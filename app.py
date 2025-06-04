@@ -2422,7 +2422,7 @@ def serve_metodoloji_pdf():
 def metodoloji():
     return render_template('metodoloji.html')
 
-"""@app.route('/abone', methods=['POST'])
+@app.route('/abone', methods=['POST'])
 def abone():
     try:
         import gspread
@@ -2498,7 +2498,7 @@ def abone():
         print(traceback.format_exc())
         flash("Sistem hatası. Lütfen daha sonra tekrar deneyin.", "error")
         
-    return redirect(url_for('index'))"""
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True) 
