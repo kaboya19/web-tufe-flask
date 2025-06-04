@@ -15,13 +15,33 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: none;
+            }
+
+            .mobile-menu.active {
+                display: block;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-50">
-    <div class="min-h-screen flex flex-row">
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-button"
+            class="md:hidden fixed top-4 right-4 z-50 bg-[#EF476F] text-white p-2 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+
         <!-- Sidebar -->
-        <aside class="w-full max-w-xs bg-white border-r shadow-sm flex flex-col justify-between py-8 px-6">
+        <aside id="sidebar"
+            class="mobile-menu w-full md:w-64 lg:w-80 bg-white border-r shadow-sm flex flex-col justify-between py-8 px-6 fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-40">
             <div>
                 <h2 class="text-xl font-bold mb-4 text-[#EF476F]">Bülten Aboneliği</h2>
                 <form method="POST" action="/abone" class="space-y-4">
@@ -92,35 +112,36 @@
                 {% endwith %}
             </div>
         </aside>
+
         <!-- Main Content -->
         <div class="flex-1">
             <div class="min-h-screen">
                 <!-- Header -->
                 <header class="bg-white shadow-sm">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-wrap items-center space-x-2 md:space-x-4">
                             <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/tufe"
                                 class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/ana-gruplar"
                                 class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
                                 Gruplar</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/harcama-gruplari"
                                 class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
                                 Grupları</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/maddeler"
                                 class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/ozel-kapsamli-gostergeler"
                                 class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
                                 Kapsamlı Göstergeler</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-400 hidden md:inline">|</span>
                             <a href="/metodoloji" class="text-gray-600 hover:text-gray-900">Metodoloji</a>
                         </div>
                     </div>
@@ -148,6 +169,24 @@
     <script>
         var graphs = {{ graphJSON | safe }};
         Plotly.newPlot('chart', graphs.data, graphs.layout);
+
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !mobileMenuButton.contains(e.target)) {
+                sidebar.classList.add('-translate-x-full');
+                mobileMenu.classList.remove('active');
+            }
+        });
     </script>
 </body>
 
