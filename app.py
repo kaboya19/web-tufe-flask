@@ -65,7 +65,7 @@ def get_google_credentials_2():
 
 def get_google_sheets_data():
     # Google Sheets API setup
-    creds = get_google_credentials()
+    """creds = get_google_credentials()
     client = gspread.authorize(creds)
     
     # Open the spreadsheet
@@ -78,7 +78,9 @@ def get_google_sheets_data():
     data = worksheet.get_all_values()
     
     # Convert to DataFrame
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplaraylık.csv",index_col=0)
     
     # Get the last column
     last_col = df.columns[-1]
@@ -112,20 +114,19 @@ def get_google_sheets_data():
 
 def get_tufe_data():
     # Google Sheets API setup
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     
-    # Open the spreadsheet
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     
-    # Get the specific worksheet by title
     worksheet = spreadsheet.worksheet('Web TÜFE')
     
-    # Get all values
-    data = worksheet.get_all_values()
+    data = worksheet.get_all_values()"""
+
+    df=pd.read_csv('tüfe.csv').rename(columns={"Unnamed: 0":"Tarih"})
     
     # Convert to DataFrame
-    df = pd.DataFrame(data[1:], columns=data[0])
+    #df = pd.DataFrame(data[1:], columns=data[0])
     
     # Convert date column to datetime
     df['Tarih'] = pd.to_datetime(df['Tarih'])
@@ -134,18 +135,20 @@ def get_tufe_data():
     df = df.sort_values('Tarih')
     
     # Convert TÜFE values to float
-    df['TÜFE'] = df['TÜFE'].str.replace(',', '.').astype(float)
     
     return df
 
 def get_monthly_change():
     # Google Sheets API setup
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplaraylık.csv",index_col=0)
+   
     last_col = df.columns[-1]
     tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'tüfe']
     if not tufe_row.empty:
@@ -160,12 +163,14 @@ def get_monthly_change():
 
 def get_tufe_vs_tuik_bar_data():
     # Google Sheets API setup
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplaraylık.csv",index_col=0)
     # Get all months (columns except the first)
     months = df.columns[1:]
     # Get TÜFE row
@@ -232,23 +237,27 @@ def safe_get_turkish_month(m):
 
 def get_ana_gruplar_data():
     # Google Sheets API setup
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(564638736)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplar_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
     df['Tarih'] = pd.to_datetime(df['Tarih'])
     df = df.sort_values('Tarih')
     return df
 
 def get_ana_grup_monthly_change(grup_adi):
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplaraylık.csv",index_col=0)
     last_col = df.columns[-1]
     row = df[df.iloc[:,0].str.strip().str.lower() == grup_adi.strip().lower()]
     if not row.empty:
@@ -262,12 +271,14 @@ def get_ana_grup_monthly_change(grup_adi):
     return value, last_col
 
 def get_ana_grup_all_monthly_changes(grup_adi):
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("gruplaraylık.csv",index_col=0)
     months = df.columns[1:]
     row = df[df.iloc[:,0].str.strip().str.lower() == grup_adi.strip().lower()]
     values = []
@@ -419,12 +430,13 @@ def tufe():
     month_name = get_turkish_month(last_col_date)
     
     # Get madde names from Google Sheet
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(459488282)
     data = worksheet.get_all_values()
-    df_madde = pd.DataFrame(data[1:], columns=data[0])
+    df_madde = pd.DataFrame(data[1:], columns=data[0])"""
+    df_madde=pd.read_csv("endeksler_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
     madde_names = df_madde.columns[1:].tolist()  # Get column names as madde names
     
     selected_madde = request.form.get('madde') if request.method == 'POST' else 'TÜFE'
@@ -470,7 +482,7 @@ def tufe():
                     color='#2B2D42'
                 ),
                 tickfont=dict(
-                    size=12,
+                    size=14,
                     family='Inter, sans-serif',
                     color='#2B2D42'
                 ),
@@ -489,7 +501,7 @@ def tufe():
                     color='#2B2D42'
                 ),
                 tickfont=dict(
-                    size=12,
+                    size=14,
                     family='Inter, sans-serif',
                     color='#2B2D42'
                 ),
@@ -670,9 +682,10 @@ def tufe():
         bar_values=[]
         bar_colors=[]
         # Madde seçiliyse endeks grafiği için 459488282 ID'li tabloyu oku
-        worksheet_endeks = spreadsheet.get_worksheet_by_id(459488282)
+        """worksheet_endeks = spreadsheet.get_worksheet_by_id(459488282)
         data_endeks = worksheet_endeks.get_all_values()
-        df_endeks = pd.DataFrame(data_endeks[1:], columns=data_endeks[0])
+        df_endeks = pd.DataFrame(data_endeks[1:], columns=data_endeks[0])"""
+        df_endeks=pd.read_csv("endeksler_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
         df_endeks = df_endeks.set_index('Tarih')
         df_endeks.columns = df_endeks.columns.str.strip().str.lower()
         df_endeks.index = pd.to_datetime(df_endeks.index)
@@ -691,9 +704,10 @@ def tufe():
             total_change = endeks_seri.iloc[-1] - 100 if not endeks_seri.empty else None
             
             # Aylık değişim oranını al
-            monthly_change_worksheet = spreadsheet.get_worksheet_by_id(1103913248)
+            """monthly_change_worksheet = spreadsheet.get_worksheet_by_id(1103913248)
             monthly_change_data = monthly_change_worksheet.get_all_values()
-            df_monthly = pd.DataFrame(monthly_change_data[1:], columns=monthly_change_data[0])
+            df_monthly = pd.DataFrame(monthly_change_data[1:], columns=monthly_change_data[0])"""
+            df_monthly=pd.read_csv("maddeleraylık.csv",index_col=0)
             df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
             monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_madde_norm]
             monthly_change = None
@@ -738,7 +752,7 @@ def tufe():
                         color='#2B2D42'
                     ),
                     tickfont=dict(
-                        size=12,
+                        size=14,
                         family='Inter, sans-serif',
                         color='#2B2D42'
                     ),
@@ -756,7 +770,7 @@ def tufe():
                         color='#2B2D42'
                     ),
                     tickfont=dict(
-                        size=12,
+                        size=14,
                         family='Inter, sans-serif',
                         color='#2B2D42'
                     ),
@@ -1044,13 +1058,13 @@ def ana_gruplar():
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
 
     # Google Sheets bağlantısı
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
+    spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')"""
 
     # Line plot için veriler
     tarih = df['Tarih']
-    values = df[selected_group].str.replace(',', '.').astype(float)
+    values = df[selected_group]
     total_change = values.iloc[-1] - 100
     monthly_change, last_col_date = get_ana_grup_monthly_change(selected_group)
     month_name = get_turkish_month(last_col_date)
@@ -1088,7 +1102,7 @@ def ana_gruplar():
             color='#2B2D42'
         ),
         tickfont=dict(
-            size=12,
+            size=14,
             family='Inter, sans-serif',
             color='#2B2D42'
         ),
@@ -1107,7 +1121,7 @@ def ana_gruplar():
             color='#2B2D42'
         ),
         tickfont=dict(
-            size=12,
+            size=14,
             family='Inter, sans-serif',
             color='#2B2D42'
         ),
@@ -1130,9 +1144,10 @@ def ana_gruplar():
     # --- Aylık değişim bar ve line grafik verileri ---
     monthly_changes = []
     monthly_dates = []
-    worksheet = spreadsheet.get_worksheet_by_id(767776936)
+    """worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
-    df_monthly = pd.DataFrame(data[1:], columns=data[0])
+    df_monthly = pd.DataFrame(data[1:], columns=data[0])"""
+    df_monthly=pd.read_csv("gruplaraylık.csv",index_col=0)
     df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
     selected_group_norm = selected_group.strip().lower()
     monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_group_norm]
@@ -1374,12 +1389,13 @@ def harcama_gruplari():
     print("Seçilen tarih:", selected_date)
     
     # Ortak: harcama grupları ve tarih seçenekleri için worksheet ve dataframe
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     harcama_worksheet = spreadsheet.get_worksheet_by_id(1927818004)
     harcama_data = harcama_worksheet.get_all_values()
-    df_harcama = pd.DataFrame(harcama_data[1:], columns=harcama_data[0])
+    df_harcama = pd.DataFrame(harcama_data[1:], columns=harcama_data[0])"""
+    df_harcama=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
     date_options = df_harcama.columns[1:].tolist()
     # Tarih seçeneklerini YYYY-MM formatına çevir (görüntüleme için)
     formatted_date_options = []
@@ -1419,9 +1435,10 @@ def harcama_gruplari():
     # Seçili tarihi orijinal formata çevir
     sheet_date = date_mapping[selected_date]
     # Ana grup değişimini 767776936 tablosundan al
-    ana_grup_worksheet = spreadsheet.get_worksheet_by_id(767776936)
+    """ana_grup_worksheet = spreadsheet.get_worksheet_by_id(767776936)
     ana_grup_data = ana_grup_worksheet.get_all_values()
-    df_ana_grup = pd.DataFrame(ana_grup_data[1:], columns=ana_grup_data[0])
+    df_ana_grup = pd.DataFrame(ana_grup_data[1:], columns=ana_grup_data[0])"""
+    df_ana_grup=pd.read_csv("gruplaraylık.csv",index_col=0)
     df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].str.strip().str.lower()
     ana_grup_row = df_ana_grup[df_ana_grup.iloc[:,0] == selected_group_norm]
     ana_grup_value = None
@@ -1547,10 +1564,13 @@ def harcama_gruplari():
 
     # Endeks grafiği için harcama grubu seçildiyse veriyi oku ve çiz
     if selected_harcama_grubu:
+        toplam_baslik=""
+        son_ay=""
         try:
-            worksheet_endeks = spreadsheet.get_worksheet_by_id(2103865002)
+            """worksheet_endeks = spreadsheet.get_worksheet_by_id(2103865002)
             data_endeks = worksheet_endeks.get_all_values()
-            df_endeks = pd.DataFrame(data_endeks[1:], columns=data_endeks[0])
+            df_endeks = pd.DataFrame(data_endeks[1:], columns=data_endeks[0])"""
+            df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
             df_endeks['Tarih'] = pd.to_datetime(df_endeks['Tarih'])
             print('Seçilen harcama grubu:', selected_harcama_grubu)
             print('Endeks tablosu sütunları:', list(df_endeks.columns))
@@ -1559,7 +1579,7 @@ def harcama_gruplari():
             selected_norm = selected_harcama_grubu.strip().lower()
             if selected_norm in col_map:
                 real_col = col_map[selected_norm]
-                values = df_endeks[real_col].str.replace(',', '.').astype(float)
+                values = df_endeks[real_col]
                 dates = df_endeks['Tarih']
                 # Türkçe ay isimleriyle x ekseni için
                 turkish_months = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in dates]
@@ -1572,9 +1592,10 @@ def harcama_gruplari():
                 son_ay = get_turkish_month(last_date.strftime('%Y-%m-%d')) + f" {last_date.year}"
                 harcama_grubu_total_change = values.iloc[-1] - values.iloc[0]
                 # --- Fix: Son ay değişimi 1927818004 ID'li tablodan alınacak ---
-                worksheet_harcama = spreadsheet.get_worksheet_by_id(1927818004)
+                """worksheet_harcama = spreadsheet.get_worksheet_by_id(1927818004)
                 data_harcama = worksheet_harcama.get_all_values()
-                df_harcama = pd.DataFrame(data_harcama[1:], columns=data_harcama[0])
+                df_harcama = pd.DataFrame(data_harcama[1:], columns=data_harcama[0])"""
+                df_harcama=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
                 df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
                 row = df_harcama[df_harcama.iloc[:,0] == selected_norm]
                 harcama_grubu_monthly_change = None
@@ -1677,7 +1698,7 @@ def harcama_gruplari():
 def maddeler():
     # Ana grup adlarını al
     df = get_ana_gruplar_data()
-    grup_adlari = [col for col in df.columns if col != 'Tarih']
+    grup_adlari = [col for col in df.drop("TÜFE",axis=1).columns if col != 'Tarih']
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
     # ürünler.csv'den madde adlarını al
     urunler = pd.read_csv('ürünler.csv')
@@ -1686,12 +1707,13 @@ def maddeler():
     selected_group_norm = selected_group.strip().lower()
     madde_adlari = urunler[urunler["Ana Grup"] == selected_group_norm]["Ürün"].unique().tolist()
     # 1103913248 ID'li tablodan değişim oranlarını oku
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(1103913248)
     data = worksheet.get_all_values()
-    df_madde = pd.DataFrame(data[1:], columns=data[0])
+    df_madde = pd.DataFrame(data[1:], columns=data[0])"""
+    df_madde=pd.read_csv("maddeleraylık.csv",index_col=0)
     df_madde[df_madde.columns[0]] = df_madde[df_madde.columns[0]].str.strip().str.lower()
     # Tarih seçenekleri
     date_options = df_madde.columns[1:].tolist()
@@ -1724,9 +1746,10 @@ def maddeler():
             except:
                 pass
     # Ana grup değişimini 767776936 ID'li tablodan oku (kırmızı)
-    ana_grup_worksheet = spreadsheet.get_worksheet_by_id(767776936)
+    """ana_grup_worksheet = spreadsheet.get_worksheet_by_id(767776936)
     ana_grup_data = ana_grup_worksheet.get_all_values()
-    df_ana_grup = pd.DataFrame(ana_grup_data[1:], columns=ana_grup_data[0])
+    df_ana_grup = pd.DataFrame(ana_grup_data[1:], columns=ana_grup_data[0])"""
+    df_ana_grup=pd.read_csv("gruplaraylık.csv",index_col=0)
     df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].str.strip().str.lower()
     ana_grup_row = df_ana_grup[df_ana_grup.iloc[:,0] == selected_group_norm]
     ana_grup_value = None
@@ -1839,14 +1862,16 @@ def maddeler():
 @app.route('/ozel-kapsamli-gostergeler', methods=['GET', 'POST'])
 def ozel_kapsamli_gostergeler():
     # Google Sheets API setup
-    creds = get_google_credentials_2()
+    """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     
     # Get endeks data from worksheet
     worksheet = spreadsheet.get_worksheet_by_id(1456874598)
     data = worksheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])"""
+
+    df=pd.read_csv("özelgöstergeler.csv").rename(columns={"Unnamed: 0":"Tarih"})
     
     # Convert date column to datetime
     df['Tarih'] = pd.to_datetime(df['Tarih'])
@@ -1858,9 +1883,10 @@ def ozel_kapsamli_gostergeler():
     selected_indicator = request.form.get('indicator') if request.method == 'POST' else indicator_names[0]
     
     # Get monthly change data
-    monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
+    """monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
     monthly_data = monthly_worksheet.get_all_values()
-    df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])
+    df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])"""
+    df_monthly=pd.read_csv("özelgöstergeleraylık.csv",index_col=0)
     
     # Get monthly change for selected indicator
     monthly_change = None
@@ -1875,14 +1901,14 @@ def ozel_kapsamli_gostergeler():
     # Calculate total change
     total_change = None
     if not df.empty and selected_indicator in df.columns:
-        values = df[selected_indicator].str.replace(',', '.').astype(float)
+        values = df[selected_indicator]
         total_change = values.iloc[-1] - 100
     
     # Create line plot
     fig = go.Figure()
     
     if not df.empty and selected_indicator in df.columns:
-        values = df[selected_indicator].str.replace(',', '.').astype(float)
+        values = df[selected_indicator]
         dates = df['Tarih']
         
         # Get Turkish month names for hover text
@@ -1961,9 +1987,10 @@ def ozel_kapsamli_gostergeler():
         )
 
     # Aylık değişim verilerini al
-    monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
+    """monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
     monthly_data = monthly_worksheet.get_all_values()
-    df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])
+    df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])"""
+    df_monthly=pd.read_csv("özelgöstergeleraylık.csv",index_col=0)
     df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
     selected_indicator_norm = selected_indicator.strip().lower()
     monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_indicator_norm]
@@ -2234,7 +2261,7 @@ def serve_metodoloji_pdf():
 def metodoloji():
     return render_template('metodoloji.html')
 
-@app.route('/abone', methods=['POST'])
+"""@app.route('/abone', methods=['POST'])
 def abone():
     try:
         import gspread
@@ -2310,7 +2337,7 @@ def abone():
         print(traceback.format_exc())
         flash("Sistem hatası. Lütfen daha sonra tekrar deneyin.", "error")
         
-    return redirect(url_for('index'))
+    return redirect(url_for('index'))"""
 
 if __name__ == '__main__':
     app.run(debug=True) 
