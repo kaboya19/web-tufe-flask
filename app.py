@@ -26,7 +26,7 @@ def get_turkish_month(date_str):
             return aylar[date_obj.month-1]
     except:
         return date_str
-
+#test
 def get_google_credentials():
     scope = ['https://spreadsheets.google.com/feeds',
              'https://www.googleapis.com/auth/drive']
