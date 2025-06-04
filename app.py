@@ -1380,7 +1380,7 @@ def harcama_gruplari():
     print("Method:", request.method)
     
     df = get_ana_gruplar_data()
-    grup_adlari = [col for col in df.columns if col != 'Tarih']
+    grup_adlari = [col for col in df.drop("TÜFE",axis=1).columns if col != 'Tarih']
     print("Grup adları:", grup_adlari)
     
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
