@@ -316,7 +316,7 @@ def index():
             text=[f'{value:+.2f}%'],
             textposition='outside',
             textfont=dict(
-                size=12,
+                size=14,
                 color='#2B2D42',
                 family='Inter, sans-serif'
             ),
