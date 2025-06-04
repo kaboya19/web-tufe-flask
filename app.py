@@ -1486,7 +1486,7 @@ def harcama_gruplari():
                 color='#2B2D42'
             ),
             tickfont=dict(
-                size=12,
+                size=14,
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
@@ -1502,7 +1502,7 @@ def harcama_gruplari():
                 color='#2B2D42'
             ),
             tickfont=dict(
-                size=12,
+                size=14,
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
