@@ -411,7 +411,7 @@ def index():
     # Convert plot to JSON
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
-    return render_template('index.html', graphJSON=graphJSON, active_page='index')
+    return render_template('index.html', graphJSON=graphJSON, active_page='index', x_min=x_min_with_margin, x_max=x_max_with_margin)
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():

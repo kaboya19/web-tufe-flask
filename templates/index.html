@@ -187,6 +187,29 @@
                 mobileMenu.classList.remove('active');
             }
         });
+
+        // Adjust x-axis range for mobile devices
+        const graph = document.getElementById('graph');
+        if (graph) {
+            const plotData = JSON.parse('{{ graphJSON | safe }}');
+            const isMobile = window.innerWidth <= 768;
+
+            if (isMobile) {
+                const xMin = {{ x_min }
+            };
+            const xMax = {{ x_max }
+        };
+        const xRange = xMax - xMin;
+        const mobileMargin = xRange * 0.4; // Mobil için daha geniş margin
+
+        plotData.layout.xaxis.range = [
+            xMin - mobileMargin,
+            xMax + mobileMargin
+        ];
+
+        Plotly.newPlot('graph', plotData.data, plotData.layout);
+            }
+        }
     </script>
 </body>
 
