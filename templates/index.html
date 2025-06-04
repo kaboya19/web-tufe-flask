@@ -189,9 +189,8 @@
         });
 
         // Adjust x-axis range for mobile devices
-        const graph = document.getElementById('graph');
-        if (graph) {
-            const plotData = JSON.parse('{{ graphJSON | safe }}');
+        const chart = document.getElementById('chart');
+        if (chart) {
             const isMobile = window.innerWidth <= 768;
 
             if (isMobile) {
@@ -202,12 +201,15 @@
         const xRange = xMax - xMin;
         const mobileMargin = xRange * 0.4; // Mobil için daha geniş margin
 
-        plotData.layout.xaxis.range = [
-            xMin - mobileMargin,
-            xMax + mobileMargin
-        ];
+        const newLayout = {
+            ...graphs.layout,
+            xaxis: {
+                ...graphs.layout.xaxis,
+                range: [xMin - mobileMargin, xMax + mobileMargin]
+            }
+        };
 
-        Plotly.newPlot('graph', plotData.data, plotData.layout);
+        Plotly.newPlot('chart', graphs.data, newLayout);
             }
         }
     </script>
