@@ -326,8 +326,7 @@ def index():
             font=dict(
                 size=24,
                 family='Inter, sans-serif',
-                color='#2B2D42',
-                weight='bold'
+                color='#2B2D42'
             ),
             y=0.95
         ),
@@ -336,14 +335,12 @@ def index():
             title_font=dict(
                 size=14,
                 family='Inter, sans-serif',
-                color='#2B2D42',
-                weight='bold'
+                color='#2B2D42'
             ),
             tickfont=dict(
                 size=12,
                 family='Inter, sans-serif',
-                color='#2B2D42',
-                weight='bold'
+                color='#2B2D42'
             ),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF'
@@ -353,14 +350,12 @@ def index():
             title_font=dict(
                 size=14,
                 family='Inter, sans-serif',
-                color='#2B2D42',
-                weight='bold'
+                color='#2B2D42'
             ),
             tickfont=dict(
                 size=12,
                 family='Inter, sans-serif',
-                color='#2B2D42',
-                weight='bold'
+                color='#2B2D42'
             ),
             gridcolor='#E9ECEF'
         ),
@@ -716,8 +711,16 @@ def tufe():
                 ),
                 xaxis=dict(
                     title='Tarih',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     gridcolor='#E9ECEF',
                     zerolinecolor='#E9ECEF',
                     tickvals=tickvals,
@@ -726,8 +729,16 @@ def tufe():
                 ),
                 yaxis=dict(
                     title='Endeks',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     gridcolor='#E9ECEF'
                 ),
                 showlegend=False,
@@ -844,7 +855,11 @@ def tufe():
                 marker_color='#EF476F',
                 text=bar_texts,
                 textposition=text_positions,
-                textfont=dict(size=16, color=text_colors, family='Inter, sans-serif', weight='bold'),
+                textfont=dict(
+                    size=16,
+                    color=text_colors,
+                    family='Inter, sans-serif'
+                ),
                 width=0.6,
                 hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
             ))
@@ -860,7 +875,11 @@ def tufe():
             fig.update_layout(
                 title=dict(
                     text=f'{selected_madde} Aylık Değişimler',
-                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+                    font=dict(
+                        size=20,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     y=0.98,
                     x=0.5,
                     xanchor='center',
@@ -868,14 +887,30 @@ def tufe():
                 ),
                 xaxis=dict(
                     title='Ay',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     tickangle=0
                 ),
                 yaxis=dict(
                     title='Değişim (%)',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     gridcolor='#E9ECEF',
                     range=[y_min_with_margin, y_max_with_margin]  # Y ekseni aralığını ayarla
                 ),
@@ -904,19 +939,39 @@ def tufe():
             line_fig.update_layout(
                 title=dict(
                     text=f'{selected_madde} Aylık Değişim Oranları',
-                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+                    font=dict(
+                        size=20,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     y=0.95
                 ),
                 xaxis=dict(
                     title='Ay',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     tickangle=0
                 ),
                 yaxis=dict(
                     title='Değişim (%)',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    title_font=dict(
+                        size=14,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
                     gridcolor='#E9ECEF'
                 ),
                 showlegend=True,
@@ -999,13 +1054,25 @@ def ana_gruplar():
     fig.update_layout(
     title=dict(
         text=f'{selected_group} Endeksi',
-        font=dict(size=24, family='Inter, sans-serif', color='#2B2D42'),
+        font=dict(
+            size=24,
+            family='Inter, sans-serif',
+            color='#2B2D42'
+        ),
         y=0.95
     ),
     xaxis=dict(
         title='Tarih',
-        title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+        title_font=dict(
+            size=14,
+            family='Inter, sans-serif',
+            color='#2B2D42'
+        ),
+        tickfont=dict(
+            size=12,
+            family='Inter, sans-serif',
+            color='#2B2D42'
+        ),
         gridcolor='#E9ECEF',
         zerolinecolor='#E9ECEF',
         tickvals=tickvals,
@@ -1015,8 +1082,16 @@ def ana_gruplar():
     ),
     yaxis=dict(
         title='Endeks',
-        title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+        title_font=dict(
+            size=14,
+            family='Inter, sans-serif',
+            color='#2B2D42'
+        ),
+        tickfont=dict(
+            size=12,
+            family='Inter, sans-serif',
+            color='#2B2D42'
+        ),
         gridcolor='#E9ECEF'
     ),
     showlegend=False,
@@ -1068,7 +1143,7 @@ def ana_gruplar():
         marker_color='#EF476F',
         text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
         textposition='outside',
-        textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif', weight='bold'),
+        textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
         width=0.35,
         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
@@ -1117,7 +1192,7 @@ def ana_gruplar():
         marker_color='#118AB2',
         text=[f'{v:.2f}' if v is not None else '' for v in tuik_changes],
         textposition='outside',
-        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif', weight='bold'),
+        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
         width=0.35,
         hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
     ))
@@ -1150,14 +1225,30 @@ def ana_gruplar():
         ),
         xaxis=dict(
             title='Ay',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         yaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF',
             range=[y_min_with_margin, y_max_with_margin]
         ),
@@ -1200,14 +1291,30 @@ def ana_gruplar():
         ),
         xaxis=dict(
             title='Ay',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             tickangle=0
         ),
         yaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         showlegend=True,
@@ -1365,7 +1472,11 @@ def harcama_gruplari():
     fig.update_layout(
         title=dict(
             text=f'{turkish_month} Ayı Harcama Grupları Değişimi',
-            font=dict(size=20, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            font=dict(
+                size=20,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             y=0.99,
             x=0.5,
             xanchor='center',
@@ -1373,16 +1484,32 @@ def harcama_gruplari():
         ),
         xaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF',
             range=xaxis_range
         ),
         yaxis=dict(
             title='Harcama Grubu',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         showlegend=False,
@@ -1454,13 +1581,25 @@ def harcama_gruplari():
                 fig_endeks.update_layout(
                     title=dict(
                         text=f'{selected_harcama_grubu.title()} Endeksi',
-                        font=dict(size=18, family='Inter, sans-serif', color='#2B2D42'),
+                        font=dict(
+                            size=18,
+                            family='Inter, sans-serif',
+                            color='#2B2D42'
+                        ),
                         y=0.98
                     ),
                     xaxis=dict(
                         title='Tarih',
-                        title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                        title_font=dict(
+                            size=12,
+                            family='Inter, sans-serif',
+                            color='#2B2D42'
+                        ),
+                        tickfont=dict(
+                            size=12,
+                            family='Inter, sans-serif',
+                            color='#2B2D42'
+                        ),
                         gridcolor='#E9ECEF',
                         zerolinecolor='#E9ECEF',
                         tickangle=0,
@@ -1469,8 +1608,16 @@ def harcama_gruplari():
                     ),
                     yaxis=dict(
                         title='Endeks',
-                        title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                        title_font=dict(
+                            size=12,
+                            family='Inter, sans-serif',
+                            color='#2B2D42'
+                        ),
+                        tickfont=dict(
+                            size=12,
+                            family='Inter, sans-serif',
+                            color='#2B2D42'
+                        ),
                         gridcolor='#E9ECEF'
                     ),
                     showlegend=False,
@@ -1615,7 +1762,11 @@ def maddeler():
     fig.update_layout(
         title=dict(
             text=f'{turkish_month} Ayı Madde Değişimleri',
-            font=dict(size=20, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            font=dict(
+                size=20,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             y=0.99,
             x=0.5,
             xanchor='center',
@@ -1623,16 +1774,32 @@ def maddeler():
         ),
         xaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF',
             range=xaxis_range
         ),
         yaxis=dict(
             title='Harcama Grubu',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42', weight='bold'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         showlegend=False,
@@ -1726,13 +1893,25 @@ def ozel_kapsamli_gostergeler():
         fig.update_layout(
             title=dict(
                 text=f'{selected_indicator} Endeksi',
-                font=dict(size=18, family='Inter, sans-serif', color='#2B2D42'),
+                font=dict(
+                    size=18,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
                 y=0.98
             ),
             xaxis=dict(
                 title='Tarih',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                title_font=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
                 tickvals=tickvals,
@@ -1742,8 +1921,16 @@ def ozel_kapsamli_gostergeler():
             ),
             yaxis=dict(
                 title='Endeks',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                title_font=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
                 gridcolor='#E9ECEF'
             ),
             showlegend=False,
@@ -1823,7 +2010,7 @@ def ozel_kapsamli_gostergeler():
         marker_color='#EF476F',
         text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
         textposition='outside',
-        textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif', weight='bold'),
+        textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
         width=0.35,
         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
@@ -1836,7 +2023,7 @@ def ozel_kapsamli_gostergeler():
         marker_color='#118AB2',
         text=[f'{v:.2f}' if v is not None else '' for v in tuik_changes],
         textposition='outside',
-        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif', weight='bold'),
+        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
         width=0.35,
         hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
     ))
@@ -1860,19 +2047,39 @@ def ozel_kapsamli_gostergeler():
         barmode='group',
         title=dict(
             text=f'{selected_indicator} Aylık Değişim Oranları',
-            font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+            font=dict(
+                size=20,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             y=0.95
         ),
         xaxis=dict(
             title='Ay',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         yaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF',
             range=[y_min_with_margin, y_max_with_margin]
         ),
@@ -1908,19 +2115,39 @@ def ozel_kapsamli_gostergeler():
     line_fig.update_layout(
         title=dict(
             text=f'{selected_indicator} Aylık Değişim Oranları',
-            font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+            font=dict(
+                size=20,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             y=0.95
         ),
         xaxis=dict(
             title='Ay',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             tickangle=0
         ),
         yaxis=dict(
             title='Değişim (%)',
-            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            title_font=dict(
+                size=14,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
             gridcolor='#E9ECEF'
         ),
         showlegend=True,
