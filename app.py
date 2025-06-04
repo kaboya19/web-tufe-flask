@@ -26,13 +26,23 @@ def get_turkish_month(date_str):
     except:
         return date_str
 
-def get_google_sheets_data():
-    # Google Sheets API setup
+def get_google_credentials():
     scope = ['https://spreadsheets.google.com/feeds',
              'https://www.googleapis.com/auth/drive']
     
-    # You'll need to create a credentials.json file with your Google API credentials
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    # Get credentials from environment variable
+    credentials_json = os.environ.get('GOOGLE_CREDENTIALS_BASE64')
+    if not credentials_json:
+        raise ValueError("GOOGLE_CREDENTIALS_BASE64 environment variable is not set")
+    
+    # Parse the JSON string from environment variable
+    credentials_dict = json.loads(credentials_json)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+    return creds
+
+def get_google_sheets_data():
+    # Google Sheets API setup
+    creds = get_google_credentials()
     client = gspread.authorize(creds)
     
     # Open the spreadsheet
@@ -1988,16 +1998,9 @@ def abone():
         from gspread.exceptions import APIError, SpreadsheetNotFound
 
         print("Google Sheets bağlantısı başlatılıyor...")
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # credentials.json dosyasının varlığını kontrol et
-        if not os.path.exists('credentials.json'):
-            print("HATA: credentials.json dosyası bulunamadı!")
-            flash("Sistem yapılandırma hatası. Lütfen yönetici ile iletişime geçin.", "error")
-            return redirect(url_for('index'))
-
         try:
-            creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+            creds = get_google_credentials()
             print("Credentials başarıyla yüklendi")
         except Exception as e:
             print(f"Credentials yükleme hatası: {str(e)}")
