@@ -369,9 +369,7 @@ def index():
             bgcolor='white',
             font_size=12,
             font_family='Inter, sans-serif',
-            font_color='#2B2D42',
-            font_weight='bold'
-        )
+            font_color='#2B2D42'        )
     )
     
     # Convert plot to JSON
@@ -1518,7 +1516,7 @@ def harcama_gruplari():
         height=max(min(len(bar_labels) * 70, 1800), 500),
         margin=dict(l=10, r=10, t=40, b=20),
         hovermode='y unified',
-        hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42', font_weight='bold')
+        hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
     )
     bar_graphJSON = fig.to_json()
 
@@ -1808,7 +1806,7 @@ def maddeler():
         height=max(min(len(bar_labels) * 70, 3000), 500),
         margin=dict(l=10, r=10, t=40, b=20),
         hovermode='y unified',
-        hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42', font_weight='bold')
+        hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
     )
     bar_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template('maddeler.html',
