@@ -45,6 +45,24 @@ def get_google_credentials():
     except Exception as e:
         raise ValueError(f"Failed to decode credentials: {str(e)}")
 
+def get_google_credentials_2():
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
+    
+    # Get credentials from environment variable
+    credentials_json = os.environ.get('GOOGLE_CREDENTIALS_2_BASE64')
+    if not credentials_json:
+        raise ValueError("GOOGLE_CREDENTIALS_2_BASE64 environment variable is not set")
+    
+    # Decode base64 and parse the JSON string from environment variable
+    try:
+        decoded_json = base64.b64decode(credentials_json).decode('utf-8')
+        credentials_dict = json.loads(decoded_json)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        return creds
+    except Exception as e:
+        raise ValueError(f"Failed to decode credentials: {str(e)}")
+
 def get_google_sheets_data():
     # Google Sheets API setup
     creds = get_google_credentials()
@@ -94,11 +112,7 @@ def get_google_sheets_data():
 
 def get_tufe_data():
     # Google Sheets API setup
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    
-    # You'll need to create a credentials.json file with your Google API credentials
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     
     # Open the spreadsheet
@@ -126,9 +140,7 @@ def get_tufe_data():
 
 def get_monthly_change():
     # Google Sheets API setup
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
@@ -148,9 +160,7 @@ def get_monthly_change():
 
 def get_tufe_vs_tuik_bar_data():
     # Google Sheets API setup
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
@@ -222,9 +232,7 @@ def safe_get_turkish_month(m):
 
 def get_ana_gruplar_data():
     # Google Sheets API setup
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(564638736)
@@ -235,9 +243,7 @@ def get_ana_gruplar_data():
     return df
 
 def get_ana_grup_monthly_change(grup_adi):
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
@@ -256,9 +262,7 @@ def get_ana_grup_monthly_change(grup_adi):
     return value, last_col
 
 def get_ana_grup_all_monthly_changes(grup_adi):
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(767776936)
@@ -394,9 +398,7 @@ def tufe():
     month_name = get_turkish_month(last_col_date)
     
     # Get madde names from Google Sheet
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(459488282)
@@ -1021,9 +1023,7 @@ def ana_gruplar():
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
 
     # Google Sheets bağlantısı
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
 
@@ -1353,9 +1353,7 @@ def harcama_gruplari():
     print("Seçilen tarih:", selected_date)
     
     # Ortak: harcama grupları ve tarih seçenekleri için worksheet ve dataframe
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     harcama_worksheet = spreadsheet.get_worksheet_by_id(1927818004)
@@ -1822,9 +1820,7 @@ def maddeler():
 @app.route('/ozel-kapsamli-gostergeler', methods=['GET', 'POST'])
 def ozel_kapsamli_gostergeler():
     # Google Sheets API setup
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     

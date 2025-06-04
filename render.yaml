@@ -8,4 +8,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: GOOGLE_CREDENTIALS_BASE64
+        sync: false
+      - key: GOOGLE_CREDENTIALS_2_BASE64
         sync: false 
