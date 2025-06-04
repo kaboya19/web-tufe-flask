@@ -1665,9 +1665,7 @@ def maddeler():
     selected_group_norm = selected_group.strip().lower()
     madde_adlari = urunler[urunler["Ana Grup"] == selected_group_norm]["Ürün"].unique().tolist()
     # 1103913248 ID'li tablodan değişim oranlarını oku
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
     worksheet = spreadsheet.get_worksheet_by_id(1103913248)
