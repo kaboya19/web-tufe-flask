@@ -12,6 +12,41 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        .graph-container {
+            margin-top: 2rem;
+        }
+
+        .graph-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: #E9ECEF;
+            color: #2B2D42;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-button.active {
+            background-color: #EF476F;
+            color: white;
+        }
+
+        .graph-content {
+            display: none;
+            overflow-x: auto;
+        }
+
+        .graph-content.active {
+            display: block;
+            overflow-x: auto;
+        }
     </style>
 </head>
 
@@ -65,12 +100,10 @@
                         {% endfor %}
                     </select>
                 </form>
-                {% if selected_group and selected_date and bar_graphJSON %}
+                {% if selected_group and selected_date and not selected_harcama_grubu %}
                 <div class="mt-8">
                     <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
                 </div>
-                {% elif selected_group and selected_date %}
-                <div class="mt-8 text-red-600 font-bold">Seçilen tarihte veri bulunamadı.</div>
                 {% endif %}
 
                 {% if harcama_grubu_adlari %}
@@ -99,6 +132,16 @@
                     </div>
                     <div id="harcama-endeks-chart" class="w-full" style="min-height: 500px;"></div>
                 </div>
+
+                <!-- Monthly Change Charts -->
+                <div class="mt-8 bg-white rounded-lg shadow-sm p-6">
+                    <div class="graph-tabs">
+                        <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
+                        <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
+                    </div>
+                    <div id="monthly-bar-chart" class="graph-content active" style="height: 400px;"></div>
+                    <div id="monthly-line-chart" class="graph-content" style="height: 400px;"></div>
+                </div>
                 {% endif %}
             </div>
         </main>
@@ -111,7 +154,7 @@
             </div>
         </footer>
     </div>
-    {% if selected_group and selected_date and bar_graphJSON %}
+    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu %}
     <script>
         var barGraphs = {{ bar_graphJSON | safe }};
         Plotly.newPlot('bar-chart', barGraphs.data, barGraphs.layout, {
@@ -127,8 +170,29 @@
             displayModeBar: false,
             responsive: true
         });
+
+        {% if monthly_bar_graphJSON and monthly_line_graphJSON %}
+        var monthlyBarGraph = {{ monthly_bar_graphJSON | safe }};
+        var monthlyLineGraph = {{ monthly_line_graphJSON | safe }};
+        Plotly.newPlot('monthly-bar-chart', monthlyBarGraph.data, monthlyBarGraph.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+        Plotly.newPlot('monthly-line-chart', monthlyLineGraph.data, monthlyLineGraph.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+        {% endif %}
     </script>
     {% endif %}
+    <script>
+        function showGraph(type) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
+            document.getElementById(`monthly-${type}-chart`).classList.add('active');
+        }
+    </script>
 </body>
 
 </html>

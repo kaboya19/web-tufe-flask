@@ -1417,6 +1417,9 @@ def harcama_gruplari():
     bar_values = []
     bar_colors = []
     bar_graphJSON = None
+    monthly_bar_graphJSON = None
+    monthly_line_graphJSON = None
+    line_graphJSON = None
 
     if not selected_date:
         selected_date = formatted_date_options[0]
@@ -1672,6 +1675,161 @@ def harcama_gruplari():
                     )
                 )
                 harcama_grubu_endeks_graphJSON = fig_endeks.to_json()
+
+                # Monthly change graphs
+                try:
+                    # Get monthly changes from harcama_gruplarıaylık.csv
+                    df_harcama = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+                    df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
+                    row = df_harcama[df_harcama.iloc[:,0] == selected_norm]
+                    
+                    if not row.empty:
+                        # Get all monthly changes
+                        monthly_changes = []
+                        monthly_dates = []
+                        for col in df_harcama.columns[1:]:
+                            try:
+                                value = float(str(row[col].values[0]).replace(',', '.'))
+                                monthly_changes.append(value)
+                                # Convert date format
+                                date_obj = datetime.strptime(col, '%Y-%m-%d')
+                                monthly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
+                            except:
+                                continue
+
+                        if monthly_changes and monthly_dates:  # Veri varsa grafikleri oluştur
+                            print(monthly_changes)
+                            # Bar graph
+                            bar_fig = go.Figure()
+                            bar_fig.add_trace(go.Bar(
+                                x=monthly_dates,
+                                y=monthly_changes,
+                                name='Web TÜFE',
+                                marker_color='#EF476F',
+                                text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
+                                textposition='outside',
+                                textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
+                                width=0.35,
+                                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                            ))
+
+                            # Calculate y-axis range with margin
+                            y_min = min(monthly_changes) if monthly_changes else 0
+                            y_max = max(monthly_changes) if monthly_changes else 0
+                            y_range = y_max - y_min
+                            y_margin = y_range * 0.2 if y_range != 0 else abs(y_max) * 0.2
+                            y_min_with_margin = y_min - y_margin
+                            y_max_with_margin = y_max + y_margin
+
+                            bar_fig.update_layout(
+                                title=dict(
+                                    text=f'{selected_harcama_grubu.title()} Aylık Değişim Oranları',
+                                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+                                    y=0.95
+                                ),
+                                xaxis=dict(
+                                    title='Ay',
+                                    title_font=dict(
+                                        size=14,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    tickfont=dict(
+                                        size=12,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    gridcolor='#E9ECEF'
+                                ),
+                                yaxis=dict(
+                                    title='Değişim (%)',
+                                    title_font=dict(
+                                        size=14,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    tickfont=dict(
+                                        size=12,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    gridcolor='#E9ECEF',
+                                    range=[y_min_with_margin, y_max_with_margin]
+                                ),
+                                showlegend=False,
+                                plot_bgcolor='white',
+                                paper_bgcolor='white',
+                                height=400,
+                                margin=dict(l=10, r=10, t=40, b=20),
+                                hovermode='x'
+                            )
+                            monthly_bar_graphJSON = json.dumps(bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+                            # Line graph
+                            line_fig = go.Figure()
+                            line_fig.add_trace(go.Scatter(
+                                x=monthly_dates,
+                                y=monthly_changes,
+                                mode='lines+markers',
+                                name='Web TÜFE',
+                                line=dict(color='#EF476F', width=3),
+                                marker=dict(size=8, color='#EF476F'),
+                                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                            ))
+
+                            line_fig.update_layout(
+                                title=dict(
+                                    text=f'{selected_harcama_grubu.title()} Aylık Değişim Oranları',
+                                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+                                    y=0.95
+                                ),
+                                xaxis=dict(
+                                    title='Ay',
+                                    title_font=dict(
+                                        size=14,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    tickfont=dict(
+                                        size=12,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    gridcolor='#E9ECEF'
+                                ),
+                                yaxis=dict(
+                                    title='Değişim (%)',
+                                    title_font=dict(
+                                        size=14,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    tickfont=dict(
+                                        size=12,
+                                        family='Inter, sans-serif',
+                                        color='#2B2D42'
+                                    ),
+                                    gridcolor='#E9ECEF',
+                                    range=[y_min_with_margin, y_max_with_margin]
+                                ),
+                                showlegend=False,
+                                plot_bgcolor='white',
+                                paper_bgcolor='white',
+                                height=400,
+                                margin=dict(l=10, r=10, t=40, b=20),
+                                hovermode='x'
+                            )
+                            monthly_line_graphJSON = json.dumps(line_fig, cls=plotly.utils.PlotlyJSONEncoder)
+                        else:
+                            monthly_bar_graphJSON = None
+                            monthly_line_graphJSON = None
+                    else:
+                        monthly_bar_graphJSON = None
+                        monthly_line_graphJSON = None
+                except Exception as e:
+                    print('Aylık değişim grafikleri oluşturulamadı:', e)
+                    bar_graphJSON = None
+                    line_graphJSON = None
             else:
                 print('Eşleşen sütun bulunamadı!')
         except Exception as e:
@@ -1683,7 +1841,6 @@ def harcama_gruplari():
         harcama_gruplari=harcama_gruplari,
         date_options=formatted_date_options,  # Yeni formatlanmış tarih listesi
         selected_date=selected_date,
-        bar_graphJSON=bar_graphJSON,
         active_page='harcama_gruplari',
         harcama_grubu_adlari=harcama_grubu_adlari,
         selected_harcama_grubu=selected_harcama_grubu,
@@ -1691,7 +1848,11 @@ def harcama_gruplari():
         harcama_grubu_total_change=harcama_grubu_total_change,
         harcama_grubu_monthly_change=harcama_grubu_monthly_change,
         toplam_baslik=toplam_baslik if selected_harcama_grubu else None,
-        son_ay=son_ay if selected_harcama_grubu else None
+        son_ay=son_ay if selected_harcama_grubu else None,
+        bar_graphJSON=bar_graphJSON if not selected_harcama_grubu else None,
+        line_graphJSON=line_graphJSON if selected_harcama_grubu else None,
+        monthly_bar_graphJSON=monthly_bar_graphJSON if selected_harcama_grubu else None,
+        monthly_line_graphJSON=monthly_line_graphJSON if selected_harcama_grubu else None
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
