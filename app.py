@@ -456,7 +456,7 @@ def tufe():
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
                 tickformat='%d %B %Y',
-                tickangle=45,
+                tickangle=0,
                 ticktext=[f"{get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}" for date in first_days['Tarih'][1:]],
                 tickvals=first_days['Tarih'][1:]
             ),
