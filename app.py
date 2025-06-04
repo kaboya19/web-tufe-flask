@@ -323,6 +323,26 @@ def index():
             hovertemplate=f'{category}: %{{x:+.2f}}%<extra></extra>'
         ))
     
+
+    valid_values = [v for _, v in data_pairs if v is not None]
+
+    if valid_values:
+        x_min = min(valid_values)
+        x_max = max(valid_values)
+
+        # Marj hesapla
+        x_range = x_max - x_min
+        x_margin = x_range * 0.2 if x_range != 0 else abs(x_max) * 0.2
+
+        x_min_with_margin = x_min - x_margin
+        x_max_with_margin = x_max + x_margin
+
+        # Sıfıra yaklaşma kontrolü
+        if x_min >= 0:
+            x_min_with_margin = max(0, x_min - x_margin)
+        if x_max <= 0:
+            x_max_with_margin = min(0, x_max + x_margin)
+
     # Update layout with modern theme
     fig.update_layout(
         title=dict(
@@ -347,7 +367,8 @@ def index():
                 color='#2B2D42'
             ),
             gridcolor='#E9ECEF',
-            zerolinecolor='#E9ECEF'
+            zerolinecolor='#E9ECEF',
+            range=[x_min_with_margin, x_max_with_margin]
         ),
         yaxis=dict(
             title='Grup',
