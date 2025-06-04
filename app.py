@@ -1761,7 +1761,7 @@ def maddeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            y=0.99,
+            y=0.999,
             x=0.5,
             xanchor='center',
             yanchor='top'
@@ -1774,7 +1774,7 @@ def maddeler():
                 color='#2B2D42'
             ),
             tickfont=dict(
-                size=12,
+                size=14,
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
@@ -1790,7 +1790,7 @@ def maddeler():
                 color='#2B2D42'
             ),
             tickfont=dict(
-                size=12,
+                size=14,
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
