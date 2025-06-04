@@ -194,17 +194,17 @@
             const isMobile = window.innerWidth <= 768;
 
             if (isMobile) {
-                const xMin = {{ x_min }
+                const xMi            n = {{ x_min }
             };
             const xMax = {{ x_max }
         };
-        const xRange = xMax - xMin;
-        const mobileMargin = xRange * 0.4; // Mobil için daha geniş margin
+         }; const xe = Min;
+        c};onst mobilgin = xRange * 0.4; // Mobil için dah        a geniş margin
 
         const newLayout = {
             ...graphs.layout,
-            xaxis: {
-                ...graphs.layout.xaxis,
+            x  axis: {
+                             .   ..graphs.layout.xaxis,
                 range: [xMin - mobileMargin, xMax + mobileMargin]
             }
         };
