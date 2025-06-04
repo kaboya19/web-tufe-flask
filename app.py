@@ -314,8 +314,7 @@ def index():
             textfont=dict(
                 size=12,
                 color='#2B2D42',
-                family='Inter, sans-serif',
-                weight='bold'
+                family='Inter, sans-serif'
             ),
             hovertemplate=f'{category}: %{{x:+.2f}}%<extra></extra>'
         ))
