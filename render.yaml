@@ -7,5 +7,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: GOOGLE_CREDENTIALS
+      - key: GOOGLE_CREDENTIALS_BASE64
         sync: false 

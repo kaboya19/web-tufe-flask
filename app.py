@@ -10,6 +10,7 @@ import csv
 from dateutil.parser import parse
 import os
 from gspread.exceptions import APIError, SpreadsheetNotFound
+import base64
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
@@ -35,10 +36,14 @@ def get_google_credentials():
     if not credentials_json:
         raise ValueError("GOOGLE_CREDENTIALS_BASE64 environment variable is not set")
     
-    # Parse the JSON string from environment variable
-    credentials_dict = json.loads(credentials_json)
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-    return creds
+    # Decode base64 and parse the JSON string from environment variable
+    try:
+        decoded_json = base64.b64decode(credentials_json).decode('utf-8')
+        credentials_dict = json.loads(decoded_json)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        return creds
+    except Exception as e:
+        raise ValueError(f"Failed to decode credentials: {str(e)}")
 
 def get_google_sheets_data():
     # Google Sheets API setup
