@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TÜFE - Web TÜFE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/tufe"
+                        class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ana-gruplar"
+                        class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
+                        Gruplar</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/harcama-gruplari"
+                        class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
+                        Grupları</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/maddeler"
+                        class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ozel-kapsamli-gostergeler"
+                        class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
+                        Kapsamlı Göstergeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <form method="post" class="mb-6">
+                    <label for="madde" class="block text-sm font-medium text-gray-700 mb-1">Madde Seçin:</label>
+                    <div class="relative w-full">
+                        <select name="madde" id="madde" onchange="this.form.submit()"
+                            class="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow focus:outline-none focus:ring-2 focus:ring-[#EF476F] focus:border-[#EF476F] text-base font-semibold text-gray-700 transition duration-150 ease-in-out cursor-pointer">
+                            <option value="TÜFE" {% if selected_madde=='TÜFE' %}selected{% endif %}>TÜFE</option>
+                            {% for madde in madde_names %}
+                            <option value="{{ madde }}" {% if selected_madde==madde %}selected{% endif %}>{{ madde }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.84a.75.75 0 01-1.02 0l-4.25-3.84a.75.75 0 01.02-1.06z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                </form>
+                {% if last_date %}
+                <h2 class="text-lg font-bold text-black mb-2">
+                    <span class="text-black">1.01.2025-{{ last_date.strftime('%d.%m.%Y') }} değişimi: </span>
+                    {% if change_rate is not none %}
+                    <span class="text-[#EF476F]">{{ '%.2f' % change_rate }}%</span>
+                    {% endif %}
+                </h2>
+                <h3 class="text-lg font-bold text-black mb-4">
+                    <span class="text-black">{{ month_name }} değişimi: </span>
+                    {% if monthly_change is not none %}
+                    <span class="text-[#EF476F]">{{ '%.2f' % monthly_change }}%</span>
+                    {% endif %}
+                </h3>
+                <div id="tufe-chart" class="w-full"></div>
+                {% if selected_madde != 'TÜFE' %}
+                <div class="mt-12">
+                    <div class="flex justify-end mb-2">
+                        <button id="madde-bar-btn"
+                            class="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 flex items-center text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-[#EF476F] mr-2"
+                            title="Bar Grafik">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <rect x="3" y="12" width="4" height="8" />
+                                <rect x="9" y="8" width="4" height="12" />
+                                <rect x="15" y="4" width="4" height="16" />
+                            </svg>
+                            Bar
+                        </button>
+                        <button id="madde-line-btn"
+                            class="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 flex items-center text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-[#EF476F]"
+                            title="Çizgi Grafik">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4-4 4 4 8-8" />
+                            </svg>
+                            Line
+                        </button>
+                    </div>
+                    <div id="monthly-change-bar-chart" class="w-full"></div>
+                    <div id="monthly-change-line-chart" class="w-full hidden"></div>
+                </div>
+                {% endif %}
+                {% if selected_madde == 'TÜFE' %}
+                <div class="mt-12">
+                    <div class="flex justify-end mb-2">
+                        <button id="bar-btn"
+                            class="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 flex items-center text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-[#EF476F] mr-2"
+                            title="Bar Grafik">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <rect x="3" y="12" width="4" height="8" />
+                                <rect x="9" y="8" width="4" height="12" />
+                                <rect x="15" y="4" width="4" height="16" />
+                            </svg>
+                            Bar
+                        </button>
+                        <button id="line-btn"
+                            class="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 flex items-center text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-[#EF476F]"
+                            title="Çizgi Grafik">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4-4 4 4 8-8" />
+                            </svg>
+                            Line
+                        </button>
+                    </div>
+                    <div id="bar-compare-chart" class="w-full"></div>
+                    <div id="line-compare-chart" class="w-full hidden"></div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center text-red-600 font-bold text-lg py-12">Veri bulunamadı.</div>
+                {% endif %}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <p class="text-center text-gray-500 text-sm">
+                    © 2024 Web TÜFE. Tüm hakları saklıdır.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        var graphs = {{ graphJSON | safe }};
+        Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { displayModeBar: false });
+    </script>
+    {% if selected_madde != 'TÜFE' %}
+    <script>
+        var monthlyChangeBarGraph = {{ bar_graphJSON | safe }};
+        var monthlyChangeLineGraph = {{ line_graphJSON | safe }};
+        Plotly.newPlot('monthly-change-bar-chart', monthlyChangeBarGraph.data, monthlyChangeBarGraph.layout, { displayModeBar: false });
+        Plotly.newPlot('monthly-change-line-chart', monthlyChangeLineGraph.data, monthlyChangeLineGraph.layout, { displayModeBar: false });
+
+        // Toggle logic for monthly change chart
+        const maddeBarBtn = document.getElementById('madde-bar-btn');
+        const maddeLineBtn = document.getElementById('madde-line-btn');
+        const maddeBarChart = document.getElementById('monthly-change-bar-chart');
+        const maddeLineChart = document.getElementById('monthly-change-line-chart');
+
+        function setMaddeActive(btn) {
+            maddeBarBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+            maddeLineBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+            btn.classList.add('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+        }
+
+        maddeBarBtn.addEventListener('click', function () {
+            maddeBarChart.classList.remove('hidden');
+            maddeLineChart.classList.add('hidden');
+            setMaddeActive(maddeBarBtn);
+        });
+
+        maddeLineBtn.addEventListener('click', function () {
+            maddeLineChart.classList.remove('hidden');
+            maddeBarChart.classList.add('hidden');
+            setMaddeActive(maddeLineBtn);
+        });
+
+        // Varsayılan olarak bar aktif
+        setMaddeActive(maddeBarBtn);
+    </script>
+    {% endif %}
+    {% if selected_madde == 'TÜFE' %}
+    <script>
+        var barGraphs = {{ bar_graphJSON | safe }};
+        var lineGraphs = {{ line_graphJSON | safe }};
+        Plotly.newPlot('bar-compare-chart', barGraphs.data, barGraphs.layout, { displayModeBar: false });
+        Plotly.newPlot('line-compare-chart', lineGraphs.data, lineGraphs.layout, { displayModeBar: false });
+        // Toggle logic for comparison chart
+        const barBtn = document.getElementById('bar-btn');
+        const lineBtn = document.getElementById('line-btn');
+        const barChart = document.getElementById('bar-compare-chart');
+        const lineChart = document.getElementById('line-compare-chart');
+        function setActive(btn) {
+            barBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+            lineBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+            btn.classList.add('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
+        }
+        barBtn.addEventListener('click', function () {
+            barChart.classList.remove('hidden');
+            lineChart.classList.add('hidden');
+            setActive(barBtn);
+        });
+        lineBtn.addEventListener('click', function () {
+            lineChart.classList.remove('hidden');
+            barChart.classList.add('hidden');
+            setActive(lineBtn);
+        });
+        // Varsayılan olarak bar aktif
+        setActive(barBtn);
+    </script>
+    {% endif %}
+</body>
+
+</html>

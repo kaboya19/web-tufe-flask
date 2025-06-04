@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harcama Grupları - Web TÜFE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/tufe"
+                        class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ana-gruplar"
+                        class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
+                        Gruplar</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/harcama-gruplari"
+                        class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
+                        Grupları</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/maddeler"
+                        class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ozel-kapsamli-gostergeler"
+                        class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
+                        Kapsamlı Göstergeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
+                    <span class="text-gray-400">|</span>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <form method="POST" class="mb-6 flex items-center space-x-4">
+                    <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
+                    <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
+                        onchange="this.form.submit()">
+                        {% for grup in grup_adlari %}
+                        <option value="{{ grup }}" {% if grup==selected_group %}selected{% endif %}>{{ grup }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="date" class="font-bold text-black text-lg ml-4">Tarih Seçin:</label>
+                    <select name="date" id="date" class="border border-gray-300 rounded px-3 py-2 text-lg"
+                        onchange="this.form.submit()">
+                        {% for date in date_options %}
+                        <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% if selected_group and selected_date and bar_graphJSON %}
+                <div class="mt-8">
+                    <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
+                </div>
+                {% elif selected_group and selected_date %}
+                <div class="mt-8 text-red-600 font-bold">Seçilen tarihte veri bulunamadı.</div>
+                {% endif %}
+
+                {% if harcama_grubu_adlari %}
+                <form method="POST" class="mb-4 flex items-center space-x-4">
+                    <input type="hidden" name="group" value="{{ selected_group }}">
+                    <input type="hidden" name="date" value="{{ selected_date }}">
+                    <label for="harcama_grubu" class="font-bold text-black text-lg">Harcama Grubu Seçin:</label>
+                    <select name="harcama_grubu" id="harcama_grubu"
+                        class="border border-gray-300 rounded px-3 py-2 text-lg" onchange="this.form.submit()">
+                        <option value="" {% if not selected_harcama_grubu %}selected{% endif %}>Seçiniz</option>
+                        {% for hgrup in harcama_grubu_adlari %}
+                        <option value="{{ hgrup }}" {% if hgrup==selected_harcama_grubu %}selected{% endif %}>{{
+                            hgrup.title() }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+
+                {% if harcama_grubu_endeks_graphJSON %}
+                <div class="mt-8">
+                    <div class="mb-4 flex flex-col">
+                        <span class="text-lg font-bold text-gray-700">{{ toplam_baslik }} Değişimi: <span
+                                class="text-[#EF476F]">%{{ harcama_grubu_total_change|round(2) }}</span></span>
+                        <span class="text-lg font-bold text-gray-700">{{ son_ay }} Değişimi: <span
+                                class="text-[#118AB2]">%{{ harcama_grubu_monthly_change|round(2) }}</span></span>
+                    </div>
+                    <div id="harcama-endeks-chart" class="w-full" style="min-height: 500px;"></div>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <p class="text-center text-gray-500 text-sm">
+                    © 2024 Web TÜFE. Tüm hakları saklıdır.
+                </p>
+            </div>
+        </footer>
+    </div>
+    {% if selected_group and selected_date and bar_graphJSON %}
+    <script>
+        var barGraphs = {{ bar_graphJSON | safe }};
+        Plotly.newPlot('bar-chart', barGraphs.data, barGraphs.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+    </script>
+    {% endif %}
+    {% if harcama_grubu_endeks_graphJSON %}
+    <script>
+        var endeksGraph = {{ harcama_grubu_endeks_graphJSON | safe }};
+        Plotly.newPlot('harcama-endeks-chart', endeksGraph.data, endeksGraph.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+    </script>
+    {% endif %}
+</body>
+
+</html>
