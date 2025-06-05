@@ -45,219 +45,100 @@
         .graph-content.active {
             display: block;
         }
-
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: none;
-            }
-
-            .mobile-menu.active {
-                display: block;
-            }
-        }
     </style>
 </head>
 
 <body class="bg-gray-50">
-    <div class="min-h-screen flex flex-col md:flex-row">
-        <!-- Mobile Menu Button -->
-        <button id="mobile-menu-button"
-            class="md:hidden fixed top-4 right-4 z-50 bg-[#EF476F] text-white p-2 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
-
-        <!-- Sidebar -->
-        <aside id="sidebar"
-            class="mobile-menu w-full md:w-64 lg:w-80 bg-white border-r shadow-sm flex flex-col justify-between py-8 px-6 fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-40">
-            <div>
-                <h2 class="text-xl font-bold mb-4 text-[#EF476F]">Bülten Aboneliği</h2>
-                <form method="POST" action="/abone" class="space-y-4">
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-posta
-                            adresiniz</label>
-                        <input type="email" id="email" name="email" required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-lg focus:ring-[#EF476F] focus:border-[#EF476F]">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ne yapmak istersiniz?</label>
-                        <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="action" value="Abone ol" checked
-                                    class="form-radio text-[#EF476F]">
-                                <span class="ml-2">Abone ol</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="action" value="Çık" class="form-radio text-[#EF476F]">
-                                <span class="ml-2">Çık</span>
-                            </label>
-                        </div>
-                    </div>
-                    <button type="submit"
-                        class="w-full bg-[#EF476F] text-white font-bold py-2 rounded hover:bg-[#d43d5c]">Gönder</button>
-                    <!-- Excel Dataset Button -->
-                    <div class="flex items-center justify-center mt-4">
-                        <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/edit?gid=523299671#gid=523299671"
-                            target="_blank" rel="noopener"
-                            class="flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition">
-                            <!-- Excel SVG -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 48 48">
-                                <rect width="48" height="48" rx="8" fill="#217346" />
-                                <path fill="#fff"
-                                    d="M14 12h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2zm2.5 7.5 2.5 4 2.5-4h2l-3.5 5.5L23.5 32h-2l-2.5-4-2.5 4h-2l3.5-5.5L14.5 19.5h2z" />
-                            </svg>
-                            <span class="font-semibold text-lg">Web TÜFE Veriseti</span>
-                        </a>
-                    </div>
-                    <!-- Bülten Button -->
-                    <div class="flex items-center justify-center mt-3">
-                        <a href="/bultenler"
-                            class="flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition">
-                            <!-- PDF SVG -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 24 24"
-                                fill="none">
-                                <rect width="24" height="24" rx="4" fill="#fff" />
-                                <path
-                                    d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
-                                    fill="#E53E3E" /><text x="7" y="17" font-size="7" fill="#E53E3E"
-                                    font-family="Arial, Helvetica, sans-serif">PDF</text>
-                            </svg>
-                            <span class="font-semibold text-lg">Bülten</span>
-                        </a>
-                    </div>
-                </form>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                <div class="mt-4">
-                    {% for category, message in messages %}
-                    <div
-                        class="rounded px-4 py-2 mb-2 {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/tufe"
+                        class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ana-gruplar"
+                        class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
+                        Gruplar</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/harcama-gruplari"
+                        class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
+                        Grupları</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/maddeler"
+                        class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/ozel-kapsamli-gostergeler"
+                        class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
+                        Kapsamlı Göstergeler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
+                    <span class="text-gray-400">|</span>
+                    <a href="/metodoloji" class="text-gray-600 hover:text-gray-900">Metodoloji</a>
                 </div>
-                {% endif %}
-                {% endwith %}
             </div>
-        </aside>
-
+        </header>
         <!-- Main Content -->
-        <div class="flex-1">
-            <div class="min-h-screen">
-                <!-- Header -->
-                <header class="bg-white shadow-sm">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <div class="flex flex-wrap items-center space-x-2 md:space-x-4">
-                            <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/tufe"
-                                class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/ana-gruplar"
-                                class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
-                                Gruplar</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/harcama-gruplari"
-                                class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
-                                Grupları</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/maddeler"
-                                class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/ozel-kapsamli-gostergeler"
-                                class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
-                                Kapsamlı Göstergeler</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
-                            <span class="text-gray-400 hidden md:inline">|</span>
-                            <a href="/metodoloji" class="text-gray-600 hover:text-gray-900">Metodoloji</a>
-                        </div>
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <form method="POST" class="mb-6 flex items-center space-x-4">
+                    <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
+                    <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
+                        onchange="this.form.submit()">
+                        {% for grup in grup_adlari %}
+                        <option value="{{ grup }}" {% if grup==selected_group %}selected{% endif %}>{{ grup }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <h2 class="text-lg font-bold text-black mb-2">
+                    <span class="text-black">1.01.2025-{{ last_date }} değişimi: </span>
+                    <span class="text-[#EF476F]">{{ '%.2f' % total_change }}%</span>
+                </h2>
+                <h3 class="text-lg font-bold text-black mb-4">
+                    <span class="text-black">{{ month_name }} değişimi: </span>
+                    <span class="text-[#EF476F]">{{ '%.2f' % monthly_change }}%</span>
+                </h3>
+                <div id="main-graph"></div>
+                <div class="graph-container">
+                    <div class="graph-tabs">
+                        <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
+                        <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
                     </div>
-                </header>
-
-                <!-- Main Content -->
-                <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div class="bg-white rounded-lg shadow-sm p-6">
-                        <form method="POST"
-                            class="mb-6 flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-                            <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
-                            <select name="group" id="group"
-                                class="border border-gray-300 rounded px-3 py-2 text-lg w-full md:w-auto"
-                                onchange="this.form.submit()">
-                                {% for grup in grup_adlari %}
-                                <option value="{{ grup }}" {% if grup==selected_group %}selected{% endif %}>{{ grup }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </form>
-                        <h2 class="text-lg font-bold text-black mb-2">
-                            <span class="text-black">1.01.2025-{{ last_date }} değişimi: </span>
-                            <span class="text-[#EF476F]">{{ '%.2f' % total_change }}%</span>
-                        </h2>
-                        <h3 class="text-lg font-bold text-black mb-4">
-                            <span class="text-black">{{ month_name }} değişimi: </span>
-                            <span class="text-[#EF476F]">{{ '%.2f' % monthly_change }}%</span>
-                        </h3>
-                        <div id="main-graph"></div>
-                        <div class="graph-container">
-                            <div class="graph-tabs">
-                                <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
-                                <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
-                            </div>
-                            <div id="bar-graph" class="graph-content active"></div>
-                            <div id="line-graph" class="graph-content"></div>
-                        </div>
-                    </div>
-                </main>
-
-                <!-- Footer -->
-                <footer class="bg-white border-t mt-8">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <p class="text-center text-gray-500 text-sm">
-                            © 2024 Web TÜFE. Tüm hakları saklıdır.
-                        </p>
-                    </div>
-                </footer>
+                    <div id="bar-graph" class="graph-content active"></div>
+                    <div id="line-graph" class="graph-content"></div>
+                </div>
+                <script>
+                    var barGraph = {{ bar_graphJSON | safe }};
+                    var lineGraph = {{ line_graphJSON | safe }};
+                    Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
+                    Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
+                    function showGraph(type) {
+                        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
+                        document.querySelector(`.tab-button[onclick=\"showGraph('${type}')\"]`).classList.add('active');
+                        document.getElementById(`${type}-graph`).classList.add('active');
+                    }
+                </script>
             </div>
-        </div>
+        </main>
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <p class="text-center text-gray-500 text-sm">
+                    © 2024 Web TÜFE. Tüm hakları saklıdır.
+                </p>
+            </div>
+        </footer>
     </div>
-
     <script>
         var mainGraph = {{ graphJSON | safe }};
         Plotly.newPlot('main-graph', mainGraph.data, mainGraph.layout, { displayModeBar: false, responsive: true });
-
-        var barGraph = {{ bar_graphJSON | safe }};
-        var lineGraph = {{ line_graphJSON | safe }};
-        Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
-        Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
-
-        function showGraph(type) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`.tab-button[onclick=\"showGraph('${type}')\"]`).classList.add('active');
-            document.getElementById(`${type}-graph`).classList.add('active');
-        }
-
-        // Mobile menu functionality
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const sidebar = document.getElementById('sidebar');
-        const mobileMenu = document.querySelector('.mobile-menu');
-
-        mobileMenuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            mobileMenu.classList.toggle('active');
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!sidebar.contains(e.target) && !mobileMenuButton.contains(e.target)) {
-                sidebar.classList.add('-translate-x-full');
-                mobileMenu.classList.remove('active');
-            }
-        });
     </script>
+
+    <!-- Aylık Değişim Grafikleri -->
+    <!-- ALTTAKİ BÜYÜK SEKME GRAFİK BÖLÜMÜ TAMAMEN KALDIRILDI -->
 </body>
 
 </html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web TÜFE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #EF476F;
+            --secondary-color: #118AB2;
+            --text-color: #2B2D42;
+            --bg-color: #F8F9FA;
+            --border-color: #E9ECEF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+        }
+
+        .nav-link.active {
+            color: var(--primary-color) !important;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .container {
+            padding: 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(239, 71, 111, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #d63d63;
+            border-color: #d63d63;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        /* Mobil uyumluluk için medya sorguları */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .card {
+                margin-bottom: 0.5rem;
+            }
+
+            .card-header {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .form-control {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-primary {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            /* Grafik container'ları için mobil düzenlemeler */
+            .plot-container {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 300px;
+            }
+
+            /* Form grupları için mobil düzenlemeler */
+            .form-group {
+                margin-bottom: 0.5rem;
+            }
+
+            /* Tablo düzenlemeleri */
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table td,
+            .table th {
+                padding: 0.5rem;
+            }
+
+            /* Dropdown menüler için mobil düzenlemeler */
+            .dropdown-menu {
+                width: 100%;
+                font-size: 0.9rem;
+            }
+
+            /* Alert mesajları için mobil düzenlemeler */
+            .alert {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        /* Çok küçük ekranlar için ek düzenlemeler */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.25rem;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .nav-link {
+                font-size: 0.8rem;
+                padding: 0.25rem;
+            }
+
+            .card-header {
+                font-size: 0.8rem;
+            }
+
+            .form-control {
+                font-size: 0.8rem;
+            }
+
+            .btn {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Web TÜFE</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'index' %}active{% endif %}"
+                            href="{{ url_for('index') }}">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'tufe' %}active{% endif %}"
+                            href="{{ url_for('tufe') }}">TÜFE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'ana_gruplar' %}active{% endif %}"
+                            href="{{ url_for('ana_gruplar') }}">Ana Gruplar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'harcama_gruplari' %}active{% endif %}"
+                            href="{{ url_for('harcama_gruplari') }}">Harcama Grupları</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'maddeler' %}active{% endif %}"
+                            href="{{ url_for('maddeler') }}">Maddeler</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}"
+                            href="{{ url_for('ozel_kapsamli_gostergeler') }}">Özel Göstergeler</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'bultenler' %}active{% endif %}"
+                            href="{{ url_for('bultenler') }}">Bültenler</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'metodoloji' %}active{% endif %}"
+                            href="{{ url_for('metodoloji') }}">Metodoloji</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
