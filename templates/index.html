@@ -153,16 +153,8 @@
     </div>
 
     <script>
-        var graphs_monthly = {{ graphJSON_monthly | safe }};
-        var graphs_bar = {{ graphJSON_bar | safe }};
-
-        if (graphs_monthly) {
-            Plotly.newPlot('chart', graphs_monthly.data, graphs_monthly.layout);
-        }
-
-        if (graphs_bar) {
-            Plotly.newPlot('chart', graphs_bar.data, graphs_bar.layout);
-        }
+        var graphs = {{ graphJSON | safe }};
+        Plotly.newPlot('chart', graphs.data, graphs.layout);
     </script>
 </body>
 
