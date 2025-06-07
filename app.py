@@ -302,116 +302,41 @@ def is_date(string):
     except:
         return False
 
+def get_last_update_date():
+    try:
+        with open('time.txt', 'r') as f:
+            date_str = f.read().strip()
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+            return date_obj.strftime('%d.%m.%Y %H:%M')
+    except Exception as e:
+        return "Bilgi mevcut değil"
+
 @app.route('/')
 def index():
     # Get data from Google Sheets
-    data_pairs, month_name = get_google_sheets_data()
-    categories = [pair[0] for pair in data_pairs]
-    values = [pair[1] for pair in data_pairs]
-    
-    # Create horizontal bar chart
-    fig = go.Figure()
-    
-    # Add bars for each category
-    for i, (category, value) in enumerate(data_pairs):
-        color = '#EF476F' if category == 'TÜFE' else '#118AB2'  # Modern color scheme
-        fig.add_trace(go.Bar(
-            y=[category],
-            x=[value],
-            orientation='h',
-            marker_color=color,
-            name=category,
-            marker=dict(
-                line=dict(width=0)
-            ),
-            text=[f'{value:+.2f}%'],
-            textposition='outside',
-            textfont=dict(
-                size=14,
-                color='#2B2D42',
-                family='Inter, sans-serif'
-            ),
-            hovertemplate=f'{category}: %{{x:+.2f}}%<extra></extra>'
-        ))
-    
-
-    valid_values = [v for _, v in data_pairs if v is not None]
-
-    if valid_values:
-        x_min = min(valid_values)
-        x_max = max(valid_values)
-
-        # Marj hesapla
-        x_range = x_max - x_min
-        x_margin = x_range * 0.2 if x_range != 0 else abs(x_max) * 0.2
-
-        x_min_with_margin = x_min - x_margin
-        x_max_with_margin = x_max + x_margin
-
-        # Sıfıra yaklaşma kontrolü
-        if x_min >= 0:
-            x_min_with_margin = max(0, x_min - x_margin)
-        if x_max <= 0:
-            x_max_with_margin = min(0, x_max + x_margin)
-
-    # Update layout with modern theme
-    fig.update_layout(
-        title=dict(
-            text=f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları',
-            font=dict(
-                size=24,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            y=0.95
-        ),
-        xaxis=dict(
-            title='Değişim (%)',
-            title_font=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            tickfont=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            gridcolor='#E9ECEF',
-            zerolinecolor='#E9ECEF',
-            range=[x_min_with_margin, x_max_with_margin]
-        ),
-        yaxis=dict(
-            title='Grup',
-            title_font=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            tickfont=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            gridcolor='#E9ECEF'
-        ),
-        showlegend=False,
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        height=600,
-        margin=dict(l=20, r=20, t=80, b=20),
-        hovermode='y unified',
-        hoverlabel=dict(
-            bgcolor='white',
-            font_size=12,
-            font_family='Inter, sans-serif',
-            font_color='#2B2D42'        )
-    )
-    
-    # Convert plot to JSON
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    
-    return render_template('index.html', graphJSON=graphJSON, active_page='index')
+    try:
+        tufe_data = get_tufe_data()
+        monthly_change = get_monthly_change()
+        tufe_vs_tuik_data = get_tufe_vs_tuik_bar_data()
+        
+        # Get last update date
+        last_update = get_last_update_date()
+        
+        # Create the graphs
+        fig_monthly = create_monthly_graph(tufe_data)
+        fig_bar = create_bar_graph(tufe_vs_tuik_data)
+        
+        graphJSON_monthly = json.dumps(fig_monthly, cls=plotly.utils.PlotlyJSONEncoder)
+        graphJSON_bar = json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        return render_template('index.html', 
+                             graphJSON_monthly=graphJSON_monthly,
+                             graphJSON_bar=graphJSON_bar,
+                             monthly_change=monthly_change,
+                             last_update=last_update)
+    except Exception as e:
+        flash(f'Bir hata oluştu: {str(e)}', 'error')
+        return render_template('index.html')
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():
