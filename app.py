@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, flash
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for
 import pandas as pd
 import json
 import plotly
@@ -10,6 +10,8 @@ from dateutil.parser import parse
 import os
 from gspread.exceptions import APIError, SpreadsheetNotFound
 import base64
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
@@ -2638,10 +2640,6 @@ def metodoloji():
 @app.route('/abone', methods=['POST'])
 def abone():
     try:
-        import gspread
-        from oauth2client.service_account import ServiceAccountCredentials
-        from gspread.exceptions import APIError, SpreadsheetNotFound
-
         print("Google Sheets bağlantısı başlatılıyor...")
         
         try:
