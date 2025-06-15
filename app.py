@@ -64,7 +64,7 @@ def get_google_credentials_2():
 
 def get_google_sheets_data():
     # Google Sheets API setup
-    """creds = get_google_credentials()
+    creds = get_google_credentials()
     client = gspread.authorize(creds)
     
     # Open the spreadsheet
@@ -77,7 +77,7 @@ def get_google_sheets_data():
     data = worksheet.get_all_values()
     
     # Convert to DataFrame
-    df = pd.DataFrame(data[1:], columns=data[0])"""
+    df = pd.DataFrame(data[1:], columns=data[0])
 
     df=pd.read_csv("gruplaraylık.csv",index_col=0)
     
