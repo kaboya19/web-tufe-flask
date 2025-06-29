@@ -2627,6 +2627,20 @@ def serve_bulten_pdf(filename):
     bultenler_dir = os.path.join(os.path.dirname(__file__), 'bültenler')
     return send_file(os.path.join(bultenler_dir, filename))
 
+@app.route('/download/fiyatlar')
+def download_fiyatlar():
+    try:
+        # Check if Fiyatlar.zip exists in the root directory
+        file_path = os.path.join(os.path.dirname(__file__), 'Fiyatlar.zip')
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name='Fiyatlar.zip')
+        else:
+            flash('Fiyatlar.zip dosyası bulunamadı.', 'error')
+            return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Dosya indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('index'))
+
 @app.route('/metodoloji/pdf')
 def serve_metodoloji_pdf():
     import os
