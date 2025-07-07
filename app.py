@@ -526,7 +526,7 @@ def index():
         
         # Add bars for each category
         for i, (category, value) in enumerate(data_pairs):
-            color = '#EF476F' if category == 'TÜFE' else '#118AB2'  # Modern color scheme
+            color = '#EF476F' if category == 'Web TÜFE' else '#118AB2'  # Modern color scheme
             fig.add_trace(go.Bar(
                 y=[category],
                 x=[value],
