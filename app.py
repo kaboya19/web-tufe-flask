@@ -151,7 +151,7 @@ def get_monthly_change():
     df=pd.read_csv("gruplaraylık.csv",index_col=0)
    
     last_col = df.columns[-1]
-    tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'tüfe']
+    tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'web tüfe']
     if not tufe_row.empty:
         value = tufe_row[last_col].values[0]
         try:
@@ -175,7 +175,7 @@ def get_tufe_vs_tuik_bar_data():
     # Get all months (columns except the first)
     months = df.columns[1:]
     # Get TÜFE row
-    tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'tüfe']
+    tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'web tüfe']
     tufe_values = []
     tufe_months = []
     for col in months:
@@ -636,7 +636,7 @@ def tufe():
     df = get_tufe_data()
     # Get last date and last value
     last_date = df['Tarih'].iloc[-1]
-    last_value = df['TÜFE'].iloc[-1]
+    last_value = df['Web TÜFE'].iloc[-1]
     # Calculate change rate
     change_rate = last_value - 100
     # Get monthly change and last column date
@@ -667,7 +667,7 @@ def tufe():
         # Add TÜFE line
         fig.add_trace(go.Scatter(
             x=df['Tarih'],
-            y=df['TÜFE'],
+            y=df['Web TÜFE'],
             mode='lines',
             name='TÜFE',
             line=dict(
@@ -675,7 +675,7 @@ def tufe():
                 width=3
             ),
             hovertemplate='%{customdata[0]}<br>TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
-            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(df['Tarih'], df['TÜFE'])]
+            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(df['Tarih'], df['Web TÜFE'])]
         ))
         
         # Update layout with modern theme
@@ -1596,7 +1596,7 @@ def harcama_gruplari():
     print("Method:", request.method)
     
     df = get_ana_gruplar_data()
-    grup_adlari = [col for col in df.drop("TÜFE",axis=1).columns if col != 'Tarih']
+    grup_adlari = [col for col in df.drop("Web TÜFE",axis=1).columns if col != 'Tarih']
     print("Grup adları:", grup_adlari)
     
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
@@ -2075,7 +2075,7 @@ def harcama_gruplari():
 def maddeler():
     # Ana grup adlarını al
     df = get_ana_gruplar_data()
-    grup_adlari = [col for col in df.drop("TÜFE",axis=1).columns if col != 'Tarih']
+    grup_adlari = [col for col in df.drop("Web TÜFE",axis=1).columns if col != 'Tarih']
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
     # ürünler.csv'den madde adlarını al
     urunler = pd.read_csv('ürünler.csv')
