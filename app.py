@@ -536,10 +536,10 @@ def index():
                 marker=dict(
                     line=dict(width=0)
                 ),
-                text=[f'{value:+.2f}%'],
+                text = [f'<b>{value:+.2f}%</b>'],
                 textposition='outside',
                 textfont=dict(
-                    size=14,
+                    size=15,
                     color='#2B2D42',
                     family='Inter, sans-serif'
                 ),
@@ -748,9 +748,9 @@ def tufe():
             y=bar_tufe,
             name='Web TÜFE',
             marker_color='#EF476F',
-            text=[f'{v:.2f}' if v is not None else '' for v in bar_tufe],
+            text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in bar_tufe],
             textposition='outside',
-            textfont=dict(size=12, color='#EF476F', family='Inter, sans-serif'),
+            textfont=dict(size=14, color='#EF476F', family='Inter, sans-serif'),
             width=0.35,
             hovertemplate='Web TÜFE: %{y:.2f}<extra></extra>',
             cliponaxis=False
@@ -760,9 +760,9 @@ def tufe():
             y=bar_tuik,
             name='TÜİK TÜFE',
             marker_color='#118AB2',
-            text=[f'{v:.2f}' if v is not None else '' for v in bar_tuik],
+            text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in bar_tuik],
             textposition='outside',
-            textfont=dict(size=12, color='#118AB2', family='Inter, sans-serif'),
+            textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
             width=0.35,
             hovertemplate='TÜİK TÜFE: %{y:.2f}<extra></extra>',
             cliponaxis=False
@@ -1077,7 +1077,8 @@ def tufe():
             text_positions = []
             threshold = max(abs(v) for v in monthly_changes) * 0.8 if monthly_changes else 1
             for v in monthly_changes:
-                bar_texts.append(f'{v:.2f}')
+                bar_texts.append(f'<b>{v:.2f}</b>')
+
                 
                 
                 text_colors.append('#2B2D42')
@@ -1390,7 +1391,7 @@ def ana_gruplar():
         y=monthly_changes,
         name='Web TÜFE',
         marker_color='#EF476F',
-        text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
+        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in monthly_changes],
         textposition='outside',
         textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
         width=0.35,
@@ -1439,7 +1440,7 @@ def ana_gruplar():
         y=tuik_changes,
         name='TÜİK',
         marker_color='#118AB2',
-        text=[f'{v:.2f}' if v is not None else '' for v in tuik_changes],
+        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
         textposition='outside',
         textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
         width=0.35,
@@ -1700,7 +1701,7 @@ def harcama_gruplari():
     valid_bar_values = [v for v in bar_values if v is not None]
     x_min = min(valid_bar_values + [0])
     x_max = max(valid_bar_values + [0])
-    xaxis_range = [x_min * 1.2 if x_min < 0 else 0, x_max * 1.2 if x_max > 0 else 1]
+    xaxis_range = [x_min * 1.4 if x_min < 0 else x_min * 1.4, x_max * 1.4 if x_max > 0 else x_max * 1.4]
     fig = go.Figure(go.Bar(
         y=bar_labels,
         x=bar_values,
@@ -1712,11 +1713,11 @@ def harcama_gruplari():
     offset = (x_max - x_min) * 0.01 if bar_values else 0.2
     for i, value in enumerate(bar_values):
         fig.add_annotation(
-            x=value + offset,
+            x=value + offset if value>=0 else value-offset*12.5,
             y=bar_labels[i],
-            text=f"{value:.2f}%",
+            text=f"<b>{value:.2f}%</b>",
             showarrow=False,
-            font=dict(size=14, family="Inter, sans-serif", color="#2B2D42"),
+            font=dict(size=15, family="Inter, sans-serif", color="#2B2D42"),
             align='left',
             xanchor='left',
             yanchor='middle'
@@ -1921,7 +1922,7 @@ def harcama_gruplari():
                                 y=monthly_changes,
                                 name='Web TÜFE',
                                 marker_color='#EF476F',
-                                text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
+                                text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in monthly_changes],
                                 textposition='outside',
                                 textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
                                 width=0.35,
@@ -2152,7 +2153,7 @@ def maddeler():
     valid_bar_values = [v for v in bar_values if v is not None]
     x_min = min(valid_bar_values + [0])
     x_max = max(valid_bar_values + [0])
-    xaxis_range = [x_min * 1.2 if x_min < 0 else 0, x_max * 1.2 if x_max > 0 else 1]
+    xaxis_range = [x_min * 1.3 if x_min < 0 else x_min * 1.3, x_max * 1.3 if x_max > 0 else x_max * 1.3]
     fig = go.Figure(go.Bar(
         y=bar_labels,
         x=bar_values,
@@ -2164,11 +2165,11 @@ def maddeler():
     offset = (x_max - x_min) * 0.01 if bar_values else 0.2
     for i, value in enumerate(bar_values):
         fig.add_annotation(
-            x=value + offset,
+            x=value + offset/2 if value>=0 else value-offset*7,
             y=bar_labels[i],
-            text=f"{value:.2f}%",
+            text=f"<b>{value:.2f}%</b>",
             showarrow=False,
-            font=dict(size=14, family="Inter, sans-serif", color="#2B2D42"),
+            font=dict(size=15, family="Inter Bold, Inter, sans-serif", color="#2B2D42"),
             align='left',
             xanchor='left',
             yanchor='middle'
@@ -2424,7 +2425,7 @@ def ozel_kapsamli_gostergeler():
         y=monthly_changes,
         name='Web TÜFE',
         marker_color='#EF476F',
-        text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
+        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in monthly_changes],
         textposition='outside',
         textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
         width=0.35,
@@ -2437,7 +2438,7 @@ def ozel_kapsamli_gostergeler():
         y=tuik_changes,
         name='TÜİK',
         marker_color='#118AB2',
-        text=[f'{v:.2f}' if v is not None else '' for v in tuik_changes],
+        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
         textposition='outside',
         textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
         width=0.35,
