@@ -596,7 +596,7 @@ def index():
                 title='Grup',
                 title_font=dict(
                     size=14,
-                    family='Inter, sans-serif',
+                    family='Inter Bold, sans-serif',
                     color='#2B2D42'
                 ),
                 tickfont=dict(
