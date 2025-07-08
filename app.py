@@ -596,12 +596,12 @@ def index():
                 title='Grup',
                 title_font=dict(
                     size=14,
-                    family='Inter Bold, sans-serif',
+                    family='Inter, sans-serif',
                     color='#2B2D42'
                 ),
                 tickfont=dict(
                     size=14,
-                    family='Inter, sans-serif',
+                    family='Arial Black, sans-serif',
                     color='#2B2D42'
                 ),
                 gridcolor='#E9ECEF'
