@@ -2153,7 +2153,7 @@ def maddeler():
     valid_bar_values = [v for v in bar_values if v is not None]
     x_min = min(valid_bar_values + [0])
     x_max = max(valid_bar_values + [0])
-    xaxis_range = [x_min * 1.3 if x_min < 0 else x_min * 1.3, x_max * 1.3 if x_max > 0 else x_max * 1.3]
+    xaxis_range = [x_min * 1.4 if x_min < 0 else x_min * 1.4, x_max * 1.4 if x_max > 0 else x_max * 1.4]
     fig = go.Figure(go.Bar(
         y=bar_labels,
         x=bar_values,
