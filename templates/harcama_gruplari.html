@@ -113,14 +113,9 @@
                         {% endfor %}
                     </select>
                 </form>
-                {% if selected_group and selected_date and not selected_harcama_grubu %}
-                <div class="mt-8">
-                    <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
-                </div>
-                {% endif %}
 
                 {% if harcama_grubu_adlari %}
-                <form method="POST" class="mb-4 flex items-center space-x-4">
+                <form method="POST" class="mb-6 flex items-center space-x-4">
                     <input type="hidden" name="group" value="{{ selected_group }}">
                     <input type="hidden" name="date" value="{{ selected_date }}">
                     <label for="harcama_grubu" class="font-bold text-black text-lg">Harcama Grubu Seçin:</label>
@@ -133,6 +128,12 @@
                         {% endfor %}
                     </select>
                 </form>
+                {% endif %}
+
+                {% if selected_group and selected_date and not selected_harcama_grubu %}
+                <div class="mt-8">
+                    <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
+                </div>
                 {% endif %}
 
                 {% if harcama_grubu_endeks_graphJSON %}

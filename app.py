@@ -1404,18 +1404,10 @@ def ana_gruplar():
 
     tuik_changes = []
     try:
-        data_tuik = pd.read_excel("harcama gruplarina gore endeks sonuclari.xlsx")
-        cols = data_tuik.iloc[2]
-        data_tuik.columns = cols
-        data_tuik = data_tuik.iloc[4:, 4:16]
-        # Tarih indeksini ay başına göre ayarla
-        data_tuik = data_tuik.set_index(pd.date_range(start="2005-01-01", freq="MS", periods=len(data_tuik)))
-        data_tuik = data_tuik.pct_change().dropna().loc["2025-02":].round(4) * 100
-        data_tuik.columns = [
-            "Gıda ve alkolsüz içecekler", "Alkollü içecekler ve tütün", "Giyim ve ayakkabı", "Konut",
-            "Ev eşyası", "Sağlık", "Ulaştırma", "Haberleşme", "Eğlence ve kültür", "Eğitim",
-            "Lokanta ve oteller", "Çeşitli mal ve hizmetler"
-        ]
+        # tuikaylik.csv dosyasından TÜİK verilerini oku
+        tuik_df = pd.read_csv("tuikaylik.csv", index_col=0)
+        tuik_df.index = pd.to_datetime(tuik_df.index).strftime("%Y-%m")
+        
         # TÜİK verilerini aylık değişim tarihleriyle eşleştir
         for date in monthly_dates:
             try:
@@ -1425,10 +1417,10 @@ def ana_gruplar():
                     'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
                     'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
                 }
-                date_str = f"{year}-{month_map[month]}-01"
-                date_obj = pd.to_datetime(date_str)
-                if selected_group in data_tuik.columns and date_obj in data_tuik.index:
-                    tuik_value = data_tuik.loc[date_obj, selected_group]
+                date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
+                
+                if selected_group in tuik_df.columns and date_str in tuik_df.index:
+                    tuik_value = tuik_df.loc[date_str, selected_group]
                     tuik_changes.append(tuik_value)
                 else:
                     tuik_changes.append(None)
@@ -1919,6 +1911,44 @@ def harcama_gruplari():
 
                         if monthly_changes and monthly_dates:  # Veri varsa grafikleri oluştur
                             print(monthly_changes)
+                            
+                            # TÜİK verilerini al
+                            tuik_changes = []
+                            try:
+                                # tuikaylik.csv dosyasından TÜİK verilerini oku
+                                tuik_df = pd.read_csv("tuikaylik.csv", index_col=0)
+                                tuik_df.index = pd.to_datetime(tuik_df.index).strftime("%Y-%m")
+                                tuik_df.columns=tuik_df.columns.str.lower()
+                                
+                                print(f"Selected harcama grubu: {selected_harcama_grubu}")
+                                print(f"TÜIK CSV columns: {list(tuik_df.columns[:10])}...")  # İlk 10 sütunu göster
+                                print(f"Harcama grubu in TÜIK columns: {selected_harcama_grubu in tuik_df.columns}")
+                                
+                                # TÜİK verilerini aylık değişim tarihleriyle eşleştir
+                                for date in monthly_dates:
+                                    try:
+                                        month, year = date.split()
+                                        month_map = {
+                                            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                                        }
+                                        date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
+                                        
+                                        if selected_harcama_grubu in tuik_df.columns and date_str in tuik_df.index:
+                                            tuik_value = tuik_df.loc[date_str, selected_harcama_grubu]
+                                            tuik_changes.append(tuik_value)
+                                            print(f"TÜİK value found for {date_str}: {tuik_value}")
+                                        else:
+                                            tuik_changes.append(None)
+                                            print(f"TÜİK value not found for {date_str}")
+                                    except Exception as e:
+                                        print(f"TÜİK verisi eşleştirme hatası: {e}")
+                                        tuik_changes.append(None)
+                            except Exception as e:
+                                print("TÜİK verisi okunamadı:", e)
+                                tuik_changes = [None] * len(monthly_dates)
+                            
                             # Bar graph
                             bar_fig = go.Figure()
                             bar_fig.add_trace(go.Bar(
@@ -1930,18 +1960,40 @@ def harcama_gruplari():
                                 textposition='outside',
                                 textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
                                 width=0.35,
-                                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                                hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
+                            ))
+                            
+                            # TÜİK bar ekle
+                            bar_fig.add_trace(go.Bar(
+                                x=monthly_dates,
+                                y=tuik_changes,
+                                name='TÜİK',
+                                marker_color='#118AB2',
+                                text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
+                                textposition='outside',
+                                textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
+                                width=0.35,
+                                hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
                             ))
 
-                            # Calculate y-axis range with margin
-                            y_min = min(monthly_changes) if monthly_changes else 0
-                            y_max = max(monthly_changes) if monthly_changes else 0
+                            # Calculate y-axis range with margin (including TUIK data)
+                            combined_values = monthly_changes + tuik_changes
+                            valid_values = [v for v in combined_values if v is not None]
+                            y_min = min(valid_values) if valid_values else 0
+                            y_max = max(valid_values) if valid_values else 0
                             y_range = y_max - y_min
                             y_margin = y_range * 0.2 if y_range != 0 else abs(y_max) * 0.2
                             y_min_with_margin = y_min - y_margin
                             y_max_with_margin = y_max + y_margin
+                            
+                            # Sıfıra yaklaşma kontrolü
+                            if y_min >= 0:
+                                y_min_with_margin = max(0, y_min - y_margin)
+                            if y_max <= 0:
+                                y_max_with_margin = min(0, y_max + y_margin)
 
                             bar_fig.update_layout(
+                                barmode='group',
                                 title=dict(
                                     text=f'{selected_harcama_grubu.title()} Aylık Değişim Oranları',
                                     font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
@@ -1976,7 +2028,14 @@ def harcama_gruplari():
                                     gridcolor='#E9ECEF',
                                     range=[y_min_with_margin, y_max_with_margin]
                                 ),
-                                showlegend=False,
+                                showlegend=True,
+                                legend=dict(
+                                    orientation='h',
+                                    yanchor='bottom',
+                                    y=1.02,
+                                    xanchor='right',
+                                    x=1
+                                ),
                                 plot_bgcolor='white',
                                 paper_bgcolor='white',
                                 height=400,
@@ -1994,7 +2053,18 @@ def harcama_gruplari():
                                 name='Web TÜFE',
                                 line=dict(color='#EF476F', width=3),
                                 marker=dict(size=8, color='#EF476F'),
-                                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                                hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
+                            ))
+                            
+                            # TÜİK line ekle
+                            line_fig.add_trace(go.Scatter(
+                                x=monthly_dates,
+                                y=tuik_changes,
+                                mode='lines+markers',
+                                name='TÜİK',
+                                line=dict(color='#118AB2', width=3),
+                                marker=dict(size=8, color='#118AB2'),
+                                hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
                             ))
 
                             line_fig.update_layout(
@@ -2032,7 +2102,14 @@ def harcama_gruplari():
                                     gridcolor='#E9ECEF',
                                     range=[y_min_with_margin, y_max_with_margin]
                                 ),
-                                showlegend=False,
+                                showlegend=True,
+                                legend=dict(
+                                    orientation='h',
+                                    yanchor='bottom',
+                                    y=1.02,
+                                    xanchor='right',
+                                    x=1
+                                ),
                                 plot_bgcolor='white',
                                 paper_bgcolor='white',
                                 height=400,
