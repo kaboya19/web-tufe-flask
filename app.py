@@ -511,7 +511,11 @@ def create_bar_graph(tufe_vs_tuik_data):
         raise
 
 @app.route('/')
-def index():
+def redirect_page():
+    return render_template('redirect.html')
+
+@app.route('/ana-sayfa')
+def ana_sayfa():
     try:
         # Get data from Google Sheets
         data_pairs, month_name = get_google_sheets_data()
@@ -623,7 +627,7 @@ def index():
         # Convert plot to JSON
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        return render_template('index.html', graphJSON=graphJSON, active_page='index', last_update=last_update)
+        return render_template('index.html', graphJSON=graphJSON, active_page='ana_sayfa', last_update=last_update)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         return render_template('index.html')
@@ -2637,10 +2641,10 @@ def download_fiyatlar():
             return send_file(file_path, as_attachment=True, download_name='Fiyatlar.zip')
         else:
             flash('Fiyatlar.zip dosyası bulunamadı.', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('ana_sayfa'))
     except Exception as e:
         flash(f'Dosya indirme hatası: {str(e)}', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('ana_sayfa'))
 
 @app.route('/metodoloji/pdf')
 def serve_metodoloji_pdf():
@@ -2724,7 +2728,7 @@ def abone():
         print(traceback.format_exc())
         flash("Sistem hatası. Lütfen daha sonra tekrar deneyin.", "error")
         
-    return redirect(url_for('index'))
+    return redirect(url_for('ana_sayfa'))
 
 if __name__ == '__main__':
     app.run(debug=True) 
