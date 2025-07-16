@@ -694,22 +694,52 @@ def tufe():
         df['month'] = df['Tarih'].dt.to_period('M')
         first_days = df.groupby('month').first()
         
+        # Read TÜİK data from tuikytd.csv
+        tuik_df = None
+        try:
+            tuik_df = pd.read_csv('tuikytd.csv', index_col=0)
+            tuik_df.index = pd.to_datetime(tuik_df.index)
+            tuik_df = tuik_df.sort_index()
+        except Exception as e:
+            print(f"TÜİK verisi okunamadı: {e}")
+        
         # Create line plot
         fig = go.Figure()
         
-        # Add TÜFE line
+        # Add Web TÜFE line
         fig.add_trace(go.Scatter(
             x=df['Tarih'],
             y=df['Web TÜFE'],
             mode='lines',
-            name='TÜFE',
+            name='Web TÜFE',
             line=dict(
                 color='#EF476F',
                 width=3
             ),
-            hovertemplate='%{customdata[0]}<br>TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
+            hovertemplate='%{customdata[0]}<br>Web TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
             customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(df['Tarih'], df['Web TÜFE'])]
         ))
+        
+        # Add TÜİK TÜFE line if data is available
+        if tuik_df is not None and 'Genel' in tuik_df.columns:
+            # Filter TÜİK data to match Web TÜFE date range
+            tuik_filtered = tuik_df[tuik_df.index >= df['Tarih'].min()]
+            tuik_filtered = tuik_filtered[tuik_filtered.index <= df['Tarih'].max()]
+            
+            if not tuik_filtered.empty:
+                fig.add_trace(go.Scatter(
+                    x=tuik_filtered.index,
+                    y=tuik_filtered['Genel'],
+                    mode='lines',
+                    name='TÜİK TÜFE',
+                    line=dict(
+                        color='#118AB2',
+                        width=3,
+                        shape='hv'  # Step grafik
+                    ),
+                    hovertemplate='%{customdata[0]}<br>TÜİK TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
+                    customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(tuik_filtered.index, tuik_filtered['Genel'])]
+                ))
         
         # Update layout with modern theme
         fig.update_layout(
@@ -755,7 +785,18 @@ def tufe():
                 ),
                 gridcolor='#E9ECEF'
             ),
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1,
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='right',
+                x=1
+            ),
             plot_bgcolor='white',
             paper_bgcolor='white',
             height=600,
@@ -1320,18 +1361,71 @@ def ana_gruplar():
     aybasi_tarihler = df['Tarih'][df['Tarih'].dt.is_month_start]
     tickvals = aybasi_tarihler
     ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in aybasi_tarihler]
+    
+    # Read TÜİK data from tuikytd.csv
+    tuik_df = None
+    tuik_column_name = None
+    try:
+        tuik_df = pd.read_csv('tuikytd.csv', index_col=0)
+        tuik_df.index = pd.to_datetime(tuik_df.index)
+        tuik_df = tuik_df.sort_index()
+        
+        # Map Web TÜFE group names to TÜİK column names
+        group_mapping = {
+            'Gıda ve alkolsüz içecekler': 'Gıda ve alkolsüz içecekler',
+            'Alkollü içecekler ve tütün': 'Alkollü içecekler ve tütün',
+            'Giyim ve ayakkabı': 'Giyim ve ayakkabı',
+            'Konut': 'Konut',
+            'Ev eşyası': 'Ev eşyası',
+            'Sağlık': 'Sağlık',
+            'Ulaştırma': 'Ulaştırma',
+            'Haberleşme': 'Haberleşme',
+            'Eğlence ve kültür': 'Eğlence ve kültür',
+            'Eğitim': 'Eğitim',
+            'Lokanta ve oteller': 'Lokanta ve oteller',
+            'Çeşitli mal ve hizmetler': 'Çeşitli mal ve hizmetler'
+        }
+        
+        tuik_column_name = group_mapping.get(selected_group)
+        
+    except Exception as e:
+        print(f"TÜİK verisi okunamadı: {e}")
+    
     fig = go.Figure()
     customdata = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tarih]
 
+    # Add Web TÜFE line
     fig.add_trace(go.Scatter(
         x=tarih,
         y=values,
         mode='lines',
-        name=selected_group,
+        name=f'Web TÜFE - {selected_group}',
         line=dict(color='#EF476F', width=3),
         customdata=customdata,
-        hovertemplate='<b>%{customdata}</b><br>' + f'{selected_group}: ' + '%{y:.2f}<extra></extra>'
+        hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_group}: ' + '%{y:.2f}<extra></extra>'
     ))
+    
+    # Add TÜİK line if data is available
+    if tuik_df is not None and tuik_column_name and tuik_column_name in tuik_df.columns:
+        # Filter TÜİK data to match Web TÜFE date range
+        tuik_filtered = tuik_df[tuik_df.index >= tarih.min()]
+        tuik_filtered = tuik_filtered[tuik_filtered.index <= tarih.max()]
+        
+        if not tuik_filtered.empty:
+            tuik_customdata = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tuik_filtered.index]
+            fig.add_trace(go.Scatter(
+                x=tuik_filtered.index,
+                y=tuik_filtered[tuik_column_name],
+                mode='lines',
+                name=f'TÜİK - {selected_group}',
+                line=dict(
+                    color='#118AB2',
+                    width=3,
+                    shape='hv'  # Step grafik
+                ),
+                customdata=tuik_customdata,
+                hovertemplate='<b>%{customdata}</b><br>' + f'TÜİK - {selected_group}: ' + '%{y:.2f}<extra></extra>'
+            ))
 
     fig.update_layout(
     title=dict(
@@ -1376,7 +1470,18 @@ def ana_gruplar():
         ),
         gridcolor='#E9ECEF'
     ),
-    showlegend=False,
+    showlegend=True,
+    legend=dict(
+        font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+        bgcolor='rgba(255,255,255,0.8)',
+        bordercolor='#E9ECEF',
+        borderwidth=1,
+        orientation='h',
+        yanchor='bottom',
+        y=1.02,
+        xanchor='right',
+        x=1
+    ),
     plot_bgcolor='white',
     paper_bgcolor='white',
     height=600,
@@ -1850,16 +1955,52 @@ def harcama_gruplari():
                     except:
                         harcama_grubu_monthly_change = None
                 # --- End Fix ---
+                
+                # Read TÜİK data from tuikytd.csv for spending groups
+                tuik_dfy = None
+                tuik_column_name = None
+                try:
+                    tuik_dfy = pd.read_csv('tuikytd.csv', index_col=0)
+                    tuik_dfy.index = pd.to_datetime(tuik_dfy.index)
+                    tuik_dfy = tuik_dfy.sort_index()
+                    
+                    tuik_dfy.columns=tuik_dfy.columns.str.lower()
+                    
+                except Exception as e:
+                    print(f"TÜİK verisi okunamadı: {e}")
+                
                 fig_endeks = go.Figure()
+                
+                # Add Web TÜFE line
                 fig_endeks.add_trace(go.Scatter(
                     x=dates,
                     y=values,
                     mode='lines',
-                    name=selected_harcama_grubu.title(),
+                    name=f'Web TÜFE - {selected_harcama_grubu.title()}',
                     line=dict(color='#EF476F', width=3),
                     marker=dict(size=8, color='#EF476F'),
-                    hovertemplate='%{x|%d.%m.%Y}<br>Endeks: %{y:.2f}<extra></extra>'
+                    hovertemplate='%{x|%d.%m.%Y}<br>Web TÜFE: %{y:.2f}<extra></extra>'
                 ))
+                
+                # Add TÜİK line if data is available
+                if tuik_dfy is not None:
+                    # Filter TÜİK data to match Web TÜFE date range
+                    tuik_filtered = tuik_dfy[tuik_dfy.index >= dates.min()]
+                    tuik_filtered = tuik_filtered[tuik_filtered.index <= dates.max()]
+                    
+                    if not tuik_filtered.empty:
+                        fig_endeks.add_trace(go.Scatter(
+                            x=tuik_filtered.index,
+                            y=tuik_filtered[selected_harcama_grubu],
+                            mode='lines',
+                            name=f'TÜİK - {selected_harcama_grubu.title()}',
+                            line=dict(
+                                color='#118AB2',
+                                width=3,
+                                shape='hv'  # Step grafik
+                            ),
+                            hovertemplate='%{x|%d.%m.%Y}<br>TÜİK: %{y:.2f}<extra></extra>'
+                        ))
                 fig_endeks.update_layout(
                     title=dict(
                         text=f'{selected_harcama_grubu.title()} Endeksi',
@@ -1902,7 +2043,18 @@ def harcama_gruplari():
                         ),
                         gridcolor='#E9ECEF'
                     ),
-                    showlegend=False,
+                    showlegend=True,
+                    legend=dict(
+                        font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                        bgcolor='rgba(255,255,255,0.8)',
+                        bordercolor='#E9ECEF',
+                        borderwidth=1,
+                        orientation='h',
+                        yanchor='bottom',
+                        y=1.02,
+                        xanchor='right',
+                        x=1
+                    ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     height=400,
@@ -2391,6 +2543,15 @@ def ozel_kapsamli_gostergeler():
         values = df[selected_indicator]
         total_change = values.iloc[-1] - 100
     
+    # Read TÜİK endeks data from tuikozelgostergelerytd.csv
+    tuik_endeks_df = None
+    try:
+        tuik_endeks_df = pd.read_csv('tuikozelgostergelerytd.csv', index_col=0)
+        tuik_endeks_df.index = pd.to_datetime(tuik_endeks_df.index)
+        tuik_endeks_df = tuik_endeks_df.sort_index()
+    except Exception as e:
+        print(f"TÜİK endeks verisi okunamadı: {e}")
+    
     # Create line plot
     fig = go.Figure()
     
@@ -2406,15 +2567,38 @@ def ozel_kapsamli_gostergeler():
         tickvals = aybasi_tarihler
         ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in aybasi_tarihler]
         
+        # Add Web TÜFE line
         fig.add_trace(go.Scatter(
             x=dates,
             y=values,
             mode='lines',
-            name=selected_indicator,
+            name=f'Web TÜFE - {selected_indicator}',
             line=dict(color='#EF476F', width=3),
             customdata=turkish_dates,
-            hovertemplate='<b>%{customdata}</b><br>' + f'{selected_indicator}: ' + '%{y:.2f}<extra></extra>'
+            hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
         ))
+        
+        # Add TÜİK endeks line if data is available
+        if tuik_endeks_df is not None and selected_indicator in tuik_endeks_df.columns:
+            # Filter TÜİK data to match Web TÜFE date range
+            tuik_filtered = tuik_endeks_df[tuik_endeks_df.index >= dates.min()]
+            tuik_filtered = tuik_filtered[tuik_filtered.index <= dates.max()]
+            
+            if not tuik_filtered.empty:
+                tuik_turkish_dates = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tuik_filtered.index]
+                fig.add_trace(go.Scatter(
+                    x=tuik_filtered.index,
+                    y=tuik_filtered[selected_indicator],
+                    mode='lines',
+                    name=f'TÜİK - {selected_indicator}',
+                    line=dict(
+                        color='#118AB2',
+                        width=3,
+                        shape='hv'  # Step grafik
+                    ),
+                    customdata=tuik_turkish_dates,
+                    hovertemplate='<b>%{customdata}</b><br>' + f'TÜİK - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
+                ))
         
         fig.update_layout(
             title=dict(
@@ -2459,7 +2643,18 @@ def ozel_kapsamli_gostergeler():
                 ),
                 gridcolor='#E9ECEF'
             ),
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1,
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='right',
+                x=1
+            ),
             plot_bgcolor='white',
             paper_bgcolor='white',
             height=500,
