@@ -510,9 +510,38 @@ def create_bar_graph(tufe_vs_tuik_data):
         print(f"Error in create_bar_graph: {str(e)}")
         raise
 
+def is_mobile_device(user_agent):
+    """
+    User agent string'ini analiz ederek mobil cihaz olup olmadığını belirler
+    """
+    if not user_agent:
+        return False
+    
+    user_agent = user_agent.lower()
+    mobile_keywords = [
+        'mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 
+        'windows phone', 'palm', 'symbian', 'nokia', 'samsung',
+        'htc', 'lg', 'motorola', 'sony', 'kindle', 'tablet'
+    ]
+    
+    return any(keyword in user_agent for keyword in mobile_keywords)
+
 @app.route('/')
 def redirect_page():
-    return render_template('redirect.html')
+    # Manuel seçim için force parametresi
+    force_manual = request.args.get('manual')
+    if force_manual:
+        return render_template('redirect.html')
+    
+    # User agent'ı kontrol et
+    user_agent = request.headers.get('User-Agent', '')
+    
+    if is_mobile_device(user_agent):
+        # Mobil cihaz - mobil siteye yönlendir
+        return redirect('https://webtufemobile.onrender.com?v=2')
+    else:
+        # Masaüstü cihaz - ana sayfaya yönlendir
+        return redirect('/ana-sayfa')
 
 @app.route('/ana-sayfa')
 def ana_sayfa():
