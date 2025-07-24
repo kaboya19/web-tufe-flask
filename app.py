@@ -16,6 +16,9 @@ import gspread
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
 
+
+
+
 def get_turkish_month(date_str):
     aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
     try:
@@ -525,6 +528,11 @@ def is_mobile_device(user_agent):
     ]
     
     return any(keyword in user_agent for keyword in mobile_keywords)
+
+from flask import send_from_directory
+@app.route('/ads.txt')
+def ads_txt():
+    return send_from_directory('static', 'ads.txt')
 
 @app.route('/')
 def redirect_page():
