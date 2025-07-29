@@ -1383,7 +1383,7 @@ def ana_gruplar():
             'Gıda ve alkolsüz içecekler': 'Gıda ve alkolsüz içecekler',
             'Alkollü içecekler ve tütün': 'Alkollü içecekler ve tütün',
             'Giyim ve ayakkabı': 'Giyim ve ayakkabı',
-            'Konut': 'Konut',
+            'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar': 'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar',
             'Ev eşyası': 'Ev eşyası',
             'Sağlık': 'Sağlık',
             'Ulaştırma': 'Ulaştırma',
