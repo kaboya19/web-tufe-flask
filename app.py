@@ -1316,11 +1316,23 @@ def tufe():
             )
             line_graphJSON = line_fig.to_json()
             
+            # Get the last month from the monthly CSV file for individual items
+            last_month_from_csv = None
+            if not df_monthly.empty:
+                # Get the last column (excluding the first column which is the group name)
+                last_column = df_monthly.columns[-1]
+                try:
+                    # Parse the date from the column name (format: YYYY-MM-DD)
+                    date_obj = datetime.strptime(last_column, '%Y-%m-%d')
+                    last_month_from_csv = get_turkish_month(date_obj.strftime('%Y-%m-%d'))
+                except:
+                    last_month_from_csv = None
+            
             return render_template('tufe.html',
                 graphJSON=graphJSON,
                 last_date=endeks_dates[-1] if not endeks_dates.empty else None,
                 change_rate=total_change,
-                month_name=get_turkish_month(endeks_dates[-1].strftime('%Y-%m-%d')) if not endeks_dates.empty else None,
+                month_name=last_month_from_csv if last_month_from_csv else (get_turkish_month(endeks_dates[-1].strftime('%Y-%m-%d')) if not endeks_dates.empty else None),
                 monthly_change=monthly_change,
                 bar_graphJSON=bar_graphJSON,
                 line_graphJSON=line_graphJSON,
