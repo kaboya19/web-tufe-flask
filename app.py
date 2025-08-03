@@ -3044,6 +3044,161 @@ def ozel_kapsamli_gostergeler():
     line_graphJSON=line_graphJSON
 )
 
+@app.route('/mevsimsel-duzeltilmis-gostergeler', methods=['GET', 'POST'])
+def mevsimsel_duzeltilmis_gostergeler():
+    # Read data from ma.xlsx file
+    df = pd.read_excel("ma.xlsx")
+    
+    # Get indicator names from the 'Gösterge' column
+    indicator_names = df['Gösterge'].dropna().tolist()
+    
+    # Get selected indicator from form
+    selected_indicator = request.form.get('indicator') if request.method == 'POST' else indicator_names[0]
+    
+    # Get the selected indicator data
+    indicator_data = df[df['Gösterge'] == selected_indicator]
+    
+    # Calculate total change (from first to last month)
+    total_change = 0.0  # Default to 0.0 instead of None
+    monthly_change = 0.0  # Default to 0.0 instead of None
+    last_date = datetime.now()  # Default to current date
+    
+    if not indicator_data.empty:
+        # Get date columns (all columns except 'Unnamed: 0' and 'Gösterge')
+        date_columns = [col for col in df.columns if col not in ['Unnamed: 0', 'Gösterge']]
+        values = indicator_data[date_columns].iloc[0].values
+        if len(values) > 1:
+            total_change = values[-1] - values[0]
+            # Show the last value itself
+            monthly_change = values[-1]
+    
+    # Create line plot
+    fig = go.Figure()
+    
+    if not indicator_data.empty:
+        # Get date columns (all columns except 'Unnamed: 0' and 'Gösterge')
+        date_columns = [col for col in df.columns if col not in ['Unnamed: 0', 'Gösterge']]
+        values = indicator_data[date_columns].iloc[0].values
+        dates = date_columns
+        
+        # Convert date strings to datetime for proper formatting
+        date_objects = []
+        turkish_dates = []
+        for date_str in dates:
+            try:
+                # Parse YYYY-MM format
+                date_obj = datetime.strptime(date_str, '%Y-%m')
+                date_objects.append(date_obj)
+                turkish_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m'))} {date_obj.year}")
+            except:
+                date_objects.append(date_str)
+                turkish_dates.append(date_str)
+        
+        # Add line
+        fig.add_trace(go.Scatter(
+            x=turkish_dates,
+            y=values,
+            mode='lines+markers',
+            name=f'Mevsimsel Düzeltilmiş - {selected_indicator}',
+            line=dict(color='#EF476F', width=3),
+            marker=dict(size=8, color='#EF476F'),
+            customdata=turkish_dates,
+            hovertemplate='<b>%{customdata}</b><br>' + f'Mevsimsel Düzeltilmiş - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title=dict(
+                text=f'Mevsimsel Düzeltilmiş {selected_indicator} Değişimi',
+                font=dict(
+                    size=18,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                y=0.98
+            ),
+            xaxis=dict(
+                title='Tarih',
+                title_font=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                gridcolor='#E9ECEF',
+                zerolinecolor='#E9ECEF',
+                tickangle=0,
+                hoverformat='',
+            ),
+            yaxis=dict(
+                title='Endeks',
+                title_font=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                gridcolor='#E9ECEF'
+            ),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1,
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='right',
+                x=1
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=500,
+            margin=dict(l=5, r=5, t=20, b=10),
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=12,
+                font_family='Inter, sans-serif',
+                namelength=-1
+            )
+        )
+
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    
+    # Get the last month from the data
+    last_month_from_csv = None
+    if not indicator_data.empty:
+        # Get date columns (all columns except 'Unnamed: 0' and 'Gösterge')
+        date_columns = [col for col in df.columns if col not in ['Unnamed: 0', 'Gösterge']]
+        if len(date_columns) > 0:
+            last_column = date_columns[-1]
+            try:
+                date_obj = datetime.strptime(last_column, '%Y-%m')
+                last_month_from_csv = get_turkish_month(date_obj.strftime('%Y-%m'))
+            except:
+                last_month_from_csv = None
+    
+    return render_template('mevsimsel_duzeltilmis_gostergeler.html',
+        graphJSON=graphJSON,
+        indicator_names=indicator_names,
+        selected_indicator=selected_indicator,
+        total_change=total_change,
+        monthly_change=monthly_change,
+        active_page='mevsimsel_duzeltilmis_gostergeler',
+        last_date=last_date,
+        month_name=last_month_from_csv
+    )
+
 @app.route('/bultenler', methods=['GET', 'POST'])
 def bultenler():
     # List all PDF files in the 'bültenler' directory

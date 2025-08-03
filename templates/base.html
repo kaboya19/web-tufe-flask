@@ -46,6 +46,15 @@
             border-bottom: 2px solid var(--primary-color);
         }
 
+        .dropdown-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
         .container {
             padding: 1rem;
         }
@@ -104,7 +113,15 @@
 
             .nav-link {
                 padding: 0.5rem;
-                font-size: 0.9rem;
+                font-size: 0.8rem;
+            }
+
+            .navbar-nav {
+                flex-wrap: wrap;
+            }
+
+            .nav-item {
+                margin-bottom: 0.25rem;
             }
 
             .card {
@@ -207,10 +224,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'ana_sayfa' %}active{% endif %}"
-                            href="{{ url_for('ana_sayfa') }}">Ana Sayfa</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link {% if active_page == 'tufe' %}active{% endif %}"
                             href="{{ url_for('tufe') }}">TÜFE</a>
                     </li>
@@ -220,7 +233,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'harcama_gruplari' %}active{% endif %}"
-                            href="{{ url_for('harcama_gruplari') }}">Harcama Grupları</a>
+                            href="{{ url_for('harcama_gruplari') }}">Harcama</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'maddeler' %}active{% endif %}"
@@ -228,7 +241,11 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}"
-                            href="{{ url_for('ozel_kapsamli_gostergeler') }}">Özel Göstergeler</a>
+                            href="{{ url_for('ozel_kapsamli_gostergeler') }}">Özel</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}active{% endif %}"
+                            href="{{ url_for('mevsimsel_duzeltilmis_gostergeler') }}">Mevsimsel</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'bultenler' %}active{% endif %}"
