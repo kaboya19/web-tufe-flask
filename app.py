@@ -1851,7 +1851,41 @@ def harcama_gruplari():
     valid_bar_values = [v for v in bar_values if v is not None]
     x_min = min(valid_bar_values + [0])
     x_max = max(valid_bar_values + [0])
-    xaxis_range = [x_min * 1.4 if x_min < 0 else x_min * 1.4, x_max * 1.4 if x_max > 0 else x_max * 1.4]
+    
+    # Dynamic xaxis_range calculation based on data distribution
+    data_range = x_max - x_min
+    if data_range == 0:
+        # If all values are the same, create a small range
+        xaxis_range = [x_min - 0.1, x_max + 0.1]
+    else:
+        # Calculate margins based on data magnitude and distribution
+        margin_factor = 0.15  # 15% margin
+        margin = data_range * margin_factor
+        
+        # Ensure minimum margin for small ranges
+        min_margin = 0.5
+        margin = max(margin, min_margin)
+        
+        # Apply asymmetric margins for better text fitting
+        if x_min >= 0:
+            # All positive values
+            x_min_with_margin = max(0, x_min - margin * 0.5)
+            x_max_with_margin = x_max + margin
+        elif x_max <= 0:
+            # All negative values
+            x_min_with_margin = x_min - margin
+            x_max_with_margin = min(0, x_max + margin * 0.5)
+        else:
+            # Mixed positive and negative values
+            x_min_with_margin = x_min - margin
+            x_max_with_margin = x_max + margin
+        
+        xaxis_range = [x_min_with_margin, x_max_with_margin]
+    
+    # Ensure range is not inverted
+    if xaxis_range[0] > xaxis_range[1]:
+        xaxis_range = [xaxis_range[1], xaxis_range[0]]
+    
     fig = go.Figure(go.Bar(
         y=bar_labels,
         x=bar_values,
@@ -1860,16 +1894,30 @@ def harcama_gruplari():
         cliponaxis=False,
         hovertemplate='%{y}: %{x:.2f}<extra></extra>'
     ))
-    offset = (x_max - x_min) * 0.01 if bar_values else 0.2
+    
+    # Calculate minimal text offset to place text exactly at bar end
+    range_span = xaxis_range[1] - xaxis_range[0]
+    text_offset = range_span * 0.001  # Reduced to 0.1% for minimal gap
+    
     for i, value in enumerate(bar_values):
+        # Determine text position based on value sign and magnitude
+        if value >= 0:
+            # For positive values, place text to the right of the bar
+            text_x = value + text_offset
+            align_anchor = 'left'
+        else:
+            # For negative values, place text to the left of the bar
+            text_x = value - text_offset
+            align_anchor = 'right'
+        
         fig.add_annotation(
-            x=value + offset if value>=0 else value-offset*12.5,
+            x=text_x,
             y=bar_labels[i],
             text=f"<b>{value:.2f}%</b>",
             showarrow=False,
-            font=dict(size=15, family="Inter, sans-serif", color="#2B2D42"),
-            align='left',
-            xanchor='left',
+            font=dict(size=15, family="Inter Bold, Inter, sans-serif", color="#2B2D42"),
+            align=align_anchor,
+            xanchor=align_anchor,
             yanchor='middle'
         )
     fig.update_layout(
@@ -1958,9 +2006,9 @@ def harcama_gruplari():
                 first_date = dates.iloc[0]
                 last_date = dates.iloc[-1]
                 toplam_baslik = f"{first_date.strftime('%d.%m.%Y')} - {last_date.strftime('%d.%m.%Y')}"
-                son_ay = get_turkish_month(last_date.strftime('%Y-%m-%d')) + f" {last_date.year}"
                 harcama_grubu_total_change = values.iloc[-1] - values.iloc[0]
-                # --- Fix: Son ay değişimi 1927818004 ID'li tablodan alınacak ---
+                
+                # --- Fix: Son ay değişimi ve ay ismi harcama_gruplarıaylık.csv'den alınacak ---
                 """worksheet_harcama = spreadsheet.get_worksheet_by_id(1927818004)
                 data_harcama = worksheet_harcama.get_all_values()
                 df_harcama = pd.DataFrame(data_harcama[1:], columns=data_harcama[0])"""
@@ -1968,12 +2016,16 @@ def harcama_gruplari():
                 df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
                 row = df_harcama[df_harcama.iloc[:,0] == selected_norm]
                 harcama_grubu_monthly_change = None
+                son_ay = None
                 if not row.empty:
                     last_col = df_harcama.columns[-1]
                     try:
                         harcama_grubu_monthly_change = float(str(row[last_col].values[0]).replace(',', '.'))
+                        # Get the month name from the last column of the monthly change CSV
+                        son_ay = get_turkish_month(last_col) + f" {datetime.strptime(last_col, '%Y-%m-%d').year}"
                     except:
                         harcama_grubu_monthly_change = None
+                        son_ay = None
                 # --- End Fix ---
                 
                 # Read TÜİK data from tuikytd.csv for spending groups
@@ -2433,9 +2485,58 @@ def maddeler():
     except Exception:
         turkish_month = selected_date
     valid_bar_values = [v for v in bar_values if v is not None]
-    x_min = min(valid_bar_values + [0])
-    x_max = max(valid_bar_values + [0])
-    xaxis_range = [x_min * 1.4 if x_min < 0 else x_min * 1.4, x_max * 1.4 if x_max > 0 else x_max * 1.4]
+    x_min = min(valid_bar_values + [0]) if valid_bar_values else 0
+    x_max = max(valid_bar_values + [0]) if valid_bar_values else 0
+    
+    # Calculate dynamic margin based on data characteristics
+    data_range = x_max - x_min
+    max_abs_value = max(abs(x_min), abs(x_max))
+    
+    # Dynamic margin calculation based on data magnitude and range
+    if data_range == 0:
+        # If all values are the same, use a fixed margin
+        dynamic_margin = max_abs_value * 0.3 + 1.0
+    elif max_abs_value < 5:
+        # Small values: use larger relative margin for text visibility
+        dynamic_margin = max(data_range * 0.4, 2.0)
+    elif max_abs_value < 20:
+        # Medium values: balanced margin
+        dynamic_margin = max(data_range * 0.25, 3.0)
+    else:
+        # Large values: smaller relative margin but ensure minimum
+        dynamic_margin = max(data_range * 0.15, max_abs_value * 0.1)
+    
+    # Ensure minimum margin for text visibility
+    dynamic_margin = max(dynamic_margin, 2.5)
+    
+    # Calculate range with dynamic margins
+    if x_min < 0:
+        # For negative values, extend left more to accommodate text
+        left_margin = dynamic_margin * 1.5
+    else:
+        # For positive values, smaller left margin
+        left_margin = dynamic_margin * 0.5
+    
+    if x_max > 0:
+        # For positive values, extend right more to accommodate text
+        right_margin = dynamic_margin * 1.5
+    else:
+        # For negative values, smaller right margin
+        right_margin = dynamic_margin * 0.5
+    
+    # Apply margins
+    x_min_with_margin = x_min - left_margin
+    x_max_with_margin = x_max + right_margin
+    
+    # Ensure the range includes zero if values span both positive and negative
+    if x_min < 0 and x_max > 0:
+        xaxis_range = [min(x_min_with_margin, x_min), max(x_max_with_margin, x_max)]
+    else:
+        xaxis_range = [x_min_with_margin, x_max_with_margin]
+    
+    # Ensure range is not inverted
+    if xaxis_range[0] > xaxis_range[1]:
+        xaxis_range = [xaxis_range[1], xaxis_range[0]]
     fig = go.Figure(go.Bar(
         y=bar_labels,
         x=bar_values,
@@ -2444,16 +2545,29 @@ def maddeler():
         cliponaxis=False,
         hovertemplate='%{y}: %{x:.2f}<extra></extra>'
     ))
-    offset = (x_max - x_min) * 0.01 if bar_values else 0.2
+    # Calculate minimal text offset to place text exactly at bar end
+    range_span = xaxis_range[1] - xaxis_range[0]
+    text_offset = range_span * 0.001  # Reduced to 0.1% for minimal gap
+    
     for i, value in enumerate(bar_values):
+        # Determine text position based on value sign and magnitude
+        if value >= 0:
+            # For positive values, place text to the right of the bar
+            text_x = value + text_offset
+            align_anchor = 'left'
+        else:
+            # For negative values, place text to the left of the bar
+            text_x = value - text_offset
+            align_anchor = 'right'
+        
         fig.add_annotation(
-            x=value + offset/2 if value>=0 else value-offset*7,
+            x=text_x,
             y=bar_labels[i],
             text=f"<b>{value:.2f}%</b>",
             showarrow=False,
             font=dict(size=15, family="Inter Bold, Inter, sans-serif", color="#2B2D42"),
-            align='left',
-            xanchor='left',
+            align=align_anchor,
+            xanchor=align_anchor,
             yanchor='middle'
         )
     fig.update_layout(
