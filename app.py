@@ -551,13 +551,83 @@ def redirect_page():
         # Masaüstü cihaz - ana sayfaya yönlendir
         return redirect('/ana-sayfa')
 
-@app.route('/ana-sayfa')
+def get_monthly_group_data_for_date(date_str):
+    """Get monthly group data for a specific date"""
+    try:
+        df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        
+        # Check if the date exists in columns
+        if date_str not in df.columns:
+            return None, None
+            
+        # Get the data for the selected date
+        data_pairs = []
+        for idx, row in df.iterrows():
+            group_name = row.iloc[0]  # First column is group name
+            value = row[date_str]
+            try:
+                value = float(str(value).replace(',', '.'))
+                data_pairs.append((group_name, value))
+            except:
+                continue
+                
+        # Get Turkish month name
+        month_name = get_turkish_month(date_str)
+        return data_pairs, month_name
+    except Exception as e:
+        print(f"Error in get_monthly_group_data_for_date: {e}")
+        return None, None
+
+def get_available_dates():
+    """Get list of available dates from monthly data"""
+    try:
+        df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        # Return column names except the first one (group names), sorted in reverse order (newest first)
+        dates = df.columns[1:].tolist()
+        dates.sort(reverse=True)
+        return dates
+    except Exception as e:
+        print(f"Error in get_available_dates: {e}")
+        return []
+
+@app.route('/ana-sayfa', methods=['GET', 'POST'])
 def ana_sayfa():
     try:
-        # Get data from Google Sheets
-        data_pairs, month_name = get_google_sheets_data()
-        categories = [pair[0] for pair in data_pairs]
-        values = [pair[1] for pair in data_pairs]
+        # Get available dates for the dropdown
+        available_dates = get_available_dates()
+        selected_date = None
+        
+        # Handle POST request (date selection)
+        if request.method == 'POST':
+            selected_date = request.form.get('selected_date')
+            if selected_date:
+                # Get data for selected date
+                data_pairs, month_name = get_monthly_group_data_for_date(selected_date)
+                if data_pairs is None:
+                    # Fallback to default data if selected date not found
+                    data_pairs, month_name = get_google_sheets_data()
+                    flash('Seçilen tarih için veri bulunamadı, varsayılan veri gösteriliyor.', 'warning')
+            else:
+                # No date selected, use default data
+                data_pairs, month_name = get_google_sheets_data()
+        else:
+            # GET request, use latest available date by default
+            if available_dates:
+                selected_date = available_dates[0]  # First item is the latest due to reverse sort
+                data_pairs, month_name = get_monthly_group_data_for_date(selected_date)
+                if data_pairs is None:
+                    # Fallback to default data if latest date not found
+                    data_pairs, month_name = get_google_sheets_data()
+                    selected_date = None  # Clear selected_date to show we're using default data
+            else:
+                # No dates available, use default data
+                data_pairs, month_name = get_google_sheets_data()
+                selected_date = None
+        
+        # Sort data pairs by value in descending order for better visualization
+        data_pairs_sorted = sorted(data_pairs, key=lambda x: x[1], reverse=True)
+        categories = [pair[0] for pair in data_pairs_sorted]
+        values = [pair[1] for pair in data_pairs_sorted]
         
         # Get last update date
         last_update = get_last_update_date()
@@ -565,8 +635,8 @@ def ana_sayfa():
         # Create horizontal bar chart
         fig = go.Figure()
         
-        # Add bars for each category
-        for i, (category, value) in enumerate(data_pairs):
+        # Add bars for each category (using sorted data)
+        for i, (category, value) in enumerate(data_pairs_sorted):
             color = '#EF476F' if category == 'Web TÜFE' else '#118AB2'  # Modern color scheme
             fig.add_trace(go.Bar(
                 y=[category],
@@ -645,7 +715,8 @@ def ana_sayfa():
                     family='Arial Black, sans-serif',
                     color='#2B2D42'
                 ),
-                gridcolor='#E9ECEF'
+                gridcolor='#E9ECEF',
+                autorange='reversed'  # This makes the highest value appear at the top
             ),
             showlegend=False,
             plot_bgcolor='white',
@@ -664,10 +735,20 @@ def ana_sayfa():
         # Convert plot to JSON
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        return render_template('index.html', graphJSON=graphJSON, active_page='ana_sayfa', last_update=last_update)
+        return render_template('index.html', 
+                             graphJSON=graphJSON, 
+                             active_page='ana_sayfa', 
+                             last_update=last_update,
+                             available_dates=available_dates,
+                             selected_date=selected_date,
+                             sorted_group_data=data_pairs_sorted)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
-        return render_template('index.html')
+        available_dates = get_available_dates()
+        return render_template('index.html', 
+                             available_dates=available_dates,
+                             selected_date=None,
+                             sorted_group_data=[])
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():
@@ -751,6 +832,7 @@ def tufe():
         
         # Update layout with modern theme
         fig.update_layout(
+            # Removed invalid width property
             title=dict(
                 text='Web Tüketici Fiyat Endeksi',
                 font=dict(
@@ -959,10 +1041,10 @@ def tufe():
         print('Degisim eşleşme:', selected_madde.strip().lower() in df.index)
         # Bar grafiği başlığında turkish_month kullanılmadan hemen önce tanımla
         try:
-            selected_date_obj = datetime.strptime(selected_date, '%Y-%m')
+            selected_date_obj = datetime.strptime(last_col_date, '%Y-%m')
             turkish_month = get_turkish_month(selected_date_obj.strftime('%Y-%m-%d'))
         except Exception:
-            turkish_month = "selected_date"
+            turkish_month = last_col_date
         return render_template('tufe.html', graphJSON=graphJSON,
             last_date=last_date,
             change_rate=change_rate,
@@ -1307,7 +1389,7 @@ def tufe():
                     ),
                     gridcolor='#E9ECEF'
                 ),
-                showlegend=True,
+                showlegend=False,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
                 height=400,
@@ -1364,7 +1446,7 @@ def ana_gruplar():
     bar_colors = []
     turkish_month = ''
     df = get_ana_gruplar_data()
-    grup_adlari = [col for col in df.columns if col != 'Tarih']
+    grup_adlari = [col for col in df.columns if col not in ['Tarih', 'Web TÜFE']]
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
 
     # Google Sheets bağlantısı
@@ -1656,7 +1738,7 @@ def ana_gruplar():
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=400,
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=20, r=20, t=80, b=20),
         hovermode='x'
     )
     bar_graphJSON = bar_fig.to_json()
@@ -1684,6 +1766,7 @@ def ana_gruplar():
         hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
     ))
     line_fig.update_layout(
+        height=400,
         title=dict(
             text=f'{selected_group} Aylık Değişim Oranları',
             font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
@@ -1691,37 +1774,33 @@ def ana_gruplar():
         ),
         xaxis=dict(
             title='Ay',
-            title_font=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            tickfont=dict(
-                size=12,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
+            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            gridcolor='#E9ECEF',
+            zerolinecolor='#E9ECEF',
             tickangle=0
         ),
         yaxis=dict(
             title='Değişim (%)',
-            title_font=dict(
-                size=14,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            tickfont=dict(
-                size=12,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
+            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+            tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
             gridcolor='#E9ECEF'
         ),
         showlegend=True,
+        legend=dict(
+            font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            bgcolor='rgba(255,255,255,0.8)',
+            bordercolor='#E9ECEF',
+            borderwidth=1,
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        ),
         plot_bgcolor='white',
         paper_bgcolor='white',
-        height=400,
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=20, r=20, t=80, b=20),
         hovermode='x'
     )
     line_graphJSON = line_fig.to_json()
@@ -2076,25 +2155,13 @@ def harcama_gruplari():
                 fig_endeks.update_layout(
                     title=dict(
                         text=f'{selected_harcama_grubu.title()} Endeksi',
-                        font=dict(
-                            size=18,
-                            family='Inter, sans-serif',
-                            color='#2B2D42'
-                        ),
+                        font=dict(size=18, family='Inter, sans-serif', color='#2B2D42'),
                         y=0.98
                     ),
                     xaxis=dict(
                         title='Tarih',
-                        title_font=dict(
-                            size=12,
-                            family='Inter, sans-serif',
-                            color='#2B2D42'
-                        ),
-                        tickfont=dict(
-                            size=12,
-                            family='Inter, sans-serif',
-                            color='#2B2D42'
-                        ),
+                        title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                         gridcolor='#E9ECEF',
                         zerolinecolor='#E9ECEF',
                         tickangle=0,
@@ -2103,16 +2170,8 @@ def harcama_gruplari():
                     ),
                     yaxis=dict(
                         title='Endeks',
-                        title_font=dict(
-                            size=12,
-                            family='Inter, sans-serif',
-                            color='#2B2D42'
-                        ),
-                        tickfont=dict(
-                            size=12,
-                            family='Inter, sans-serif',
-                            color='#2B2D42'
-                        ),
+                        title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                        tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                         gridcolor='#E9ECEF'
                     ),
                     showlegend=True,
@@ -2130,7 +2189,7 @@ def harcama_gruplari():
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     height=400,
-                    margin=dict(l=10, r=10, t=40, b=20),
+                    margin=dict(l=20, r=20, t=80, b=20),
                     hovermode='x unified',
                     hoverlabel=dict(
                         bgcolor='white',
@@ -2292,7 +2351,7 @@ def harcama_gruplari():
                                 plot_bgcolor='white',
                                 paper_bgcolor='white',
                                 height=400,
-                                margin=dict(l=10, r=10, t=40, b=20),
+                                margin=dict(l=20, r=20, t=80, b=20),
                                 hovermode='x'
                             )
                             monthly_bar_graphJSON = json.dumps(bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -2321,6 +2380,7 @@ def harcama_gruplari():
                             ))
 
                             line_fig.update_layout(
+                                height=400,
                                 title=dict(
                                     text=f'{selected_harcama_grubu.title()} Aylık Değişim Oranları',
                                     font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
@@ -2328,35 +2388,24 @@ def harcama_gruplari():
                                 ),
                                 xaxis=dict(
                                     title='Ay',
-                                    title_font=dict(
-                                        size=14,
-                                        family='Inter, sans-serif',
-                                        color='#2B2D42'
-                                    ),
-                                    tickfont=dict(
-                                        size=12,
-                                        family='Inter, sans-serif',
-                                        color='#2B2D42'
-                                    ),
-                                    gridcolor='#E9ECEF'
+                                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                                    gridcolor='#E9ECEF',
+                                    zerolinecolor='#E9ECEF',
+                                    tickangle=0
                                 ),
                                 yaxis=dict(
                                     title='Değişim (%)',
-                                    title_font=dict(
-                                        size=14,
-                                        family='Inter, sans-serif',
-                                        color='#2B2D42'
-                                    ),
-                                    tickfont=dict(
-                                        size=12,
-                                        family='Inter, sans-serif',
-                                        color='#2B2D42'
-                                    ),
-                                    gridcolor='#E9ECEF',
-                                    range=[y_min_with_margin, y_max_with_margin]
+                                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                                    gridcolor='#E9ECEF'
                                 ),
                                 showlegend=True,
                                 legend=dict(
+                                    font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                                    bgcolor='rgba(255,255,255,0.8)',
+                                    bordercolor='#E9ECEF',
+                                    borderwidth=1,
                                     orientation='h',
                                     yanchor='bottom',
                                     y=1.02,
@@ -2365,8 +2414,7 @@ def harcama_gruplari():
                                 ),
                                 plot_bgcolor='white',
                                 paper_bgcolor='white',
-                                height=400,
-                                margin=dict(l=10, r=10, t=40, b=20),
+                                margin=dict(l=20, r=20, t=80, b=20),
                                 hovermode='x'
                             )
                             monthly_line_graphJSON = json.dumps(line_fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -2944,7 +2992,8 @@ def ozel_kapsamli_gostergeler():
         paper_bgcolor='white',
         height=400,
         margin=dict(l=10, r=10, t=40, b=20),
-        hovermode='x'
+        hovermode='x',
+        autosize=True
     )
 
     # Line grafik
@@ -2972,7 +3021,7 @@ def ozel_kapsamli_gostergeler():
         title=dict(
             text=f'{selected_indicator} Aylık Değişim Oranları',
             font=dict(
-                size=20,
+                size=14,
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
@@ -3005,13 +3054,14 @@ def ozel_kapsamli_gostergeler():
                 color='#2B2D42'
             ),
             gridcolor='#E9ECEF'
-        ),
+            ),
         showlegend=True,
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=400,
         margin=dict(l=10, r=10, t=40, b=20),
-        hovermode='x'
+        hovermode='x',
+        autosize=True
     )
 
     bar_graphJSON = json.dumps(bar_fig, cls=plotly.utils.PlotlyJSONEncoder)

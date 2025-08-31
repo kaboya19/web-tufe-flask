@@ -28,6 +28,12 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        #bar-compare-chart,
+        #line-compare-chart {
+            width: 100% !important;
+            /* Ensure full width */
+        }
     </style>
 </head>
 
@@ -108,7 +114,7 @@
                 </h3>
                 <div id="tufe-chart" class="w-full"></div>
                 {% if selected_madde != 'TÜFE' %}
-                <div class="mt-12">
+                <div class="mt-12 w-full">
                     <div class="flex justify-end mb-2">
                         <button id="madde-bar-btn"
                             class="p-2 rounded border border-gray-300 bg-white hover:bg-gray-100 flex items-center text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-[#EF476F] mr-2"
@@ -132,8 +138,9 @@
                             Line
                         </button>
                     </div>
-                    <div id="monthly-change-bar-chart" class="w-full"></div>
-                    <div id="monthly-change-line-chart" class="w-full hidden"></div>
+                    <div id="monthly-change-bar-chart" class="w-full" style="width: 100% !important;"></div>
+                    <div id="monthly-change-line-chart" class="w-full hidden" style="width: 100% !important;">
+                    </div>
                 </div>
                 {% endif %}
                 {% if selected_madde == 'TÜFE' %}
@@ -190,8 +197,8 @@
     <script>
         var monthlyChangeBarGraph = {{ bar_graphJSON | safe }};
         var monthlyChangeLineGraph = {{ line_graphJSON | safe }};
-        Plotly.newPlot('monthly-change-bar-chart', monthlyChangeBarGraph.data, monthlyChangeBarGraph.layout, { displayModeBar: false });
-        Plotly.newPlot('monthly-change-line-chart', monthlyChangeLineGraph.data, monthlyChangeLineGraph.layout, { displayModeBar: false });
+        Plotly.newPlot('monthly-change-bar-chart', monthlyChangeBarGraph.data, monthlyChangeBarGraph.layout, { displayModeBar: false, responsive: true });
+        Plotly.newPlot('monthly-change-line-chart', monthlyChangeLineGraph.data, monthlyChangeLineGraph.layout, { displayModeBar: false, responsive: true });
 
         // Toggle logic for monthly change chart
         const maddeBarBtn = document.getElementById('madde-bar-btn');
@@ -209,46 +216,91 @@
             maddeBarChart.classList.remove('hidden');
             maddeLineChart.classList.add('hidden');
             setMaddeActive(maddeBarBtn);
+            setTimeout(function () {
+                Plotly.Plots.resize('monthly-change-bar-chart');
+            }, 100);
         });
 
         maddeLineBtn.addEventListener('click', function () {
             maddeLineChart.classList.remove('hidden');
             maddeBarChart.classList.add('hidden');
             setMaddeActive(maddeLineBtn);
+            setTimeout(function () {
+                Plotly.Plots.resize('monthly-change-line-chart');
+            }, 100);
         });
 
         // Varsayılan olarak bar aktif
         setMaddeActive(maddeBarBtn);
+
+        // Window resize event to ensure charts fill the container
+        window.addEventListener('resize', function () {
+            if (!maddeLineChart.classList.contains('hidden')) {
+                setTimeout(function () {
+                    Plotly.Plots.resize('monthly-change-line-chart');
+                }, 100);
+            }
+            if (!maddeBarChart.classList.contains('hidden')) {
+                setTimeout(function () {
+                    Plotly.Plots.resize('monthly-change-bar-chart');
+                }, 100);
+            }
+        });
     </script>
     {% endif %}
     {% if selected_madde == 'TÜFE' %}
     <script>
         var barGraphs = {{ bar_graphJSON | safe }};
         var lineGraphs = {{ line_graphJSON | safe }};
-        Plotly.newPlot('bar-compare-chart', barGraphs.data, barGraphs.layout, { displayModeBar: false });
-        Plotly.newPlot('line-compare-chart', lineGraphs.data, lineGraphs.layout, { displayModeBar: false });
+        Plotly.newPlot('bar-compare-chart', barGraphs.data, barGraphs.layout, { displayModeBar: false, responsive: true });
+        Plotly.newPlot('line-compare-chart', lineGraphs.data, lineGraphs.layout, { displayModeBar: false, responsive: true });
+
         // Toggle logic for comparison chart
         const barBtn = document.getElementById('bar-btn');
         const lineBtn = document.getElementById('line-btn');
         const barChart = document.getElementById('bar-compare-chart');
         const lineChart = document.getElementById('line-compare-chart');
+
         function setActive(btn) {
             barBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
             lineBtn.classList.remove('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
             btn.classList.add('ring-2', 'ring-[#EF476F]', 'bg-gray-100');
         }
+
         barBtn.addEventListener('click', function () {
             barChart.classList.remove('hidden');
             lineChart.classList.add('hidden');
             setActive(barBtn);
+            setTimeout(function () {
+                Plotly.Plots.resize('bar-compare-chart');
+            }, 100);
         });
+
         lineBtn.addEventListener('click', function () {
             lineChart.classList.remove('hidden');
             barChart.classList.add('hidden');
             setActive(lineBtn);
+            setTimeout(function () {
+                Plotly.Plots.resize('line-compare-chart');
+            }, 100);
         });
+
         // Varsayılan olarak bar aktif
         setActive(barBtn);
+
+        // Window resize event to ensure charts fill the container
+        window.addEventListener('resize', function () {
+            if (!lineChart.classList.contains('hidden')) {
+                setTimeout(function () {
+                    Plotly.Plots.resize('line-compare-chart');
+                }, 100);
+            }
+            if (!barChart.classList.contains('hidden')) {
+                setTimeout(function () {
+                    Plotly.Plots.resize('bar-compare-chart');
+                }, 100);
+            }
+        });
     </script>
     {% endif %}
 </body>

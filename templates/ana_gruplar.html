@@ -61,6 +61,11 @@
         .graph-content.active {
             display: block;
         }
+
+        .graph-content {
+            width: 100% !important;
+            /* Ensure full width */
+        }
     </style>
 </head>
 
@@ -134,11 +139,15 @@
                     var lineGraph = {{ line_graphJSON | safe }};
                     Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
                     Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
+
                     function showGraph(type) {
                         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                         document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-                        document.querySelector(`.tab-button[onclick=\"showGraph('${type}')\"]`).classList.add('active');
+                        document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
                         document.getElementById(`${type}-graph`).classList.add('active');
+                        setTimeout(function () {
+                            Plotly.Plots.resize(`${type}-graph`);
+                        }, 100);
                     }
                 </script>
             </div>

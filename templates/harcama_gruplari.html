@@ -63,6 +63,11 @@
             display: block;
             overflow-x: auto;
         }
+
+        .graph-content {
+            width: 100% !important;
+            /* Ensure full width */
+        }
     </style>
 </head>
 
@@ -196,14 +201,8 @@
         {% if monthly_bar_graphJSON and monthly_line_graphJSON %}
         var monthlyBarGraph = {{ monthly_bar_graphJSON | safe }};
         var monthlyLineGraph = {{ monthly_line_graphJSON | safe }};
-        Plotly.newPlot('monthly-bar-chart', monthlyBarGraph.data, monthlyBarGraph.layout, {
-            displayModeBar: false,
-            responsive: true
-        });
-        Plotly.newPlot('monthly-line-chart', monthlyLineGraph.data, monthlyLineGraph.layout, {
-            displayModeBar: false,
-            responsive: true
-        });
+        Plotly.newPlot('monthly-bar-chart', monthlyBarGraph.data, monthlyBarGraph.layout, { displayModeBar: false, responsive: true });
+        Plotly.newPlot('monthly-line-chart', monthlyLineGraph.data, monthlyLineGraph.layout, { displayModeBar: false, responsive: true });
         {% endif %}
     </script>
     {% endif %}
@@ -213,6 +212,9 @@
             document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
             document.getElementById(`monthly-${type}-chart`).classList.add('active');
+            setTimeout(function () {
+                Plotly.Plots.resize(`monthly-${type}-chart`);
+            }, 100);
         }
     </script>
 </body>

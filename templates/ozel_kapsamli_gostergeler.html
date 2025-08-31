@@ -63,6 +63,17 @@
             display: block;
             overflow-x: auto;
         }
+
+        .graph-content {
+            width: 100% !important;
+            /* Ensure full width */
+        }
+
+        #bar-chart,
+        #line-chart {
+            width: 100% !important;
+            /* Ensure full width */
+        }
     </style>
 </head>
 
@@ -252,8 +263,13 @@
                 // Handle window resize
                 window.addEventListener('resize', function () {
                     Plotly.Plots.resize('index-chart');
-                    Plotly.Plots.resize('bar-chart');
-                    Plotly.Plots.resize('line-chart');
+
+                    // Only resize visible chart
+                    const activeChart = document.querySelector('.graph-content.active');
+                    if (activeChart) {
+                        const chartId = activeChart.id;
+                        Plotly.Plots.resize(chartId);
+                    }
                 });
             } catch (error) {
                 console.error('Error initializing graphs:', error);
@@ -269,6 +285,11 @@
             document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
             document.getElementById(`${type}-chart`).classList.add('active');
+
+            // Resize the chart after showing it
+            setTimeout(function () {
+                Plotly.Plots.resize(`${type}-chart`);
+            }, 100);
         }
     </script>
 </body>
