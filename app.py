@@ -3107,38 +3107,6 @@ def mevsimsel_duzeltilmis_gostergeler():
     
     # Get the selected indicator data
     indicator_data = df[df['Gösterge'] == selected_indicator]
-
-    tuikma=pd.read_excel("matuik.xls")
-
-    tuikma.columns=tuikma.iloc[1]
-    tuikma=tuikma.iloc[2:]
-    tuikma.columns=[                                                                                         "Tarih",
-                                                                                                'TÜFE',
-                    'İşlenmemiş gıda ürünleri, enerji, alkollü içkiler ve tütün ile altın hariç TÜFE',
-        'Enerji, gıda ve alkolsüz içecekler, alkollü içkiler ile tütün ürünleri ve altın hariç TÜFE',
-                                                                                                    "",
-                                                                                            'Enerji',
-                                                                        'Gıda ve alkolsüz içecekler',
-                                                                                    'İşlenmemiş gıda',
-                                                                                'Taze meyve ve sebze',
-                                                                                'Diğer işlenmemiş gıda',
-                                                                                        'İşlenmiş gıda',
-                                                                                    'Ekmek ve tahıllar',
-                                                                                'Diğer işlenmiş gıda',
-                                                                        'Enerji ve gıda dışı mallar',
-                                                                                        'Temel mallar',
-                                                                                    'Giyim ve ayakkabı',
-                                                                    'Dayanıklı mallar (Altın hariç)',
-                                                                                'Diğer temel mallar',
-                                                                            'Alkollü içecekler, tütün',
-                                                                                                'Altın',
-                                                                                                    "",
-                                                                                                'Kira',
-                                                                                'Lokanta ve oteller',
-                                                                            'Ulaştırma hizmetleri(5)',
-                                                                            'Haberleşme hizmetleri(5)',
-                                                                                    'Diğer hizmetler']
-    tuikma=tuikma.set_index("Tarih")
     
     # Calculate total change (from first to last month)
     total_change = 0.0  # Default to 0.0 instead of None
@@ -3187,19 +3155,6 @@ def mevsimsel_duzeltilmis_gostergeler():
             customdata=turkish_dates,
             hovertemplate='<b>%{customdata}</b><br>' + f'Mevsimsel Düzeltilmiş - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
         ))
-        import numpy as np
-        fig.add_trace(go.Scatter(
-            x=turkish_dates,
-            y=tuikma.loc[np.intersect1d(tuikma.index,date_columns)].values,
-            mode='lines+markers',
-            name=f'TÜİK Mevsimsel Düzeltilmiş - {selected_indicator}',
-            line=dict(color="blue", width=3),
-            marker=dict(size=8, color='#EF476F'),
-            customdata=turkish_dates,
-            hovertemplate='<b>%{customdata}</b><br>' + f'Mevsimsel Düzeltilmiş - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
-        ))
-
-
         
         fig.update_layout(
             title=dict(
