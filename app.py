@@ -3096,8 +3096,11 @@ def ozel_kapsamli_gostergeler():
 
 @app.route('/mevsimsel-duzeltilmis-gostergeler', methods=['GET', 'POST'])
 def mevsimsel_duzeltilmis_gostergeler():
-    # Read data from ma.xlsx file
+    # Read data from ma.xlsx file (Web TÜFE)
     df = pd.read_excel("ma.xlsx")
+    
+    # Read data from matuik.xlsx file (TÜİK)
+    df_tuik = pd.read_excel("matuik.xlsx")
     
     # Get indicator names from the 'Gösterge' column
     indicator_names = df['Gösterge'].dropna().tolist()
@@ -3105,8 +3108,15 @@ def mevsimsel_duzeltilmis_gostergeler():
     # Get selected indicator from form
     selected_indicator = request.form.get('indicator') if request.method == 'POST' else indicator_names[0]
     
-    # Get the selected indicator data
+    # Get the selected indicator data from Web TÜFE
     indicator_data = df[df['Gösterge'] == selected_indicator]
+    
+    # Get the selected indicator data from TÜİK (if exists)
+    # Special case: if "Web TÜFE" is selected, show "TÜFE" from TÜİK data
+    if selected_indicator == "Web TÜFE":
+        indicator_data_tuik = df_tuik[df_tuik['Gösterge'] == "TÜFE"]
+    else:
+        indicator_data_tuik = df_tuik[df_tuik['Gösterge'] == selected_indicator]
     
     # Calculate total change (from first to last month)
     total_change = 0.0  # Default to 0.0 instead of None
@@ -3144,83 +3154,113 @@ def mevsimsel_duzeltilmis_gostergeler():
                 date_objects.append(date_str)
                 turkish_dates.append(date_str)
         
-        # Add line
+        # Add Web TÜFE line
         fig.add_trace(go.Scatter(
             x=turkish_dates,
             y=values,
             mode='lines+markers',
-            name=f'Mevsimsel Düzeltilmiş - {selected_indicator}',
+            name=f'Web TÜFE - {selected_indicator}',
             line=dict(color='#EF476F', width=3),
             marker=dict(size=8, color='#EF476F'),
             customdata=turkish_dates,
-            hovertemplate='<b>%{customdata}</b><br>' + f'Mevsimsel Düzeltilmiş - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
+            hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
         ))
+    
+    # Add TÜİK data if it exists for the selected indicator
+    if not indicator_data_tuik.empty:
+        # Get date columns from TÜİK data
+        date_columns_tuik = [col for col in df_tuik.columns if col not in ['Gösterge']]
+        values_tuik = indicator_data_tuik[date_columns_tuik].iloc[0].values
+        dates_tuik = date_columns_tuik
         
-        fig.update_layout(
-            title=dict(
-                text=f'Mevsimsel Düzeltilmiş {selected_indicator} Değişimi',
-                font=dict(
-                    size=18,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                y=0.98
+        # Convert date strings to datetime for proper formatting
+        turkish_dates_tuik = []
+        for date_str in dates_tuik:
+            try:
+                # Parse YYYY-MM format
+                date_obj = datetime.strptime(date_str, '%Y-%m')
+                turkish_dates_tuik.append(f"{get_turkish_month(date_obj.strftime('%Y-%m'))} {date_obj.year}")
+            except:
+                turkish_dates_tuik.append(date_str)
+        
+        # Add TÜİK line
+        fig.add_trace(go.Scatter(
+            x=turkish_dates_tuik,
+            y=values_tuik,
+            mode='lines+markers',
+            name=f'TÜİK - {selected_indicator}',
+            line=dict(color='#2B2D42', width=3),
+            marker=dict(size=8, color='#2B2D42'),
+            customdata=turkish_dates_tuik,
+            hovertemplate='<b>%{customdata}</b><br>' + f'TÜİK - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
+        ))
+    
+    # Update layout for all cases
+    fig.update_layout(
+        title=dict(
+            text=f'Mevsimsel Düzeltilmiş {selected_indicator} Değişimi - Web TÜFE vs TÜİK',
+            font=dict(
+                size=18,
+                family='Inter, sans-serif',
+                color='#2B2D42'
             ),
-            xaxis=dict(
-                title='Tarih',
-                title_font=dict(
-                    size=12,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                tickfont=dict(
-                    size=12,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                gridcolor='#E9ECEF',
-                zerolinecolor='#E9ECEF',
-                tickangle=0,
-                hoverformat='',
+            y=0.98
+        ),
+        xaxis=dict(
+            title='Tarih',
+            title_font=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
             ),
-            yaxis=dict(
-                title='Endeks',
-                title_font=dict(
-                    size=12,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                tickfont=dict(
-                    size=12,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                gridcolor='#E9ECEF'
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
             ),
-            showlegend=True,
-            legend=dict(
-                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                bgcolor='rgba(255,255,255,0.8)',
-                bordercolor='#E9ECEF',
-                borderwidth=1,
-                orientation='h',
-                yanchor='bottom',
-                y=1.02,
-                xanchor='right',
-                x=1
+            gridcolor='#E9ECEF',
+            zerolinecolor='#E9ECEF',
+            tickangle=0,
+            hoverformat='',
+        ),
+        yaxis=dict(
+            title='Endeks',
+            title_font=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
             ),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            height=500,
-            margin=dict(l=5, r=5, t=20, b=10),
-            hovermode='x unified',
-            hoverlabel=dict(
-                bgcolor='white',
-                font_size=12,
-                font_family='Inter, sans-serif',
-                namelength=-1
-            )
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            gridcolor='#E9ECEF'
+        ),
+        showlegend=True,
+        legend=dict(
+            font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+            bgcolor='rgba(255,255,255,0.8)',
+            bordercolor='#E9ECEF',
+            borderwidth=1,
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        height=500,
+        margin=dict(l=5, r=5, t=20, b=10),
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter, sans-serif',
+            namelength=-1
         )
+    )
 
 
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
