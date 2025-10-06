@@ -654,6 +654,7 @@ def ana_sayfa():
                     color='#2B2D42',
                     family='Inter, sans-serif'
                 ),
+                cliponaxis=False,
                 hovertemplate=f'{category}: %{{x:+.2f}}%<extra></extra>'
             ))
         
@@ -665,7 +666,7 @@ def ana_sayfa():
 
             # Marj hesapla
             x_range = x_max - x_min
-            x_margin = x_range * 0.2 if x_range != 0 else abs(x_max) * 0.2
+            x_margin = x_range * 0.3 if x_range != 0 else abs(x_max) * 0.3
 
             x_min_with_margin = x_min - x_margin
             x_max_with_margin = x_max + x_margin
@@ -722,7 +723,7 @@ def ana_sayfa():
             plot_bgcolor='white',
             paper_bgcolor='white',
             height=600,
-            margin=dict(l=20, r=20, t=80, b=20),
+            margin=dict(l=20, r=140, t=80, b=20),
             hovermode='y unified',
             hoverlabel=dict(
                 bgcolor='white',
@@ -735,13 +736,96 @@ def ana_sayfa():
         # Convert plot to JSON
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
+        # Build contribution chart from katkıpayları.csv for the selected month
+        contribGraphJSON = None
+        try:
+            contrib_df = pd.read_csv('katkıpayları.csv', index_col=0)
+            # Try to select the row matching selected_date; otherwise use the last available row
+            contrib_row = None
+            if selected_date and selected_date in contrib_df.index:
+                contrib_row = contrib_df.loc[selected_date]
+                contrib_date_for_title = selected_date[:7]
+            else:
+                # Fallback to latest row
+                latest_idx = contrib_df.index[-1]
+                contrib_row = contrib_df.loc[latest_idx]
+                contrib_date_for_title = str(latest_idx)[:7]
+            # Exclude the total column if present
+            if 'Web TÜFE' in contrib_row.index:
+                contrib_row = contrib_row.drop('Web TÜFE')
+            # Prepare sorted contributions
+            contrib_series_sorted = contrib_row.sort_values(ascending=True)
+            contrib_categories = list(contrib_series_sorted.index)
+            contrib_values = list(contrib_series_sorted.values)
+
+            contrib_fig = go.Figure()
+            contrib_fig.add_trace(go.Bar(
+                y=contrib_categories,
+                x=contrib_values,
+                orientation='h',
+                marker_color='#118AB2',
+                marker=dict(line=dict(width=0)),
+                text=[f"<b>{v:+.2f}</b>" for v in contrib_values],
+                textposition='outside',
+                textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
+            ))
+
+            # Compute x-axis range with margin similar to the main chart
+            if len(contrib_values) > 0:
+                cmin = min(contrib_values)
+                cmax = max(contrib_values)
+                crange = cmax - cmin
+                cmargin = crange * 0.2 if crange != 0 else abs(cmax) * 0.2
+                cx_min = cmin - cmargin
+                cx_max = cmax + cmargin
+                if cmin >= 0:
+                    cx_min = max(0, cmin - cmargin)
+                if cmax <= 0:
+                    cx_max = min(0, cmax + cmargin)
+            else:
+                cx_min, cx_max = 0, 1
+
+            contrib_fig.update_layout(
+                title=dict(
+                    text=f'{month_name} Ayı Ana Grupların Aylık Katkısı (puan)',
+                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+                    y=0.95
+                ),
+                xaxis=dict(
+                    title='Katkı (puan)',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    gridcolor='#E9ECEF',
+                    zerolinecolor='#E9ECEF',
+                    range=[cx_min, cx_max]
+                ),
+                yaxis=dict(
+                    title='Grup',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42')
+                ),
+                showlegend=False,
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                height=600,
+                margin=dict(l=20, r=140, t=80, b=20),
+                hovermode='y unified',
+                hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
+            )
+            contribGraphJSON = json.dumps(contrib_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        except Exception as _:
+            contribGraphJSON = None
+
         return render_template('index.html', 
                              graphJSON=graphJSON, 
                              active_page='ana_sayfa', 
                              last_update=last_update,
                              available_dates=available_dates,
                              selected_date=selected_date,
-                             sorted_group_data=data_pairs_sorted)
+                             sorted_group_data=data_pairs_sorted,
+                             contribGraphJSON=contribGraphJSON)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         available_dates = get_available_dates()
