@@ -75,7 +75,7 @@
     <div class="min-h-screen">
         <!-- Header -->
         <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="w-full px-6 lg:px-8 py-4">
                 <div class="flex items-center space-x-4">
                     <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
                     <span class="text-gray-400">|</span>
@@ -108,7 +108,7 @@
             </div>
         </header>
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main class="w-full px-6 lg:px-8 py-8">
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <form method="POST" class="mb-6 flex items-center space-x-4">
                     <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
@@ -125,6 +125,20 @@
                         <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date }}</option>
                         {% endfor %}
                     </select>
+                    <label class="ml-6 flex items-center gap-2">
+                        <input type="checkbox" name="show_contrib" {% if show_contrib %}checked{% endif %} onchange="this.form.submit()">
+                        <span>Katkıları göster</span>
+                    </label>
+                    <div class="ml-4 flex items-center gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="radio" name="contrib_type" value="ana" {% if contrib_type=='ana' %}checked{% endif %} onchange="this.form.submit()">
+                            <span>Ana gruba katkı</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="radio" name="contrib_type" value="manset" {% if contrib_type=='manset' %}checked{% endif %} onchange="this.form.submit()">
+                            <span>Manşet enflasyona katkı</span>
+                        </label>
+                    </div>
                 </form>
 
                 {% if harcama_grubu_adlari %}
@@ -145,7 +159,11 @@
 
                 {% if selected_group and selected_date and not selected_harcama_grubu %}
                 <div class="mt-8">
-                    <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
+                    {% if combined_graphJSON and show_contrib %}
+                    <div id="contrib-combined-chart" class="w-full" style="min-height: 640px;"></div>
+                    {% else %}
+                    <div id="bar-chart" class="w-full" style="min-height: 640px;"></div>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -170,6 +188,11 @@
                     <div id="monthly-line-chart" class="graph-content" style="height: 400px;"></div>
                 </div>
                 {% endif %}
+                {% if contrib_graphJSON %}
+                <div class="mt-8">
+                    <div id="contrib-chart" class="w-full" style="min-height: 600px;"></div>
+                </div>
+                {% endif %}
             </div>
         </main>
         <!-- Footer -->
@@ -181,10 +204,28 @@
             </div>
         </footer>
     </div>
-    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu %}
+    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu and not show_contrib %}
     <script>
         var barGraphs = {{ bar_graphJSON | safe }};
         Plotly.newPlot('bar-chart', barGraphs.data, barGraphs.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+    </script>
+    {% endif %}
+    {% if contrib_graphJSON %}
+    <script>
+        var contribGraph = {{ contrib_graphJSON | safe }};
+        Plotly.newPlot('contrib-chart', contribGraph.data, contribGraph.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+    </script>
+    {% endif %}
+    {% if combined_graphJSON and show_contrib %}
+    <script>
+        var combinedGraph = {{ combined_graphJSON | safe }};
+        Plotly.newPlot('contrib-combined-chart', combinedGraph.data, combinedGraph.layout, {
             displayModeBar: false,
             responsive: true
         });

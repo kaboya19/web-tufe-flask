@@ -1914,6 +1914,9 @@ def harcama_gruplari():
     
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
     selected_date = request.form.get('date') if request.method == 'POST' else None
+    # Contribution controls (defaults: show=True, type='ana')
+    show_contrib = False if request.method != 'POST' else ('show_contrib' in request.form)
+    contrib_type = request.form.get('contrib_type', 'ana')
     print("Seçilen grup:", selected_group)
     print("Seçilen tarih:", selected_date)
     
@@ -1946,6 +1949,8 @@ def harcama_gruplari():
     bar_values = []
     bar_colors = []
     bar_graphJSON = None
+    contrib_graphJSON = None
+    combined_graphJSON = None
     monthly_bar_graphJSON = None
     monthly_line_graphJSON = None
     line_graphJSON = None
@@ -2135,6 +2140,144 @@ def harcama_gruplari():
         hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
     )
     bar_graphJSON = fig.to_json()
+
+    # Build contribution chart for selected ana grup's harcama grupları
+    if show_contrib:
+        try:
+            # Select correct CSV by contribution type
+            file_path = 'harcamagrupları_manşetkatkı.csv' if contrib_type == 'ana' else 'harcamagrupları_katkı.csv'
+            df_katki = pd.read_csv(file_path, index_col=0)
+            # choose date row
+            target_date = sheet_date if sheet_date in df_katki.index else (sheet_date[:7] if sheet_date[:7] in df_katki.index else df_katki.index[-1])
+            row = df_katki.loc[target_date]
+            # normalize headers
+            row.index = [str(c).strip().lower() for c in row.index]
+            labels = []
+            values = []
+            for g in harcama_gruplari:
+                key = str(g).strip().lower()
+                if key in row.index:
+                    try:
+                        val = float(str(row[key]).replace(',', '.'))
+                        labels.append(g.title())
+                        values.append(val)
+                    except Exception:
+                        pass
+            # sort ascending
+            pairs = sorted(zip(labels, values), key=lambda x: x[1])
+            labels = [p[0] for p in pairs]
+            values = [p[1] for p in pairs]
+            def xr(vals):
+                if not vals:
+                    return [0, 1]
+                vmin, vmax = min(vals), max(vals)
+                rng = vmax - vmin
+                m = rng * 0.25 if rng != 0 else max(abs(vmax), abs(vmin)) * 0.25
+                xmin, xmax = vmin - m, vmax + m
+                if vmin >= 0:
+                    xmin = max(0, vmin - m)
+                if vmax <= 0:
+                    xmax = min(0, vmax + m)
+                return [xmin, xmax]
+            x_range = xr(values)
+            # Build combined symmetric chart like homepage
+            left_categories = bar_labels
+            left_values = bar_values
+            # Align right values to left categories; if a category is missing in contribution data
+            # and it is the selected ana grup, fill with ana_grup_value to keep rows aligned
+            right_map = {labels[i].strip().lower(): values[i] for i in range(len(labels))}
+            right_values = []
+            for name in left_categories:
+                key = name.strip().lower()
+                if key in right_map:
+                    val = right_map[key]
+                    # Ana grup satırında katkı değeri çizilmesin (boş bırak)
+                    if key == selected_group_norm:
+                        right_values.append(None)
+                    else:
+                        right_values.append(val)
+                elif key == selected_group_norm and ana_grup_value is not None:
+                    # Ana grup için katkıyı boş bırak
+                    right_values.append(None)
+                else:
+                    right_values.append(0.0)
+
+            # Sıralama: aylık değişimi büyükten küçüğe (üstte en büyük)
+            combined = list(zip(left_categories, left_values, right_values))
+            combined.sort(key=lambda x: (x[1] if x[1] is not None else float('-inf')), reverse=True)
+            left_categories = [c for c, _, _ in combined]
+            left_values = [v for _, v, _ in combined]
+            right_values = [rv for _, _, rv in combined]
+
+            from plotly.subplots import make_subplots
+            # Compute dynamic gutter width between subplots based on longest label length
+            try:
+                max_label_len = max(len(str(n)) for n in left_categories)
+            except Exception:
+                max_label_len = 20
+            gutter = min(0.50, 0.12 + 0.006 * max_label_len)
+            comb = make_subplots(rows=1, cols=2, column_widths=[0.46, 0.46],
+                                 specs=[[{"type": "bar"}, {"type": "bar"}]],
+                                 horizontal_spacing=gutter, shared_yaxes=True)
+
+            left_colors = ['#118AB2' for _ in left_categories]
+            # Highlight ana grup if present
+            for i, name in enumerate(left_categories):
+                if name.strip().lower() == selected_group_norm:
+                    left_colors[i] = '#EF476F'
+
+            comb.add_trace(go.Bar(
+                y=left_categories, x=left_values, orientation='h',
+                marker=dict(color=left_colors, line=dict(width=0)),
+                name='Aylık değişim',
+                text=[f"<b>{v:+.2f}%</b>" for v in left_values],
+                textposition='outside', textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+            ), row=1, col=1)
+
+            # Build text labels safely; leave empty when value is None (ana grup satırı)
+            right_text = [f"<b>{v:+.2f}</b>" if v is not None else '' for v in right_values]
+            comb.add_trace(go.Bar(
+                y=left_categories, x=right_values, orientation='h',
+                marker=dict(color='#118AB2', line=dict(width=0)),
+                name='Katkı',
+                text=right_text,
+                textposition='outside', textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
+            ), row=1, col=2)
+
+            # Ranges
+            def compute_range_left(vals):
+                if not vals:
+                    return [0, 1]
+                vmin, vmax = min(vals), max(vals)
+                rng = vmax - vmin
+                m = rng * 0.3 if rng != 0 else max(abs(vmax), abs(vmin)) * 0.3
+                xmin, xmax = vmin - m, vmax + m
+                if vmin >= 0:
+                    xmin = max(0, vmin - m)
+                if vmax <= 0:
+                    xmax = min(0, vmax + m)
+                return [xmin, xmax]
+            comb.update_yaxes(title_text='Harcama Grubu', autorange='reversed', side='right',
+                               title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                               tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42'),
+                               showticklabels=True, row=1, col=1)
+            comb.update_yaxes(showticklabels=False, row=1, col=2)
+            comb.update_xaxes(title_text='Değişim (%)', range=compute_range_left(left_values), gridcolor='#E9ECEF', zerolinecolor='#E9ECEF',
+                               tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), row=1, col=1)
+            # Let Plotly autoscale right panel; do not force x-range. We only increased gutter for labels.
+            comb.update_xaxes(title_text='Katkı (puan)', gridcolor='#E9ECEF', zerolinecolor='#E9ECEF',
+                               tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), row=1, col=2)
+            comb.update_layout(title=dict(text=''), barmode='overlay', bargap=0.25, showlegend=False,
+                               plot_bgcolor='white', paper_bgcolor='white',
+                               height=max(min(len(left_categories) * 70, 1800), 500),
+                               margin=dict(l=30, r=30, t=30, b=30))
+            combined_graphJSON = comb.to_json()
+        except Exception as e:
+            print('Katkı grafiği oluşturulamadı:', e)
 
     selected_harcama_grubu = request.form.get('harcama_grubu') if request.method == 'POST' else None
     harcama_grubu_adlari = harcama_gruplari if harcama_gruplari else []
@@ -2534,7 +2677,11 @@ def harcama_gruplari():
         bar_graphJSON=bar_graphJSON if not selected_harcama_grubu else None,
         line_graphJSON=line_graphJSON if selected_harcama_grubu else None,
         monthly_bar_graphJSON=monthly_bar_graphJSON if selected_harcama_grubu else None,
-        monthly_line_graphJSON=monthly_line_graphJSON if selected_harcama_grubu else None
+        monthly_line_graphJSON=monthly_line_graphJSON if selected_harcama_grubu else None,
+        show_contrib=show_contrib,
+        contrib_type=contrib_type,
+        contrib_graphJSON=contrib_graphJSON,
+        combined_graphJSON=combined_graphJSON
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
