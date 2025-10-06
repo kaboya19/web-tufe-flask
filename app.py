@@ -722,8 +722,8 @@ def ana_sayfa():
             showlegend=False,
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=600,
-            margin=dict(l=20, r=140, t=80, b=20),
+            height=640,
+            margin=dict(l=20, r=80, t=80, b=20),
             hovermode='y unified',
             hoverlabel=dict(
                 bgcolor='white',
@@ -777,13 +777,16 @@ def ana_sayfa():
                 cmin = min(contrib_values)
                 cmax = max(contrib_values)
                 crange = cmax - cmin
-                cmargin = crange * 0.2 if crange != 0 else abs(cmax) * 0.2
-                cx_min = cmin - cmargin
-                cx_max = cmax + cmargin
+                base_margin = crange * 0.3 if crange != 0 else max(abs(cmin), abs(cmax)) * 0.3
+                # Start with symmetric margins
+                cx_min = cmin - base_margin
+                cx_max = cmax + base_margin
+                # If there are negatives, expand further on the left to fit outside labels
+                if cmin < 0:
+                    cx_min = cmin - base_margin - abs(cmin) * 0.3
+                # If all values are non-negative, keep left bound at least 0
                 if cmin >= 0:
-                    cx_min = max(0, cmin - cmargin)
-                if cmax <= 0:
-                    cx_max = min(0, cmax + cmargin)
+                    cx_min = max(0, cmin - base_margin)
             else:
                 cx_min, cx_max = 0, 1
 
@@ -809,8 +812,8 @@ def ana_sayfa():
                 showlegend=False,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
-                height=600,
-                margin=dict(l=20, r=140, t=80, b=20),
+                height=640,
+                margin=dict(l=20, r=80, t=80, b=20),
                 hovermode='y unified',
                 hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
             )
