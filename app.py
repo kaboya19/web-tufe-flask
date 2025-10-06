@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import plotly
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import plotly.utils
 from datetime import datetime
 import csv
@@ -598,8 +599,11 @@ def ana_sayfa():
         selected_date = None
         
         # Handle POST request (date selection)
+        show_contrib = True
         if request.method == 'POST':
             selected_date = request.form.get('selected_date')
+            # Checkbox sends value only when checked
+            show_contrib = 'show_contrib' in request.form
             if selected_date:
                 # Get data for selected date
                 data_pairs, month_name = get_monthly_group_data_for_date(selected_date)
@@ -632,31 +636,9 @@ def ana_sayfa():
         # Get last update date
         last_update = get_last_update_date()
         
-        # Create horizontal bar chart
-        fig = go.Figure()
-        
-        # Add bars for each category (using sorted data)
-        for i, (category, value) in enumerate(data_pairs_sorted):
-            color = '#EF476F' if category == 'Web TÜFE' else '#118AB2'  # Modern color scheme
-            fig.add_trace(go.Bar(
-                y=[category],
-                x=[value],
-                orientation='h',
-                marker_color=color,
-                name=category,
-                marker=dict(
-                    line=dict(width=0)
-                ),
-                text = [f'<b>{value:+.2f}%</b>'],
-                textposition='outside',
-                textfont=dict(
-                    size=15,
-                    color='#2B2D42',
-                    family='Inter, sans-serif'
-                ),
-                cliponaxis=False,
-                hovertemplate=f'{category}: %{{x:+.2f}}%<extra></extra>'
-            ))
+        # Prepare left (monthly change) data
+        left_categories = [pair[0] for pair in data_pairs_sorted]
+        left_values = [pair[1] for pair in data_pairs_sorted]
         
         valid_values = [v for _, v in data_pairs if v is not None]
 
@@ -677,150 +659,163 @@ def ana_sayfa():
             if x_max <= 0:
                 x_max_with_margin = min(0, x_max + x_margin)
 
-        # Update layout with modern theme
-        fig.update_layout(
-            title=dict(
-                text=f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları',
-                font=dict(
-                    size=24,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                y=0.95
-            ),
-            xaxis=dict(
-                title='Değişim (%)',
-                title_font=dict(
-                    size=14,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                tickfont=dict(
-                    size=14,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                gridcolor='#E9ECEF',
-                zerolinecolor='#E9ECEF',
-                range=[x_min_with_margin, x_max_with_margin]
-            ),
-            yaxis=dict(
-                title='Grup',
-                title_font=dict(
-                    size=14,
-                    family='Inter, sans-serif',
-                    color='#2B2D42'
-                ),
-                tickfont=dict(
-                    size=14,
-                    family='Arial Black, sans-serif',
-                    color='#2B2D42'
-                ),
-                gridcolor='#E9ECEF',
-                autorange='reversed'  # This makes the highest value appear at the top
-            ),
-            showlegend=False,
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            height=640,
-            margin=dict(l=20, r=80, t=80, b=20),
-            hovermode='y unified',
-            hoverlabel=dict(
-                bgcolor='white',
-                font_size=12,
-                font_family='Inter, sans-serif',
-                font_color='#2B2D42'
+        # If user disabled contributions, render single chart and return early
+        if not show_contrib:
+            def compute_range_single(values):
+                vals = [v for v in values if v is not None]
+                if not vals:
+                    return [0, 1]
+                vmin, vmax = min(vals), max(vals)
+                vr = vmax - vmin
+                m = vr * 0.3 if vr != 0 else max(abs(vmax), abs(vmin)) * 0.3
+                xmin, xmax = vmin - m, vmax + m
+                if vmin >= 0:
+                    xmin = max(0, vmin - m)
+                return [xmin, xmax]
+
+            single_range = compute_range_single(left_values)
+            left_colors = ['#EF476F' if c == 'Web TÜFE' else '#118AB2' for c in left_categories]
+            single_fig = go.Figure()
+            single_fig.add_trace(go.Bar(
+                y=left_categories,
+                x=left_values,
+                orientation='h',
+                marker=dict(color=left_colors, line=dict(width=0)),
+                text=[f'<b>{v:+.2f}%</b>' for v in left_values],
+                textposition='outside',
+                textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+            ))
+            chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları'
+            single_fig.update_layout(
+                title=dict(text=''),
+                xaxis=dict(title='Değişim (%)', gridcolor='#E9ECEF', zerolinecolor='#E9ECEF', range=single_range,
+                           title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                           tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42')),
+                yaxis=dict(title='Grup', autorange='reversed', gridcolor='#E9ECEF',
+                           title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                           tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42')),
+                showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=640,
+                margin=dict(l=40, r=80, t=30, b=50), hovermode='y unified',
+                hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
             )
-        )
-        
-        # Convert plot to JSON
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        
-        # Build contribution chart from katkıpayları.csv for the selected month
+            graphJSON = json.dumps(single_fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return render_template('index.html', 
+                                 graphJSON=graphJSON, 
+                                 active_page='ana_sayfa', 
+                                 last_update=last_update,
+                                 available_dates=available_dates,
+                                 selected_date=selected_date,
+                                 sorted_group_data=data_pairs_sorted,
+                                 show_contrib=show_contrib,
+                                 chart_title=chart_title)
+
+        # Build contribution series from katkıpayları.csv (right side)
         contribGraphJSON = None
+        contrib_df = None
         try:
             contrib_df = pd.read_csv('katkıpayları.csv', index_col=0)
-            # Try to select the row matching selected_date; otherwise use the last available row
-            contrib_row = None
-            if selected_date and selected_date in contrib_df.index:
-                contrib_row = contrib_df.loc[selected_date]
-                contrib_date_for_title = selected_date[:7]
-            else:
-                # Fallback to latest row
-                latest_idx = contrib_df.index[-1]
-                contrib_row = contrib_df.loc[latest_idx]
-                contrib_date_for_title = str(latest_idx)[:7]
-            # Exclude the total column if present
-            if 'Web TÜFE' in contrib_row.index:
-                contrib_row = contrib_row.drop('Web TÜFE')
-            # Prepare sorted contributions
-            contrib_series_sorted = contrib_row.sort_values(ascending=True)
-            contrib_categories = list(contrib_series_sorted.index)
-            contrib_values = list(contrib_series_sorted.values)
+        except Exception:
+            contrib_df = None
 
-            contrib_fig = go.Figure()
-            contrib_fig.add_trace(go.Bar(
-                y=contrib_categories,
-                x=contrib_values,
+        right_values = None
+        if contrib_df is not None:
+            if selected_date and selected_date in contrib_df.index:
+                row = contrib_df.loc[selected_date]
+            else:
+                row = contrib_df.iloc[-1]
+            if 'Web TÜFE' in row.index:
+                row = row.drop('Web TÜFE')
+            # Reindex to match left order where possible
+            try:
+                row = row.reindex(left_categories)
+            except Exception:
+                pass
+            right_values = row.tolist()
+
+        # Create combined subplot: 1 row, 2 columns (left bars, right bars) with shared y-axis
+        # Leave a visible middle gutter (for centered labels) by increasing spacing
+        # Create two symmetric panels with a wide center gutter for labels
+        fig = make_subplots(rows=1, cols=2, column_widths=[0.37, 0.37],
+                             specs=[[{"type": "bar"}, {"type": "bar"}]],
+                             horizontal_spacing=0.26, shared_yaxes=True)
+
+        # Left bars (monthly change)
+        left_colors = ['#EF476F' if c == 'Web TÜFE' else '#118AB2' for c in left_categories]
+        fig.add_trace(go.Bar(
+            y=left_categories,
+            x=left_values,
+            orientation='h',
+            marker=dict(color=left_colors, line=dict(width=0)),
+            name='Aylık değişim',
+            text=[f'<b>{v:+.2f}%</b>' for v in left_values],
+            textposition='outside',
+            textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+            cliponaxis=False,
+            hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+        ), row=1, col=1)
+
+        # Right bars (contributions), if available
+        if right_values is not None:
+            fig.add_trace(go.Bar(
+                y=left_categories,
+                x=right_values,
                 orientation='h',
-                marker_color='#118AB2',
-                marker=dict(line=dict(width=0)),
-                text=[f"<b>{v:+.2f}</b>" for v in contrib_values],
+                marker=dict(color='#118AB2', line=dict(width=0)),
+                name='Aylık etkiler',
+                text=[f'<b>{(v if pd.notna(v) else 0):+.2f}</b>' for v in right_values],
                 textposition='outside',
                 textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
                 cliponaxis=False,
                 hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
-            ))
+            ), row=1, col=2)
 
-            # Compute x-axis range with margin similar to the main chart
-            if len(contrib_values) > 0:
-                cmin = min(contrib_values)
-                cmax = max(contrib_values)
-                crange = cmax - cmin
-                base_margin = crange * 0.3 if crange != 0 else max(abs(cmin), abs(cmax)) * 0.3
-                # Start with symmetric margins
-                cx_min = cmin - base_margin
-                cx_max = cmax + base_margin
-                # If there are negatives, expand further on the left to fit outside labels
-                if cmin < 0:
-                    cx_min = cmin - base_margin - abs(cmin) * 0.3
-                # If all values are non-negative, keep left bound at least 0
-                if cmin >= 0:
-                    cx_min = max(0, cmin - base_margin)
-            else:
-                cx_min, cx_max = 0, 1
+        # Determine ranges for both sides
+        def compute_range(values):
+            vals = [v for v in values if v is not None]
+            if not vals:
+                return [0, 1]
+            vmin, vmax = min(vals), max(vals)
+            vr = vmax - vmin
+            m = vr * 0.3 if vr != 0 else max(abs(vmax), abs(vmin)) * 0.3
+            xmin, xmax = vmin - m, vmax + m
+            if vmin >= 0:
+                xmin = max(0, vmin - m)
+            return [xmin, xmax]
 
-            contrib_fig.update_layout(
-                title=dict(
-                    text=f'{month_name} Ayı Ana Grupların Aylık Katkısı (puan)',
-                    font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
-                    y=0.95
-                ),
-                xaxis=dict(
-                    title='Katkı (puan)',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                    gridcolor='#E9ECEF',
-                    zerolinecolor='#E9ECEF',
-                    range=[cx_min, cx_max]
-                ),
-                yaxis=dict(
-                    title='Grup',
-                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                    tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42')
-                ),
-                showlegend=False,
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                height=640,
-                margin=dict(l=20, r=80, t=80, b=20),
-                hovermode='y unified',
-                hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
-            )
-            contribGraphJSON = json.dumps(contrib_fig, cls=plotly.utils.PlotlyJSONEncoder)
-        except Exception as _:
-            contribGraphJSON = None
+        # Data-driven ranges with margin; widen left bound a bit if negative labels would clip
+        left_range = compute_range(left_values)
+        right_range = compute_range(right_values) if right_values is not None else [0, 1]
 
+        # Update shared y-axis and both x-axes
+        # Put y tick labels in the center gutter by placing them on right side of the left subplot
+        fig.update_yaxes(title_text='Grup', autorange='reversed', side='right',
+                         title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                         tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42'),
+                         showticklabels=True, row=1, col=1)
+        # Hide y tick labels on the right subplot so labels appear only in the middle
+        fig.update_yaxes(showticklabels=False, row=1, col=2)
+        fig.update_xaxes(title_text='Değişim (%)', range=left_range, gridcolor='#E9ECEF', zerolinecolor='#E9ECEF',
+                         tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), row=1, col=1)
+        fig.update_xaxes(title_text='Katkı (puan)', range=right_range, gridcolor='#E9ECEF', zerolinecolor='#E9ECEF',
+                         tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), row=1, col=2)
+
+        # Layout - leave title empty to place heading in template row with controls
+        chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Aylık Değişimleri ve Katkıları'
+        fig.update_layout(
+            title=dict(text=''),
+            barmode='overlay', bargap=0.25,
+            showlegend=False,
+            legend=dict(orientation='h', yanchor='bottom', y=0.02, xanchor='center', x=0.5),
+            plot_bgcolor='white', paper_bgcolor='white', height=640,
+            margin=dict(l=40, r=40, t=30, b=50), hovermode='y unified',
+            hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
+        )
+
+        # Export combined
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
         return render_template('index.html', 
                              graphJSON=graphJSON, 
                              active_page='ana_sayfa', 
@@ -828,14 +823,16 @@ def ana_sayfa():
                              available_dates=available_dates,
                              selected_date=selected_date,
                              sorted_group_data=data_pairs_sorted,
-                             contribGraphJSON=contribGraphJSON)
+                             show_contrib=show_contrib,
+                             chart_title=chart_title)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         available_dates = get_available_dates()
         return render_template('index.html', 
                              available_dates=available_dates,
                              selected_date=None,
-                             sorted_group_data=[])
+                             sorted_group_data=[],
+                             show_contrib=True)
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():

@@ -191,8 +191,9 @@
 
 
                     <div class="bg-white rounded-lg shadow-sm p-6">
-                        <!-- Date Selection Section - moved above charts to avoid overlap -->
-                        <div class="mb-4 flex justify-end">
+                        <!-- Header row: Title left, controls right -->
+                        <div class="relative flex items-center justify-end mb-2">
+                            <h1 class="absolute left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-900">{{ chart_title }}</h1>
                             <div class="bg-gray-50 rounded-lg shadow-sm p-3 border">
                                 <form method="POST" action="/ana-sayfa" class="flex items-center gap-3">
                                     <label for="selected_date" class="text-sm font-medium text-gray-600 whitespace-nowrap">Tarih:</label>
@@ -201,13 +202,14 @@
                                         <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date[:7] if date|length >= 7 else date }}</option>
                                         {% endfor %}
                                     </select>
+                                    <label class="flex items-center gap-2 ml-4">
+                                        <input type="checkbox" name="show_contrib" onchange="this.form.submit()" {% if show_contrib is not defined or show_contrib %}checked{% endif %}>
+                                        <span class="text-sm text-gray-700">Katkıları göster</span>
+                                    </label>
                                 </form>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
-                            <div id="chart" class="w-full"></div>
-                            <div id="contrib-chart" class="w-full"></div>
-                        </div>
+                        <div id="chart" class="w-full"></div>
                     </div>
                 </main>
 
@@ -223,18 +225,12 @@
         </div>
     </div>
 
+    <script id="graphs-data" type="application/json">{{ graphJSON | safe }}</script>
     <script>
-        var graphs = {{ graphJSON | safe }};
+        var graphs = JSON.parse(document.getElementById('graphs-data').textContent);
         Plotly.newPlot('chart', graphs.data, graphs.layout, { displayModeBar: false, responsive: true });
-        {% if contribGraphJSON %}
-        var contribGraphs = {{ contribGraphJSON | safe }};
-        Plotly.newPlot('contrib-chart', contribGraphs.data, contribGraphs.layout, { displayModeBar: false, responsive: true });
-        {% endif %}
         window.addEventListener('resize', function () {
             Plotly.Plots.resize('chart');
-            {% if contribGraphJSON %}
-            Plotly.Plots.resize('contrib-chart');
-            {% endif %}
         });
     </script>
 </body>
