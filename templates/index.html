@@ -195,15 +195,15 @@
                         <div class="relative flex items-center justify-end mb-2">
                             <h1 class="absolute left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-900">{{ chart_title }}</h1>
                             <div class="bg-gray-50 rounded-lg shadow-sm p-3 border">
-                                <form method="POST" action="/ana-sayfa" class="flex items-center gap-3">
+                                <form id="controls-form" method="POST" action="/ana-sayfa" class="flex items-center gap-3">
                                     <label for="selected_date" class="text-sm font-medium text-gray-600 whitespace-nowrap">Tarih:</label>
-                                    <select name="selected_date" id="selected_date" onchange="this.form.submit()" class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-[#EF476F] focus:border-[#EF476F] min-w-0 bg-white">
+                                    <select name="selected_date" id="selected_date" class="auto-submit border border-gray-300 rounded px-3 py-2 text-sm focus:ring-[#EF476F] focus:border-[#EF476F] min-w-0 bg-white">
                                         {% for date in available_dates %}
                                         <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date[:7] if date|length >= 7 else date }}</option>
                                         {% endfor %}
                                     </select>
                                     <label class="flex items-center gap-2 ml-4">
-                                        <input type="checkbox" name="show_contrib" onchange="this.form.submit()" {% if show_contrib is not defined or show_contrib %}checked{% endif %}>
+                                        <input type="checkbox" name="show_contrib" class="auto-submit" {% if show_contrib is not defined or show_contrib %}checked{% endif %}>
                                         <span class="text-sm text-gray-700">Katkıları göster</span>
                                     </label>
                                 </form>
@@ -232,6 +232,44 @@
         window.addEventListener('resize', function () {
             Plotly.Plots.resize('chart');
         });
+        (function () {
+            var form = document.getElementById('controls-form');
+            if (form) {
+                function saveScroll() {
+                    try {
+                        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+                        sessionStorage.setItem('index_scroll_y', String(y));
+                    } catch (e) {}
+                }
+                // Submit on change, after saving scroll
+                var autos = form.querySelectorAll('.auto-submit');
+                autos.forEach(function (el) {
+                    el.addEventListener('change', function () {
+                        saveScroll();
+                        form.submit();
+                    });
+                });
+                // Fallback: if something else triggers submit
+                form.addEventListener('submit', saveScroll);
+            }
+            // Prevent browser auto-restoring to top
+            try { if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; } } catch(e) {}
+            function restore() {
+                try {
+                    var saved = sessionStorage.getItem('index_scroll_y');
+                    if (saved !== null) {
+                        var y = parseInt(saved, 10);
+                        window.scrollTo(0, y);
+                    }
+                } catch (e) {}
+            }
+            window.addEventListener('load', function () {
+                restore();
+                // Re-apply after layout settles
+                setTimeout(restore, 150);
+                setTimeout(restore, 400);
+            });
+        })();
     </script>
 </body>
 
