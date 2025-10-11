@@ -3552,6 +3552,10 @@ def bultenler():
 
 @app.route('/bultenler/pdf/<filename>')
 def serve_bulten_pdf(filename):
+    return render_template('pdf_viewer.html', filename=filename)
+
+@app.route('/bultenler/pdf-direct/<filename>')
+def serve_bulten_pdf_direct(filename):
     bultenler_dir = os.path.join(os.path.dirname(__file__), 'bültenler')
     return send_file(os.path.join(bultenler_dir, filename))
 
