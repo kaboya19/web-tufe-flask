@@ -237,16 +237,7 @@
                         <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                     </div>
                 </div>
-                <!-- Endeks Grafiği için Günlük/Aylık Butonları -->
-                <div class="mb-4">
-                    <div class="flex justify-end gap-3">
-                        <button class="tab-button active" onclick="showIndexType('daily')">Günlük</button>
-                        <button class="tab-button" onclick="showIndexType('monthly')">Aylık</button>
-                    </div>
-                </div>
-                <div id="main-graph-daily"></div>
-                <div id="main-graph-monthly" class="hidden"></div>
-                
+                <div id="main-graph"></div>
                 <div class="graph-container">
                     <div class="graph-tabs">
                         <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
@@ -256,43 +247,13 @@
                     <div id="line-graph" class="graph-content"></div>
                 </div>
                 <script>
-                    var dailyIndexGraph = {{ graphJSON | safe }};
-                    var monthlyIndexGraph = {{ monthly_cumulative_graphJSON | safe }};
                     var barGraph = {{ bar_graphJSON | safe }};
                     var lineGraph = {{ line_graphJSON | safe }};
-                    
-                    // Endeks grafikleri
-                    Plotly.newPlot('main-graph-daily', dailyIndexGraph.data, dailyIndexGraph.layout, { displayModeBar: false, responsive: true });
-                    Plotly.newPlot('main-graph-monthly', monthlyIndexGraph.data, monthlyIndexGraph.layout, { displayModeBar: false, responsive: true });
-                    
-                    // Aylık değişim grafikleri
                     Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
                     Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
 
-                    function showIndexType(type) {
-                        // Butonları güncelle
-                        var buttons = document.querySelectorAll('.tab-button[onclick^="showIndexType"]');
-                        buttons.forEach(btn => btn.classList.remove('active'));
-                        event.target.classList.add('active');
-                        
-                        // Grafikleri göster/gizle
-                        if (type === 'daily') {
-                            document.getElementById('main-graph-daily').classList.remove('hidden');
-                            document.getElementById('main-graph-monthly').classList.add('hidden');
-                            setTimeout(function () {
-                                Plotly.Plots.resize('main-graph-daily');
-                            }, 100);
-                        } else {
-                            document.getElementById('main-graph-daily').classList.add('hidden');
-                            document.getElementById('main-graph-monthly').classList.remove('hidden');
-                            setTimeout(function () {
-                                Plotly.Plots.resize('main-graph-monthly');
-                            }, 100);
-                        }
-                    }
-
                     function showGraph(type) {
-                        document.querySelectorAll('.graph-tabs .tab-button').forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                         document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
                         document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
                         document.getElementById(`${type}-graph`).classList.add('active');
@@ -300,6 +261,10 @@
                             Plotly.Plots.resize(`${type}-graph`);
                         }, 100);
                     }
+                </script>
+                <script>
+                    var graphs = {{ graphJSON | safe }};
+                    Plotly.newPlot('main-graph', graphs.data, graphs.layout, { displayModeBar: false });
                 </script>
             </div>
         </main>

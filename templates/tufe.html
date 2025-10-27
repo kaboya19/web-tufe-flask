@@ -250,21 +250,7 @@
                         <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                     </div>
                 </div>
-                
-                {% if selected_madde == 'TÜFE' %}
-                <!-- Endeks Grafiği için Günlük/Aylık Butonları -->
-                <div class="mb-4">
-                    <div class="flex justify-end gap-3">
-                        <button class="tab-button active" onclick="showIndexType('daily')">Günlük</button>
-                        <button class="tab-button" onclick="showIndexType('monthly')">Aylık</button>
-                    </div>
-                </div>
-                <div id="tufe-chart-daily" class="w-full"></div>
-                <div id="tufe-chart-monthly" class="w-full hidden"></div>
-                {% else %}
                 <div id="tufe-chart" class="w-full"></div>
-                {% endif %}
-                
                 {% if selected_madde != 'TÜFE' %}
                 <div class="mt-12 w-full">
                     <div class="btn-group">
@@ -335,40 +321,7 @@
 
     <script>
         var graphs = {{ graphJSON | safe }};
-        {% if selected_madde == 'TÜFE' %}
-        // TÜFE için günlük ve aylık grafikleri çiz
-        Plotly.newPlot('tufe-chart-daily', graphs.data, graphs.layout, { displayModeBar: false, responsive: true });
-        
-        var monthlyGraphs = {{ monthly_cumulative_graphJSON | safe }};
-        if (monthlyGraphs && monthlyGraphs !== 'null') {
-            Plotly.newPlot('tufe-chart-monthly', monthlyGraphs.data, monthlyGraphs.layout, { displayModeBar: false, responsive: true });
-        }
-        
-        function showIndexType(type) {
-            // Butonları güncelle
-            var buttons = document.querySelectorAll('.tab-button[onclick^="showIndexType"]');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            // Grafikleri göster/gizle
-            if (type === 'daily') {
-                document.getElementById('tufe-chart-daily').classList.remove('hidden');
-                document.getElementById('tufe-chart-monthly').classList.add('hidden');
-                setTimeout(function () {
-                    Plotly.Plots.resize('tufe-chart-daily');
-                }, 100);
-            } else {
-                document.getElementById('tufe-chart-daily').classList.add('hidden');
-                document.getElementById('tufe-chart-monthly').classList.remove('hidden');
-                setTimeout(function () {
-                    Plotly.Plots.resize('tufe-chart-monthly');
-                }, 100);
-            }
-        }
-        {% else %}
-        // Diğer maddeler için normal grafik
         Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { displayModeBar: false });
-        {% endif %}
     </script>
     {% if selected_madde != 'TÜFE' %}
     <script>
