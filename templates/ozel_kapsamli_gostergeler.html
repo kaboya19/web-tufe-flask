@@ -261,7 +261,15 @@
 
             <!-- Index Chart -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <div id="index-chart" class="w-full" style="height: 500px;"></div>
+                <!-- Endeks Grafiği için Günlük/Aylık Butonları -->
+                <div class="mb-4">
+                    <div class="flex justify-end gap-3">
+                        <button class="tab-button active" onclick="showIndexType('daily')">Günlük</button>
+                        <button class="tab-button" onclick="showIndexType('monthly')">Aylık</button>
+                    </div>
+                </div>
+                <div id="index-chart-daily" class="w-full" style="height: 500px;"></div>
+                <div id="index-chart-monthly" class="w-full hidden" style="height: 500px;"></div>
             </div>
 
             <!-- Monthly Change Charts -->
@@ -298,7 +306,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('DOM Content Loaded');  // Test log
             try {
-                // Index Chart
+                // Index Chart - Daily
                 const rawGraphJSON = '{{ graphJSON | tojson | safe }}';
                 console.log('Raw graphJSON:', rawGraphJSON);
                 let indexGraphData;
@@ -308,7 +316,7 @@
                     indexGraphData = JSON.parse(cleanJSON);
                     console.log('Parsed Index Graph Data:', indexGraphData);
                     if (indexGraphData && indexGraphData.data && indexGraphData.layout) {
-                        Plotly.newPlot('index-chart', indexGraphData.data, indexGraphData.layout, {
+                        Plotly.newPlot('index-chart-daily', indexGraphData.data, indexGraphData.layout, {
                             displayModeBar: false,
                             responsive: true,
                             scrollZoom: true
@@ -318,6 +326,28 @@
                     }
                 } catch (parseError) {
                     console.error('Error parsing index graph JSON:', parseError);
+                }
+                
+                // Index Chart - Monthly
+                const rawMonthlyGraphJSON = '{{ monthly_cumulative_graphJSON | tojson | safe }}';
+                console.log('Raw monthly_cumulative_graphJSON:', rawMonthlyGraphJSON);
+                let monthlyIndexGraphData;
+                try {
+                    // Remove extra quotes if present
+                    const cleanJSON = rawMonthlyGraphJSON.replace(/^"|"$/g, '');
+                    monthlyIndexGraphData = JSON.parse(cleanJSON);
+                    console.log('Parsed Monthly Index Graph Data:', monthlyIndexGraphData);
+                    if (monthlyIndexGraphData && monthlyIndexGraphData.data && monthlyIndexGraphData.layout) {
+                        Plotly.newPlot('index-chart-monthly', monthlyIndexGraphData.data, monthlyIndexGraphData.layout, {
+                            displayModeBar: false,
+                            responsive: true,
+                            scrollZoom: true
+                        });
+                    } else {
+                        console.error('Invalid monthly index graph data structure:', monthlyIndexGraphData);
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing monthly index graph JSON:', parseError);
                 }
 
                 // Bar Chart
@@ -364,9 +394,11 @@
 
                 // Handle window resize
                 window.addEventListener('resize', function () {
-                    Plotly.Plots.resize('index-chart');
+                    // Resize active index chart
+                    const activeIndexChart = document.getElementById('index-chart-daily').classList.contains('hidden') ? 'index-chart-monthly' : 'index-chart-daily';
+                    Plotly.Plots.resize(activeIndexChart);
 
-                    // Only resize visible chart
+                    // Only resize visible monthly chart
                     const activeChart = document.querySelector('.graph-content.active');
                     if (activeChart) {
                         const chartId = activeChart.id;
@@ -381,9 +413,31 @@
                 });
             }
         });
+        
+        function showIndexType(type) {
+            // Butonları güncelle
+            var buttons = document.querySelectorAll('.tab-button[onclick^="showIndexType"]');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Grafikleri göster/gizle
+            if (type === 'daily') {
+                document.getElementById('index-chart-daily').classList.remove('hidden');
+                document.getElementById('index-chart-monthly').classList.add('hidden');
+                setTimeout(function () {
+                    Plotly.Plots.resize('index-chart-daily');
+                }, 100);
+            } else {
+                document.getElementById('index-chart-daily').classList.add('hidden');
+                document.getElementById('index-chart-monthly').classList.remove('hidden');
+                setTimeout(function () {
+                    Plotly.Plots.resize('index-chart-monthly');
+                }, 100);
+            }
+        }
 
         function showGraph(type) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.graph-tabs .tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
             document.getElementById(`${type}-chart`).classList.add('active');
