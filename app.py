@@ -3522,6 +3522,10 @@ def mevsimsel_duzeltilmis_gostergeler():
         month_name=last_month_from_csv
     )
 
+@app.route('/hakkinda')
+def hakkinda():
+    return render_template('hakkinda.html', active_page='hakkinda')
+
 @app.route('/bultenler', methods=['GET', 'POST'])
 def bultenler():
     # List all PDF files in the 'bültenler' directory
