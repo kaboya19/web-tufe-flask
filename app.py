@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for
 import pandas as pd
+import numpy as np
 import json
 import plotly
 import plotly.graph_objects as go
@@ -1889,6 +1890,129 @@ def ana_gruplar():
     )
     line_graphJSON = line_fig.to_json()
 
+    # --- Aylık Kümülatif Grafik ---
+    monthly_cumulative_fig = go.Figure()
+    
+    try:
+        # gruplaraylık.csv dosyasını oku
+        df_monthly_cum = pd.read_csv("gruplaraylık.csv", index_col=0)
+        df_monthly_cum = df_monthly_cum.T
+        df_monthly_cum.columns = df_monthly_cum.iloc[0]
+        df_monthly_cum = df_monthly_cum.iloc[1:]
+        
+        # Kümülatif hesaplama
+        df_monthly_cum = ((np.cumprod((df_monthly_cum/100)+1))-1)*100
+        df_monthly_cum.index = pd.to_datetime(df_monthly_cum.index)
+        df_monthly_cum.loc[pd.to_datetime("2025-01-31")] = 0
+        df_monthly_cum = df_monthly_cum.sort_index()
+        
+        # Seçili grup için verileri al
+        if selected_group in df_monthly_cum.columns:
+            monthly_cum_values = df_monthly_cum[selected_group]
+            monthly_cum_dates = df_monthly_cum.index
+            
+            # Türkçe tarih formatı için customdata
+            monthly_customdata = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in monthly_cum_dates]
+            
+            # Web TÜFE trace
+            monthly_cumulative_fig.add_trace(go.Scatter(
+                x=monthly_cum_dates,
+                y=monthly_cum_values,
+                mode='lines+markers',
+                name=f'Web TÜFE - {selected_group}',
+                line=dict(color='#EF476F', width=3),
+                marker=dict(size=8, color='#EF476F'),
+                customdata=monthly_customdata,
+                hovertemplate='<b>%{customdata}</b><br>Web TÜFE: %{y:.2f}%<extra></extra>'
+            ))
+            
+            # TÜİK için de aynı işlemi yap (eğer veri varsa)
+            if tuik_df is not None and tuik_column_name and tuik_column_name in tuik_df.columns:
+                # TÜİK aylık değişim verilerini al
+                try:
+                    tuik_aylik_df = pd.read_csv("tuikaylik.csv", index_col=0)
+                    tuik_aylik_df.index = pd.to_datetime(tuik_aylik_df.index)
+                    
+                    if tuik_column_name in tuik_aylik_df.columns:
+                        # Kümülatif hesaplama
+                        tuik_cum_values = ((np.cumprod((tuik_aylik_df[tuik_column_name]/100)+1))-1)*100
+                        tuik_cum_values.loc[pd.to_datetime("2025-01-31")] = 0
+                        tuik_cum_values = tuik_cum_values.sort_index()
+                        
+                        # Türkçe tarih formatı
+                        tuik_customdata = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tuik_cum_values.index]
+                        
+                        # TÜİK trace
+                        monthly_cumulative_fig.add_trace(go.Scatter(
+                            x=tuik_cum_values.index,
+                            y=tuik_cum_values.values,
+                            mode='lines+markers',
+                            name=f'TÜİK - {tuik_column_name}',
+                            line=dict(color='#118AB2', width=3),
+                            marker=dict(size=8, color='#118AB2'),
+                            customdata=tuik_customdata,
+                            hovertemplate='<b>%{customdata}</b><br>TÜİK: %{y:.2f}%<extra></extra>'
+                        ))
+                except Exception as e:
+                    print(f"TÜİK aylık kümülatif hesaplama hatası: {e}")
+            
+            # X ekseni için ay başı tarihleri
+            monthly_tickvals = monthly_cum_dates
+            monthly_ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in monthly_cum_dates]
+            
+            # Layout ayarları
+            monthly_cumulative_fig.update_layout(
+                height=600,
+                title=dict(
+                    text=f'{selected_group} Endeksi (Aylık Bazda)',
+                    font=dict(size=24, family='Inter, sans-serif', color='#2B2D42'),
+                    y=0.95
+                ),
+                xaxis=dict(
+                    title='Tarih',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    gridcolor='#E9ECEF',
+                    zerolinecolor='#E9ECEF',
+                    tickvals=monthly_tickvals,
+                    ticktext=monthly_ticktext,
+                    tickangle=0,
+                    hoverformat=''
+                ),
+                yaxis=dict(
+                    title='Endeks (Yılbaşından İtibaren Değişim %)',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    gridcolor='#E9ECEF'
+                ),
+                showlegend=True,
+                legend=dict(
+                    font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    bgcolor='rgba(255,255,255,0.8)',
+                    bordercolor='#E9ECEF',
+                    borderwidth=1,
+                    orientation='h',
+                    yanchor='bottom',
+                    y=1.02,
+                    xanchor='right',
+                    x=1
+                ),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                margin=dict(l=20, r=20, t=80, b=20),
+                hovermode='x unified',
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=12,
+                    font_family='Inter, sans-serif',
+                    namelength=-1
+                )
+            )
+    except Exception as e:
+        print(f"Aylık kümülatif grafik hatası: {e}")
+    
+    monthly_cumulative_graphJSON = monthly_cumulative_fig.to_json()
+
     return render_template('ana_gruplar.html',
         graphJSON=fig.to_json(),
         grup_adlari=grup_adlari,
@@ -1900,7 +2024,8 @@ def ana_gruplar():
         last_date=tarih.iloc[-1].strftime('%d.%m.%Y') if not tarih.empty else '',
         active_page='ana_gruplar',
         bar_graphJSON=bar_graphJSON,
-        line_graphJSON=line_graphJSON
+        line_graphJSON=line_graphJSON,
+        monthly_cumulative_graphJSON=monthly_cumulative_graphJSON
     )
 
 @app.route('/harcama-gruplari', methods=['GET', 'POST'])

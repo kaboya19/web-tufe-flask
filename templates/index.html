@@ -27,10 +27,115 @@
     <title>Anasayfa - Web TÜFE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #6366F1;
+            --secondary-color: #06B6D4;
+            --accent-color: #F97316;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-modern {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+        }
+
+        .card-modern:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-5px);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary-color), #4F46E5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-gradient:hover::before {
+            left: 100%;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .nav-link-modern {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link-modern::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.3s ease;
+        }
+
+        .nav-link-modern:hover::after {
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -38,45 +143,58 @@
 <body class="bg-gray-50">
     <div class="min-h-screen flex flex-row">
         <!-- Sidebar -->
-        <aside class="w-full max-w-xs bg-white border-r shadow-sm flex flex-col justify-between py-8 px-6">
+        <aside class="w-full max-w-xs bg-white border-r border-gray-200 shadow-lg flex flex-col justify-between py-8 px-6" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
             <div>
-                <h2 class="text-xl font-bold mb-4 text-[#EF476F]">Bülten Aboneliği</h2>
+                <h2 class="text-xl font-bold mb-4 gradient-text">Bülten Aboneliği</h2>
                 <form method="POST" action="/abone" class="space-y-4">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-posta
+                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">E-posta
                             adresiniz</label>
                         <input type="email" id="email" name="email" required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-lg focus:ring-[#EF476F] focus:border-[#EF476F]">
+                            class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base transition-all duration-300">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ne yapmak istersiniz?</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Ne yapmak istersiniz?</label>
                         <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
+                            <label class="inline-flex items-center cursor-pointer">
                                 <input type="radio" name="action" value="Abone ol" checked
-                                    class="form-radio text-[#EF476F]">
-                                <span class="ml-2">Abone ol</span>
+                                    class="form-radio text-indigo-600 h-5 w-5">
+                                <span class="ml-2 font-medium">Abone ol</span>
                             </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="action" value="Çık" class="form-radio text-[#EF476F]">
-                                <span class="ml-2">Çık</span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="action" value="Çık" class="form-radio text-indigo-600 h-5 w-5">
+                                <span class="ml-2 font-medium">Çık</span>
                             </label>
                         </div>
                     </div>
                     <button type="submit"
-                        class="w-full bg-[#EF476F] text-white font-bold py-2 rounded hover:bg-[#d43d5c]">Gönder</button>
+                        class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg">Gönder</button>
                     <!-- Excel Dataset Button -->
-                    <div class="flex items-center justify-center mt-4">
-                        <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/edit?gid=523299671#gid=523299671"
-                            target="_blank" rel="noopener"
-                            class="flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition">
-                            <!-- Excel SVG -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 48 48">
-                                <rect width="48" height="48" rx="8" fill="#217346" />
-                                <path fill="#fff"
-                                    d="M14 12h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2zm2.5 7.5 2.5 4 2.5-4h2l-3.5 5.5L23.5 32h-2l-2.5-4-2.5 4h-2l3.5-5.5L14.5 19.5h2z" />
-                            </svg>
-                            <span class="font-semibold text-lg">Web TÜFE Veriseti</span>
-                        </a>
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center justify-center">
+                            <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/edit?gid=523299671#gid=523299671"
+                                target="_blank" rel="noopener"
+                                class="flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition w-full">
+                                <!-- Excel SVG -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 48 48">
+                                    <rect width="48" height="48" rx="8" fill="#217346" />
+                                    <path fill="#fff"
+                                        d="M14 12h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2zm2.5 7.5 2.5 4 2.5-4h2l-3.5 5.5L23.5 32h-2l-2.5-4-2.5 4h-2l3.5-5.5L14.5 19.5h2z" />
+                                </svg>
+                                <span class="font-semibold text-lg">Web TÜFE Veriseti</span>
+                            </a>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/export?format=xlsx"
+                                target="_blank" rel="noopener"
+                                class="flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition w-full">
+                                <!-- Download SVG -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span class="font-semibold text-lg">Veriyi İndir (Excel)</span>
+                            </a>
+                        </div>
                     </div>
                     <!-- Haftalık Fiyatlar Button -->
 
@@ -179,36 +297,36 @@
         <div class="flex-1">
             <div class="min-h-screen">
                 <!-- Header -->
-                <header class="bg-white shadow-sm">
-                    <div class="w-full px-6 lg:px-8 py-4">
-                        <div class="flex items-center space-x-4">
-                            <a href="/" class="text-2xl font-bold text-gray-900 hover:text-[#EF476F]">Web TÜFE</a>
-                            <span class="text-gray-400">|</span>
+                <header>
+                    <div class="w-full px-6 lg:px-8 py-5">
+                        <div class="flex items-center space-x-3">
+                            <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/tufe"
-                                class="{% if active_page == 'tufe' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">TÜFE</a>
-                            <span class="text-gray-400">|</span>
+                                class="nav-link-modern font-semibold {% if active_page == 'tufe' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">TÜFE</a>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/ana-gruplar"
-                                class="{% if active_page == 'ana_gruplar' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Ana
+                                class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Ana
                                 Gruplar</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/harcama-gruplari"
-                                class="{% if active_page == 'harcama_gruplari' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Harcama
+                                class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Harcama
                                 Grupları</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/maddeler"
-                                class="{% if active_page == 'maddeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Maddeler</a>
-                            <span class="text-gray-400">|</span>
+                                class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Maddeler</a>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/ozel-kapsamli-gostergeler"
-                                class="{% if active_page == 'ozel_kapsamli_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Özel
+                                class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Özel
                                 Kapsamlı Göstergeler</a>
-                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-300 font-light">|</span>
                             <a href="/mevsimsel-duzeltilmis-gostergeler"
-                                class="{% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-black font-bold hover:text-[#EF476F]{% else %}text-gray-600 hover:text-gray-900{% endif %}">Mevsimsel
+                                class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Mevsimsel
                                 Düzeltilmiş Göstergeler</a>
-                            <span class="text-gray-400">|</span>
-                            <a href="/bultenler" class="text-gray-600 hover:text-gray-900">Bültenler</a>
-                            <span class="text-gray-400">|</span>
-                            <a href="/metodoloji" class="text-gray-600 hover:text-gray-900">Metodoloji</a>
+                            <span class="text-gray-300 font-light">|</span>
+                            <a href="/bultenler" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Bültenler</a>
+                            <span class="text-gray-300 font-light">|</span>
+                            <a href="/metodoloji" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Metodoloji</a>
                         </div>
                     </div>
                 </header>
@@ -216,45 +334,50 @@
                 <!-- Main Content -->
                 <main class="w-full px-6 lg:px-8 py-8">
                     {% if last_update %}
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <p class="text-blue-800 font-medium">
-                            Son Güncellenme Tarihi: {{ last_update }}
-
-                        </p>
-                        <p class="text-blue-800 font-medium">
-                            Nihai veriler her ayın 24.günü belli olmaktadır.
-                        </p>
+                    <div class="card-modern p-6 mb-6 border-l-4 border-indigo-500">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-base font-semibold text-indigo-900">
+                                    Son Güncellenme Tarihi: {{ last_update }}
+                                </p>
+                                <p class="mt-1 text-sm text-indigo-700">
+                                    Nihai veriler her ayın 24.günü belli olmaktadır.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-
-
-
-
                     {% endif %}
 
-                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                        <h1 class="text-2xl font-bold text-gray-900 mb-3">Web TÜFE Ekimde %3,09 arttı</h1>
-                        <p class="text-gray-700">
-                            Ekim bülteni yayınlandı:
-                            <a href="/bultenler" class="text-[#EF476F] hover:text-[#d43d5c] font-medium underline">
-                                Bülten sayfasına git
-                            </a>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-5 h-5 ml-1"
-                                viewBox="0 0 24 24" fill="none">
-                                <rect width="24" height="24" rx="4" fill="#E53E3E" />
-                                <path
-                                    d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
-                                    fill="#fff" />
-                                <text x="7" y="17" font-size="7" fill="#fff"
-                                    font-family="Arial, Helvetica, sans-serif">PDF</text>
-                            </svg>
-                        </p>
+                    <div class="card-modern p-8 mb-6">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-shrink-0 mr-4">
+                                <div class="p-3 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400">
+                                    <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif;">Web TÜFE Ekimde %3,09 arttı</h1>
+                                <p class="text-gray-600 flex items-center">
+                                    <span class="mr-2">Ekim bülteni yayınlandı:</span>
+                                    <a href="/bultenler" class="gradient-text font-semibold hover:underline inline-flex items-center">
+                                        Bülten sayfasına git
+                                        <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-
-
-
-
-                    <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="card-modern p-6">
                         <!-- Header row: Title left, controls right -->
                         <div class="relative flex items-center justify-end mb-2">
                             <h1 class="absolute left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-900">{{ chart_title }}</h1>
