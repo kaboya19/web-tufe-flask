@@ -858,6 +858,7 @@ def tufe():
     worksheet = spreadsheet.get_worksheet_by_id(459488282)
     data = worksheet.get_all_values()
     df_madde = pd.DataFrame(data[1:], columns=data[0])"""
+    import pandas as pd
     df_madde=pd.read_csv("endeksler_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
     madde_names = df_madde.columns[1:].tolist()  # Get column names as madde names
     
@@ -1109,6 +1110,131 @@ def tufe():
             )
         )
         line_graphJSON = json.dumps(line_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # --- Aylık Kümülatif Grafik (TÜFE için) ---
+        monthly_cumulative_graphJSON = 'null'
+        try:
+            # Aylık değişim verilerini al (bar_tufe ve bar_tuik)
+            monthly_tufe_values = [v if v is not None else 0 for v in bar_tufe]
+            monthly_tuik_values = [v if v is not None else 0 for v in bar_tuik]
+            
+            # Aralık 2024 ve Ocak 2025 ekle
+            # Aralık 2024 = 0
+            cumulative_dates = ['Aralık 2024']
+            cumulative_tufe = [0]
+            cumulative_tuik = [0]
+            
+            # Ocak 2025 = 31 Ocak endeksi - 100
+            if not df.empty and 'Web TÜFE' in df.columns:
+                target_date = pd.to_datetime("2025-01-31")
+                if target_date in df['Tarih'].values:
+                    ocak_endeks = df[df['Tarih'] == target_date]['Web TÜFE'].iloc[0]
+                    cumulative_dates.append('Ocak 2025')
+                    cumulative_tufe.append(ocak_endeks - 100)
+                    
+                    # TÜİK için de
+                    if tuik_df is not None and 'Genel' in tuik_df.columns and target_date in tuik_df.index:
+                        ocak_tuik_endeks = tuik_df.loc[target_date, 'Genel']
+                        cumulative_tuik.append(ocak_tuik_endeks - 100)
+                    else:
+                        cumulative_tuik.append(0)
+            
+            # Şubat ve sonrasını ekle
+            for i, month in enumerate(bar_months):
+                # Ocak 2025'i atla (zaten ekledik)
+                if 'Ocak 2025' not in month:
+                    cumulative_dates.append(month)
+                    cumulative_tufe.append(monthly_tufe_values[i])
+                    cumulative_tuik.append(monthly_tuik_values[i])
+            
+            # Kümülatif hesaplama
+            # df_cum oluştur
+            import pandas as pd
+            df_cum = pd.DataFrame({
+                'Ay': cumulative_dates,
+                'Web TÜFE': cumulative_tufe,
+                'TÜİK': cumulative_tuik
+            })
+            
+            # Kümülatif hesaplama: ((cumprod((df/100)+1))-1)*100
+            df_cum['Web TÜFE Kümülatif'] = ((np.cumprod((df_cum['Web TÜFE']/100)+1))-1)*100
+            df_cum['TÜİK Kümülatif'] = ((np.cumprod((df_cum['TÜİK']/100)+1))-1)*100
+            
+            # Grafik oluştur
+            monthly_cumulative_fig = go.Figure()
+            
+            # Web TÜFE
+            monthly_cumulative_fig.add_trace(go.Scatter(
+                x=df_cum['Ay'],
+                y=df_cum['Web TÜFE Kümülatif'],
+                mode='lines+markers',
+                name='Web TÜFE',
+                line=dict(color='#EF476F', width=3),
+                marker=dict(size=8, color='#EF476F'),
+                hovertemplate='<b>%{x}</b><br>Web TÜFE: %{y:.2f}%<extra></extra>'
+            ))
+            
+            # TÜİK
+            monthly_cumulative_fig.add_trace(go.Scatter(
+                x=df_cum['Ay'],
+                y=df_cum['TÜİK Kümülatif'],
+                mode='lines+markers',
+                name='TÜİK TÜFE',
+                line=dict(color='#118AB2', width=3),
+                marker=dict(size=8, color='#118AB2'),
+                hovertemplate='<b>%{x}</b><br>TÜİK TÜFE: %{y:.2f}%<extra></extra>'
+            ))
+            
+            # Layout
+            monthly_cumulative_fig.update_layout(
+                height=600,
+                title=dict(
+                    text='Web Tüketici Fiyat Endeksi (Aylık Bazda)',
+                    font=dict(size=24, family='Inter, sans-serif', color='#2B2D42'),
+                    y=0.95
+                ),
+                xaxis=dict(
+                    title='Ay',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    gridcolor='#E9ECEF',
+                    tickangle=-45
+                ),
+                yaxis=dict(
+                    title='Endeks (Yılbaşından İtibaren Değişim %)',
+                    title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                    gridcolor='#E9ECEF'
+                ),
+                showlegend=True,
+                legend=dict(
+                    font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                    bgcolor='rgba(255,255,255,0.8)',
+                    bordercolor='#E9ECEF',
+                    borderwidth=1,
+                    orientation='h',
+                    yanchor='bottom',
+                    y=1.02,
+                    xanchor='right',
+                    x=1
+                ),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                margin=dict(l=20, r=20, t=80, b=80),
+                hovermode='x unified',
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=12,
+                    font_family='Inter, sans-serif',
+                    namelength=-1
+                )
+            )
+            
+            monthly_cumulative_graphJSON = json.dumps(monthly_cumulative_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        except Exception as e:
+            print(f"TÜFE aylık kümülatif grafik hatası: {e}")
+            monthly_cumulative_graphJSON = 'null'
+        
         # Ensure last_date is a datetime object
         if isinstance(last_date, str):
             try:
@@ -1137,6 +1263,7 @@ def tufe():
             monthly_change=monthly_change,
             bar_graphJSON=bar_graphJSON,
             line_graphJSON=line_graphJSON,
+            monthly_cumulative_graphJSON=monthly_cumulative_graphJSON,
             active_page='tufe',
             madde_names=madde_names,
             selected_madde=selected_madde
