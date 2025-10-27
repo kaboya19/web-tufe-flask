@@ -106,11 +106,1186 @@
                 </div>
             </div>
         </header>
-        <main class="w-full px-0 py-0">
-            <div class="w-full h-[calc(100vh-80px)]" style="height: calc(100vh - 80px);">
-                <iframe src="/metodoloji/pdf" width="100%" height="100%"
-                    style="border:none; min-height:100vh;"></iframe>
+        <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <!-- Article Header -->
+            <article class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <!-- Hero Section -->
+                <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 text-white px-8 py-12">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4">Web TÜFE Metodolojisi</h1>
+                        <p class="text-xl text-indigo-100 mb-6">Günlük Tüketici Fiyat Endeksi Hesaplama Yöntemi</p>
+                        
+                        <!-- PDF Download Button -->
+                        <a href="/metodoloji/pdf" download="Web_TUFE_Metodoloji.pdf" class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Metodoloji PDF'ini İndir</span>
+                            <svg class="w-5 h-5 ml-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/>
+                                <text x="7.5" y="17" font-size="6" fill="currentColor" font-family="Arial">PDF</text>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="px-8 md:px-12 py-10">
+                    <!-- Giriş -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-indigo-500 pb-2 inline-block">Giriş</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                            Web TÜFE, Türkiye'nin günlük tüketici fiyat endeksini takip etmek amacıyla geliştirilmiş yenilikçi bir göstergedir. 
+                            Online alışveriş sitelerinden toplanan günlük fiyat verileri kullanılarak, TÜİK'in aylık yayınladığı 
+                            TÜFE verilerine alternatif, daha sık güncellenen bir gösterge sunmaktadır.
+                        </p>
+                        <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                            Geleneksel enflasyon ölçüm yöntemlerinin aylık periyotlarla sınırlı kalması, hızlı değişen ekonomik koşullarda 
+                            karar alıcıların ve vatandaşların güncel bilgiye erişimini kısıtlamaktadır. Web TÜFE bu boşluğu doldurmak üzere, 
+                            <strong>web scraping </strong> teknikleri kullanılarak 2025 yılında başlatılmıştır.
+                        </p>
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
+                                <p class="text-indigo-900">
+                                    <strong>🎯 Temel Amaç:</strong> Ekonomik aktörlerin ve vatandaşların fiyat değişimlerini günlük bazda, 
+                                    şeffaf ve güvenilir bir şekilde takip edebilmelerini sağlamak.
+                                </p>
+                            </div>
+                            <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                                <p class="text-purple-900">
+                                    <strong>🔍 Kapsam:</strong> TÜİK'in TÜFE sepetindeki 337 farklı ürün kategorisini takip ederek, 
+                                    Türkiye ekonomisinin gerçek zamanlı nabzını tutma.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-lg p-5 border border-indigo-300">
+                            <ul class="space-y-2 text-gray-800">
+                                <li class="flex items-start">
+                                    <span class="text-indigo-600 mr-2">•</span>
+                                    <span><strong>Günlük Güncelleme:</strong> Her gün 1 milyondan fazla fiyat verisi toplanarak anlık görünüm sağlanır</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-indigo-600 mr-2">•</span>
+                                    <span><strong>Erken Uyarı:</strong> Fiyat değişimlerini aylık veriler yayınlanmadan önce tespit edebilme</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-indigo-600 mr-2">•</span>
+                                    <span><strong>Detaylı Analiz:</strong> Ana grup, harcama grubu ve madde bazında ayrıştırılmış veriler</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-indigo-600 mr-2">•</span>
+                                    <span><strong>Açık Erişim:</strong> Tüm veriler ücretsiz ve herkese açık olarak sunulmaktadır</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Veri Kaynakları -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-purple-500 pb-2 inline-block">Veri Kaynakları</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                            Web TÜFE, Türkiye'nin önde gelen e-ticaret platformlarından günlük olarak fiyat verileri toplamaktadır.
+                        </p>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                                        1M+
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Günlük Veri</h3>
+                                </div>
+                                <p class="text-gray-700">Her gün 1 milyondan fazla fiyat verisi toplanmaktadır.</p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                                        337
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Ürün Sayısı</h3>
+                                </div>
+                                <p class="text-gray-700">TÜİK sepetinde yer alan 337 adet farklı ürün kategorisinde fiyat takibi yapılmaktadır.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h4 class="font-semibold text-gray-900 mb-3 text-lg">Veri Toplama Platformları:</h4>
+                            <ul class="space-y-2 text-gray-700">
+                                <li class="flex items-start">
+                                    <svg class="w-6 h-6 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>Migros, Carrefour, A101, BİM, ŞOK gibi market zincirlerinin online platformları</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg class="w-6 h-6 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>Trendyol, Akakçe, Cimri gibi genel e-ticaret platformları</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg class="w-6 h-6 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>Sektörel e-ticaret siteleri (elektronik, giyim, mobilya vb.)</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg class="w-6 h-6 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>Kamu ve belediye siteleri (EPDK,KGM,Büyükşehir Belediyeleri)</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg class="w-6 h-6 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>Armut,Obilet,Enuygun vb. hizmet siteleri</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Metodoloji -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-cyan-500 pb-2 inline-block">Hesaplama Metodolojisi</h2>
+                        
+                        <!-- Adım 1 -->
+                        <div class="mb-8">
+                            <div class="flex items-start mb-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                    1
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-semibold text-gray-900 mb-3">Veri Toplama ve Temizleme</h3>
+                                    <p class="text-gray-700 leading-relaxed mb-3">
+                                        Her gün <strong>sabah 05:00-08:00</strong> saatlerinde otomatik web kazıma (web scraping) 
+                                        yöntemleri kullanılarak ürün fiyatları toplanır.
+                                    </p>
+                                    
+                                    <div class="bg-purple-50 rounded-lg p-4 mb-4 border border-purple-200">
+                                        <h4 class="font-semibold text-purple-900 mb-2">📊 Veri Toplama Süreci:</h4>
+                                        <ul class="space-y-2 text-gray-700 text-sm">
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">1.</span>
+                                                <span><strong>Platform Taraması:</strong> 50+ farklı e-ticaret platformu ve market sitesi otomatik olarak taranır</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">2.</span>
+                                                <span><strong>Ürün Eşleştirme:</strong> Barkod, marka ve ürün özellikleri kullanılarak aynı ürünler birleştirilir</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">3.</span>
+                                                <span><strong>Fiyat Kaydetme:</strong> Her ürün için tarih, saat, platform ve fiyat bilgisi veritabanına kaydedilir</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">4.</span>
+                                                <span><strong>Anlık İşleme:</strong> Toplanan veriler gerçek zamanlı olarak işlenir ve endeks hesaplamalarına dahil edilir</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <h4 class="font-semibold text-gray-900 mb-2">🧹 Veri Temizleme ve Kalite Kontrol:</h4>
+                                    <p class="text-gray-700 leading-relaxed mb-3">
+                                        Ham veri toplandıktan sonra, güvenilirliği artırmak için çok katmanlı bir temizleme ve doğrulama sürecinden geçer:
+                                    </p>
+                                    <ul class="space-y-2 text-gray-700 ml-4">
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Aykırı Değer Tespiti:</strong> İstatistiksel yöntemlerle (IQR, Z-score) normal dağılımdan 
+                                                sapan fiyatlar tespit edilir ve otomatik olarak filtrelenir
+                                            </div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Promosyon Filtreleme:</strong> "kampanya", "indirim", "fırsat" gibi etiketler taşıyan 
+                                                ürünler ayrı kategorilendirilir ve normal fiyat hesaplamalarına dahil edilmez
+                                            </div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Platform Karşılaştırması:</strong> Aynı ürünün farklı platformlardaki fiyatları karşılaştırılır, 
+                                                %50'den fazla sapma gösteren veriler incelemeye alınır
+                                            </div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Stok ve Temin Durumu:</strong> "stokta yok", "geçici olarak temin edilemiyor" gibi 
+                                                durumlar tespit edilir ve bu ürünler ortalamadan çıkarılır
+                                            </div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Zaman Serisi Analizi:</strong> Bir ürünün fiyatında ani %20+ değişim olduğunda, 
+                                                önceki dönem verileriyle karşılaştırma yapılır ve anomali tespiti gerçekleştirilir
+                                            </div>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <span class="text-purple-500 mr-2">▹</span>
+                                            <div>
+                                                <strong>Manuel Doğrulama:</strong> Kritik ürün grupları (akaryakıt, gıda gibi) için 
+                                                haftalık manuel kontroller yapılır
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    
+                                    <div class="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                                        <p class="text-sm text-gray-700">
+                                            <strong>💡 Not:</strong> Veri kalitesi sürekli izlenmekte ve algoritmaların doğruluğu TÜİK'in 
+                                            resmi aylık verileriyle karşılaştırılarak iyileştirilmektedir. Ortalama hata payı: ±0.5 puan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adım 2 -->
+                        <div class="mb-8">
+                            <div class="flex items-start mb-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                    2
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-semibold text-gray-900 mb-3">Ürün Kategorilendirmesi</h3>
+                                    <p class="text-gray-700 leading-relaxed mb-3">
+                                        Toplanan ürünler TÜİK'in TÜFE sepet metodolojisiyle uyumlu şekilde kategorize edilir:
+                                    </p>
+                                    <div class="bg-pink-50 rounded-lg p-4 border border-pink-200">
+                                        <ul class="grid md:grid-cols-2 gap-3 text-gray-700">
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Gıda ve alkolsüz içecekler
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Giyim ve ayakkabı
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Konut (kira, ısıtma vb.)
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Mobilya ve ev eşyaları
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Sağlık
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Ulaştırma
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Eğlence ve kültür
+                                            </li>
+                                            <li class="flex items-center">
+                                                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                                                Çeşitli mal ve hizmetler
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adım 3 -->
+                        <div class="mb-8">
+                            <div class="flex items-start mb-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                    3
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-semibold text-gray-900 mb-3">Ağırlıklandırma</h3>
+                                    <p class="text-gray-700 leading-relaxed mb-3">
+                                        Her ürün kategorisine TÜİK'in TÜFE sepet ağırlıklarına benzer şekilde ağırlıklar atanır. 
+                                        Bu ağırlıklar hanehalkı tüketim harcamalarındaki payları temsil eder.
+                                    </p>
+                                    <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-4 border border-red-200 mb-6">
+                                        <p class="text-gray-700">
+                                            <strong>Örnek:</strong> Gıda ürünleri sepette %25-30 ağırlığa sahipken, eğlence-kültür %8-10 
+                                            civarında ağırlığa sahiptir.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Ana Grup Ağırlıkları Grafik -->
+                                    <div class="bg-white rounded-xl border-2 border-pink-200 p-6 shadow-sm">
+                                        <h4 class="font-bold text-gray-900 mb-4 text-center text-lg">Ana Grup Ağırlıkları (%)</h4>
+                                        <div class="space-y-3">
+                                            <!-- Gıda ve alkolsüz içecekler -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Gıda ve alkolsüz içecekler</span>
+                                                    <span class="text-sm font-bold text-indigo-600">28,18%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 28.18%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Konut -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Konut</span>
+                                                    <span class="text-sm font-bold text-purple-600">16,05%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 16.05%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Ulaştırma -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Ulaştırma</span>
+                                                    <span class="text-sm font-bold text-pink-600">13,43%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-pink-500 to-pink-600 h-3 rounded-full transition-all duration-500" style="width: 13.43%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Lokanta ve oteller -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Lokanta ve oteller</span>
+                                                    <span class="text-sm font-bold text-red-600">8,77%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-500" style="width: 8.77%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Ev eşyası -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Ev eşyası</span>
+                                                    <span class="text-sm font-bold text-orange-600">8,16%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500" style="width: 8.16%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Giyim ve ayakkabı -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Giyim ve ayakkabı</span>
+                                                    <span class="text-sm font-bold text-cyan-600">7,99%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 h-3 rounded-full transition-all duration-500" style="width: 7.99%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Alkollü içecekler ve tütün -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Alkollü içecekler ve tütün</span>
+                                                    <span class="text-sm font-bold text-emerald-600">3,98%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500" style="width: 3.98%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Haberleşme -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Haberleşme</span>
+                                                    <span class="text-sm font-bold text-teal-600">3,89%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-teal-500 to-teal-600 h-3 rounded-full transition-all duration-500" style="width: 3.89%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Çeşitli mal ve hizmetler -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Çeşitli mal ve hizmetler</span>
+                                                    <span class="text-sm font-bold text-blue-600">3,70%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" style="width: 3.70%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Eğitim -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Eğitim</span>
+                                                    <span class="text-sm font-bold text-violet-600">2,26%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-violet-500 to-violet-600 h-3 rounded-full transition-all duration-500" style="width: 2.26%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Eğlence ve kültür -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Eğlence ve kültür</span>
+                                                    <span class="text-sm font-bold text-fuchsia-600">2,05%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 h-3 rounded-full transition-all duration-500" style="width: 2.05%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Sağlık -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Sağlık</span>
+                                                    <span class="text-sm font-bold text-rose-600">1,53%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-rose-500 to-rose-600 h-3 rounded-full transition-all duration-500" style="width: 1.53%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-500 text-center mt-4 italic">Toplam: %100</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adım 4 -->
+                        <div class="mb-8">
+                            <div class="flex items-start mb-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                    4
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-semibold text-gray-900 mb-3">Endeks Hesaplaması</h3>
+                                    <p class="text-gray-700 leading-relaxed mb-4">
+                                        Web TÜFE endeksi, <strong>Zincirleme Laspeyres Endeksi</strong> yöntemi kullanılarak hesaplanır. 
+                                        Bu yöntemde her gün, ürün fiyatları bir önceki güne göre karşılaştırılır ve madde bazında <strong>geometrik ortalama</strong> 
+                                        alınarak endeks değeri önceki günün endeksine kümülatif olarak eklenir. Bu yaklaşım, günlük fiyat değişimlerini hassas bir 
+                                        şekilde yakalamayı ve kümülatif olarak takip etmeyi sağlar.
+                                    </p>
+                                    
+                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-4 border border-purple-200">
+                                        <h4 class="font-semibold text-purple-900 mb-2">🔗 Zincirleme Laspeyres Endeksi</h4>
+                                        <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                                            Web TÜFE, klasik Laspeyres fiyat endeksinin zincirleme (chain-linked) versiyonunu kullanır. 
+                                            Bu yöntemde:
+                                        </p>
+                                        <ul class="space-y-2 text-sm text-gray-700">
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">1.</span>
+                                                <span><strong>Günlük Hesaplama:</strong> Her gün, fiyatlar bir önceki güne göre karşılaştırılır ve 
+                                                geometrik ortalama ile endeks güncellenir (günlük zincirleme)</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">2.</span>
+                                                <span><strong>Yıllık Zincirleme:</strong> Her yıl ağırlıklar değiştiğinde (Ocak ayı), 
+                                                endeks yeni ağırlıklarla zincirleme hale getirilir. Önceki yılın son endeks değeri, 
+                                                yeni yılın başlangıç noktası olur</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="text-purple-600 font-bold mr-2">3.</span>
+                                                <span><strong>Süreklilik:</strong> Bu sayede sepet ağırlıkları her yıl güncellenirken, 
+                                                endeks serisi kesintisiz devam eder ve geçmiş dönemlerle karşılaştırılabilir kalır</span>
+                                            </li>
+                                        </ul>
+                                        <div class="mt-3 bg-purple-100 rounded p-3">
+                                            <p class="text-xs text-purple-900">
+                                                <strong>💡 Önemli:</strong> Zincirleme yöntem, sabit ağırlıklı endekslerin aksine, 
+                                                tüketim alışkanlıklarındaki değişimleri daha iyi yansıtır ve uzun dönemde "baz yılı etkisi" 
+                                                (base year effect) problemini minimize eder. Özellikle yüksek enflasyon dönemlerinde daha güvenilir sonuçlar üretir.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-5 mb-4 border-2 border-indigo-300">
+                                        <h4 class="font-semibold text-indigo-900 mb-3 text-lg">📊 Yıllık Ağırlık Güncellemesi ve Zincirleme - Detaylı Örnek</h4>
+                                        <p class="text-sm text-gray-700 leading-relaxed mb-4">
+                                            Ağırlıklar değiştiğinde aynı fiyatlarla farklı endeks değerleri oluşur. Zincirleme, bu farkı ortadan kaldırarak 
+                                            serinin sürekliliğini sağlar. İşte 2025 → 2026 geçişinde nasıl çalıştığı:
+                                        </p>
+                                        
+                                        <!-- Problem: Ağırlık Farkı -->
+                                        <div class="bg-white rounded-lg p-4 mb-4 border-l-4 border-red-400">
+                                            <h5 class="font-semibold text-red-900 mb-2 text-sm">⚠️ Problem: Ağırlık Değişimi Endeks Sıçraması Yaratır</h5>
+                                            <p class="text-xs text-gray-700 mb-3">
+                                                31 Aralık 2025 tarihinde aynı fiyatlar için iki farklı ağırlıkla hesaplama yaparsak:
+                                            </p>
+                                            <div class="bg-gray-50 rounded p-3 font-mono text-xs space-y-2">
+                                                <div class="border-b border-gray-300 pb-2">
+                                                    <p class="font-bold text-gray-900 mb-1">2025 Ağırlıklarıyla Hesaplanan Endeks:</p>
+                                                    <table class="w-full text-xs">
+                                                        <thead>
+                                                            <tr class="text-left">
+                                                                <th class="py-1">Madde</th>
+                                                                <th class="py-1 text-right">2025 Ağırlık</th>
+                                                                <th class="py-1 text-right">Fiyat İndeksi</th>
+                                                                <th class="py-1 text-right">Katkı</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="py-1">Gıda</td>
+                                                                <td class="py-1 text-right">28.0%</td>
+                                                                <td class="py-1 text-right">155.0</td>
+                                                                <td class="py-1 text-right">43.40</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="py-1">Konut</td>
+                                                                <td class="py-1 text-right">16.0%</td>
+                                                                <td class="py-1 text-right">148.0</td>
+                                                                <td class="py-1 text-right">23.68</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="py-1">Diğer...</td>
+                                                                <td class="py-1 text-right">56.0%</td>
+                                                                <td class="py-1 text-right">...</td>
+                                                                <td class="py-1 text-right">83.42</td>
+                                                            </tr>
+                                                            <tr class="border-t border-gray-400 font-bold">
+                                                                <td colspan="3" class="py-1">TOPLAM ENDEKs</td>
+                                                                <td class="py-1 text-right text-indigo-700">150.50</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                
+                                                <div class="pt-2">
+                                                    <p class="font-bold text-gray-900 mb-1">2026 Ağırlıklarıyla Aynı Fiyatlar İçin:</p>
+                                                    <table class="w-full text-xs">
+                                                        <thead>
+                                                            <tr class="text-left">
+                                                                <th class="py-1">Madde</th>
+                                                                <th class="py-1 text-right">2026 Ağırlık</th>
+                                                                <th class="py-1 text-right">Fiyat İndeksi</th>
+                                                                <th class="py-1 text-right">Katkı</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="py-1">Gıda</td>
+                                                                <td class="py-1 text-right">29.5%</td>
+                                                                <td class="py-1 text-right">155.0</td>
+                                                                <td class="py-1 text-right">45.73</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="py-1">Konut</td>
+                                                                <td class="py-1 text-right">15.0%</td>
+                                                                <td class="py-1 text-right">148.0</td>
+                                                                <td class="py-1 text-right">22.20</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="py-1">Diğer...</td>
+                                                                <td class="py-1 text-right">55.5%</td>
+                                                                <td class="py-1 text-right">...</td>
+                                                                <td class="py-1 text-right">84.27</td>
+                                                            </tr>
+                                                            <tr class="border-t border-gray-400 font-bold">
+                                                                <td colspan="3" class="py-1">TOPLAM ENDEKS</td>
+                                                                <td class="py-1 text-right text-red-700">152.20</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 bg-red-50 rounded p-2">
+                                                <p class="text-xs text-red-900">
+                                                    <strong>❌ Sorun:</strong> Aynı fiyatlar için 2025 ağırlıklarıyla <strong>150.50</strong>, 
+                                                    2026 ağırlıklarıyla <strong>152.20</strong> endeks oluşuyor. 
+                                                    <strong>1.70 puanlık fark</strong> tamamen ağırlık değişiminden kaynaklanıyor, fiyat değişimi yok!
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Çözüm: Zincirleme -->
+                                        <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                                            <h5 class="font-semibold text-green-900 mb-2 text-sm">✅ Çözüm: Zincirleme Bağlantı Mekanizması</h5>
+                                            <p class="text-xs text-gray-700 mb-3">
+                                                Zincirleme yöntem, ağırlık değişiminden kaynaklanan farkı ortadan kaldırarak seriyi kesintisiz tutar:
+                                            </p>
+                                            <div class="bg-green-50 rounded p-3 space-y-3 text-xs">
+                                                <div class="flex items-start">
+                                                    <span class="bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-0.5">1</span>
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold mb-1">31 Aralık 2025 (2025 ağırlıklarıyla - orijinal):</p>
+                                                        <p class="font-mono text-indigo-700">I<sub>31 Ara 2025</sub><sup>(2025 ağ.)</sup> = 150.50</p>
+                                                        <p class="text-xs text-gray-600 mt-1 italic">
+                                                            → Bu değer korunacak (zincirleme bağlantı için referans)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex items-start">
+                                                    <span class="bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-0.5">2</span>
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold mb-1">31 Aralık 2025 (2026 ağırlıklarıyla yeniden hesaplanır):</p>
+                                                        <p class="font-mono text-purple-700">I<sub>31 Ara 2025</sub><sup>(2026 ağ.)</sup> = 152.20</p>
+                                                        <p class="text-xs text-gray-600 mt-1 italic">
+                                                            → Aynı fiyatlar, yeni ağırlıklarla hesaplanır (sadece bağlantı için)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex items-start">
+                                                    <span class="bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-0.5">3</span>
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold mb-1">1 Ocak 2026 endeksi (2026 ağırlıklarıyla):</p>
+                                                        <p class="font-mono text-purple-700">I<sub>1 Oca 2026</sub><sup>(2026 ağ.)</sup> = 152.50</p>
+                                                        <p class="text-xs text-gray-600 mt-1">
+                                                            → 1 Ocak fiyatlarıyla, 2026 ağırlıklarıyla hesaplanan endeks
+                                                        </p>
+                                                        <p class="text-xs text-gray-600 mt-1 italic">
+                                                            (Örnek: %0.20 günlük artış varsayalım → 152.20 × 1.002 = 152.50)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex items-start bg-yellow-50 p-2 rounded border border-yellow-300">
+                                                    <span class="bg-yellow-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-0.5">4</span>
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold mb-1 text-yellow-900">Yüzde Değişim Hesaplama (2026 ağırlıklarıyla):</p>
+                                                        <div class="bg-white rounded p-2 mt-1">
+                                                            <p class="font-mono text-xs mb-2">
+                                                                Δ% = [(I<sub>1 Oca 2026</sub><sup>(2026 ağ.)</sup> - I<sub>31 Ara 2025</sub><sup>(2026 ağ.)</sup>) / I<sub>31 Ara 2025</sub><sup>(2026 ağ.)</sup>] × 100
+                                                            </p>
+                                                            <p class="font-mono text-xs text-blue-700 mb-1">
+                                                                Δ% = [(152.50 - 152.20) / 152.20] × 100
+                                                            </p>
+                                                            <p class="font-mono text-xs text-blue-700 font-bold">
+                                                                Δ% = 0.197% ≈ 0.2%
+                                                            </p>
+                                                        </div>
+                                                        <p class="text-xs text-gray-600 mt-1 italic">
+                                                            → Bu, yeni ağırlıklarla hesaplanan gerçek fiyat değişimi
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex items-start">
+                                                    <span class="bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-0.5">5</span>
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold mb-1">1 Ocak 2026 zincirleme endeksi:</p>
+                                                        <div class="bg-white rounded p-2 mt-1">
+                                                            <p class="font-mono text-xs mb-2 text-gray-700">
+                                                                I<sub>1 Oca 2026</sub><sup>(zincirleme)</sup> = I<sub>31 Ara 2025</sub><sup>(2025 ağ.)</sup> × (1 + Δ%/100)
+                                                            </p>
+                                                            <p class="font-mono text-xs text-green-700 mb-1">
+                                                                I<sub>1 Oca 2026</sub><sup>(zincirleme)</sup> = 150.50 × (1 + 0.002)
+                                                            </p>
+                                                            <p class="font-mono text-xs text-green-700 font-bold">
+                                                                I<sub>1 Oca 2026</sub><sup>(zincirleme)</sup> = 150.50 × 1.002 = 150.80
+                                                            </p>
+                                                        </div>
+                                                        <p class="text-xs text-gray-600 mt-2 italic">
+                                                            → Orijinal 31 Aralık endeksine sadece <strong>%0.2'lik gerçek fiyat değişimi</strong> eklendi!
+                                                        </p>
+                                                        <p class="text-xs text-gray-600 mt-1 italic">
+                                                            → Artış: 150.80 - 150.50 = <strong>0.30 puan</strong>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded p-3 border border-green-300">
+                                                <p class="text-xs text-green-900 leading-relaxed">
+                                                    <strong>✨ Zincirleme Bağlantı Mekanizması Özeti:</strong>
+                                                </p>
+                                                <ul class="text-xs text-green-900 mt-2 space-y-1 ml-4">
+                                                    <li>• <strong>Adım 1:</strong> 31 Aralık 2025 endeksi 2026 ağırlıklarıyla yeniden hesaplanır (152.20)</li>
+                                                    <li>• <strong>Adım 2:</strong> 1 Ocak 2026 endeksi 2026 ağırlıklarıyla hesaplanır (152.50)</li>
+                                                    <li>• <strong>Adım 3:</strong> Yüzde değişim bulunur: (152.50 - 152.20) / 152.20 = %0.2</li>
+                                                    <li>• <strong>Adım 4:</strong> Bu %0.2 değişim orijinal 31 Aralık endeksine uygulanır</li>
+                                                    <li>• <strong>Adım 5:</strong> Zincirleme endeks: 150.50 × 1.002 = 150.80</li>
+                                                    <li>• <strong>Sonuç:</strong> Seri kesintisiz devam eder, sadece gerçek fiyat değişimi (%0.2) yansır</li>
+                                                    <li>• <strong>🎯 Ağırlık farkından kaynaklanan 1.70 puanlık yapay artış tamamen önlenmiş olur!</strong></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Karşılaştırma -->
+                                        <div class="mt-4 bg-gradient-to-r from-purple-100 to-indigo-100 rounded p-4 border border-purple-300">
+                                            <h5 class="font-semibold text-purple-900 mb-2 text-sm">🔍 Zincirleme Olmadan vs. Zincirleme Bağlantı İle</h5>
+                                            <div class="grid md:grid-cols-2 gap-3 text-xs">
+                                                <div class="bg-white rounded p-3">
+                                                    <p class="font-bold text-red-700 mb-2">❌ Zincirleme Olmadan:</p>
+                                                    <div class="space-y-1">
+                                                        <p class="font-mono text-xs">31 Ara 2025 (2025 ağ.): 150.50</p>
+                                                        <p class="font-mono text-xs text-red-600 font-bold">1 Oca 2026 (2026 ağ.): 152.20 ⚠️</p>
+                                                        <p class="text-xs text-gray-500 ml-4">→ Ağırlık değişti, endeks sıçradı!</p>
+                                                        <p class="font-mono text-xs">2 Oca 2026: 152.50</p>
+                                                    </div>
+                                                    <div class="mt-2 pt-2 border-t border-red-200">
+                                                        <p class="text-xs text-red-800">
+                                                            <strong>Toplam Artış:</strong> 2.00 puan<br>
+                                                            <span class="text-red-600">• Ağırlık etkisi: 1.70 puan (yapay)</span><br>
+                                                            • Fiyat artışı: 0.30 puan
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="bg-white rounded p-3">
+                                                    <p class="font-bold text-green-700 mb-2">✅ Zincirleme Bağlantı İle:</p>
+                                                    <div class="space-y-1">
+                                                        <p class="font-mono text-xs">31 Ara 2025 (2025 ağ.): 150.50</p>
+                                                        <p class="text-xs text-gray-500 ml-4 italic">→ 31 Ara 2026 ağ. ile: 152.20</p>
+                                                        <p class="text-xs text-gray-500 ml-4 italic">→ 1 Oca 2026 ağ. ile: 152.50</p>
+                                                        <p class="text-xs text-gray-500 ml-4 italic">→ Değişim: %0.2 (152.50/152.20)</p>
+                                                        <p class="font-mono text-xs text-green-600 font-bold">1 Oca 2026 (zincirleme): 150.80 ✓</p>
+                                                        <p class="text-xs text-gray-500 ml-4">→ 150.50 × 1.002 = 150.80</p>
+                                                    </div>
+                                                    <div class="mt-2 pt-2 border-t border-green-200">
+                                                        <p class="text-xs text-green-800">
+                                                            <strong>Toplam Artış:</strong> 0.30 puan<br>
+                                                            <span class="text-gray-600">• Ağırlık etkisi: 0.00 puan (önlendi!)</span><br>
+                                                            <span class="text-green-600">• Fiyat artışı: 0.30 puan (%0.2 gerçek)</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 bg-white rounded p-3 border-2 border-purple-300">
+                                                <p class="text-xs text-purple-900 leading-relaxed">
+                                                    <strong>📌 Zincirleme Bağlantı Formülü:</strong><br>
+                                                    <code class="bg-purple-50 px-2 py-1 rounded text-xs block mt-2 p-2">
+                                                        Δ% = [(I<sub>t</sub><sup>(yeni ağ.)</sup> - I<sub>t-1</sub><sup>(yeni ağ.)</sup>) / I<sub>t-1</sub><sup>(yeni ağ.)</sup>] × 100<br>
+                                                        I<sub>t</sub><sup>(zincirleme)</sup> = I<sub>t-1</sub><sup>(eski ağ.)</sup> × (1 + Δ%/100)
+                                                    </code>
+                                                </p>
+                                                <p class="text-xs text-gray-600 mt-2 italic">
+                                                    Orijinal endekse, yeni ağırlıklarla hesaplanan yüzde değişim eklenir
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-gray-900 rounded-xl p-6 text-white overflow-x-auto mb-4">
+                                        <h4 class="text-center text-lg mb-4 text-cyan-400 font-semibold">Günlük Kümülatif Endeks Formülü</h4>
+                                        
+                                        <!-- Günlük Geometrik Ortalama -->
+                                        <div class="mb-4">
+                                            <p class="text-xs text-gray-400 text-center mb-1">Madde Bazında Geometrik Ortalama:</p>
+                                            <p class="text-center text-xl font-mono">
+                                                G<sub>madde,t</sub> = (∏<sub>i=1</sub><sup>n</sup> R<sub>i,t</sub>)<sup>1/n</sup>
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Kümülatif Endeks -->
+                                        <div class="mb-4">
+                                            <p class="text-xs text-gray-400 text-center mb-1">Kümülatif Endeks Hesabı:</p>
+                                            <p class="text-center text-xl font-mono">
+                                                I<sub>t</sub> = I<sub>t-1</sub> × G<sub>madde,t</sub>
+                                            </p>
+                                        </div>
+                                        
+                                        <div class="text-sm text-gray-300 mt-4 space-y-2 bg-gray-800 rounded p-4">
+                                            <p><strong class="text-cyan-400">I<sub>t</sub>:</strong> t gününün endeks değeri</p>
+                                            <p><strong class="text-cyan-400">I<sub>t-1</sub>:</strong> Bir önceki günün endeks değeri</p>
+                                            <p><strong class="text-cyan-400">G<sub>madde,t</sub>:</strong> t günündeki madde bazında geometrik ortalama</p>
+                                            <p><strong class="text-cyan-400">R<sub>i,t</sub>:</strong> i'inci ürünün günlük fiyat değişim oranı (P<sub>t</sub>/P<sub>t-1</sub>)</p>
+                                            <p><strong class="text-cyan-400">n:</strong> Madde içindeki ürün sayısı</p>
+                                            <p><strong class="text-cyan-400">∏:</strong> Çarpım işareti (tüm ürünler çarpılır)</p>
+                                        </div>
+                                        
+                                        <div class="mt-4 bg-gradient-to-r from-cyan-900 to-blue-900 rounded p-3 text-xs">
+                                            <p class="text-cyan-200">
+                                                <strong>💡 Neden Geometrik Ortalama?</strong><br>
+                                                Geometrik ortalama, fiyat değişimlerinin çarpımsal doğasını yansıtır ve aykırı değerlerin etkisini azaltır. 
+                                                Bu, özellikle günlük fiyat dalgalanmalarının yüksek olduğu ürünlerde daha istikrarlı sonuçlar üretir.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-orange-50 rounded-lg p-5 border border-orange-200 mb-4">
+                                        <h4 class="font-semibold text-orange-900 mb-3">📐 Hesaplama Adımları:</h4>
+                                        <ol class="space-y-3 text-gray-700">
+                                            <li class="flex items-start">
+                                                
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">1</span>
+                                                <div>
+                                                    <strong>Günlük Fiyat Değişimi:</strong> Her ürün için cari günün fiyatı bir önceki günün fiyatı ile kıyaslanır: 
+                                                    <code class="bg-orange-100 px-2 py-1 rounded">R<sub>i,t</sub> = P<sub>t,i</sub> / P<sub>t-1,i</sub></code>
+                                                </div>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">2</span>
+                                                <div>
+                                                    <strong>Madde Bazında Geometrik Ortalama:</strong> Her madde için günlük fiyat değişimlerinin geometrik ortalaması hesaplanır: 
+                                                    <code class="bg-orange-100 px-2 py-1 rounded">G<sub>madde</sub> = (∏ R<sub>i</sub>)<sup>1/n</sup></code>
+                                                </div>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">3</span>
+                                                <div>
+                                                    <strong>Kümülatif Endeks Hesaplama:</strong> Geometrik ortalama, önceki günün endeksine çarpılarak cari günün endeksi elde edilir: 
+                                                    <code class="bg-orange-100 px-2 py-1 rounded">I<sub>t</sub> = I<sub>t-1</sub> × G<sub>madde</sub></code>
+                                                </div>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">4</span>
+                                                <div>
+                                                    <strong>Alt Grup Endeksleri:</strong> Aynı yöntem ana gruplar, harcama grupları ve madde endeksleri için ayrı ayrı uygulanır
+                                                </div>
+                                            </li>
+                                        </ol>
+                                    </div>
+                                    
+                                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-5 border border-blue-200">
+                                        <h4 class="font-semibold text-blue-900 mb-3">🧮 Örnek Hesaplama (Günlük - Kümülatif Yöntem):</h4>
+                                        <div class="text-sm text-gray-700 space-y-2">
+                                            <p><strong>Senaryo:</strong> "Süt" maddesinde 3 farklı marka için günlük hesaplama</p>
+                                            <div class="bg-white rounded p-3 my-2">
+                                                <p class="font-semibold mb-2">Veriler:</p>
+                                                <table class="w-full text-xs">
+                                                    <thead class="bg-blue-100">
+                                                        <tr>
+                                                            <th class="p-1 text-left">Marka</th>
+                                                            <th class="p-1 text-right">Dün (Pₜ₋₁)</th>
+                                                            <th class="p-1 text-right">Bugün (Pₜ)</th>
+                                                            <th class="p-1 text-right">Değişim (R)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr class="border-b">
+                                                            <td class="p-1">Marka A</td>
+                                                            <td class="p-1 text-right">50 TL</td>
+                                                            <td class="p-1 text-right">52 TL</td>
+                                                            <td class="p-1 text-right">1.040</td>
+                                                        </tr>
+                                                        <tr class="border-b">
+                                                            <td class="p-1">Marka B</td>
+                                                            <td class="p-1 text-right">48 TL</td>
+                                                            <td class="p-1 text-right">49.5 TL</td>
+                                                            <td class="p-1 text-right">1.031</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="p-1">Marka C</td>
+                                                            <td class="p-1 text-right">55 TL</td>
+                                                            <td class="p-1 text-right">56 TL</td>
+                                                            <td class="p-1 text-right">1.018</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <p class="mt-2"><strong>Hesaplama Adımları:</strong></p>
+                                            <p class="bg-white rounded p-2 font-mono text-xs leading-relaxed">
+                                                <strong>1. Geometrik Ortalama:</strong><br>
+                                                G<sub>süt</sub> = (1.040 × 1.031 × 1.018)<sup>1/3</sup><br>
+                                                G<sub>süt</sub> = (1.0896)<sup>1/3</sup> = 1.0296<br><br>
+                                                
+                                                <strong>2. Kümülatif Endeks:</strong><br>
+                                                Dünkü Süt Endeksi (I<sub>t-1</sub>): 105.20<br>
+                                                Bugünkü Süt Endeksi: I<sub>t</sub> = 105.20 × 1.0296 = 108.31<br><br>
+                                                
+                                                <strong>Sonuç:</strong> Süt maddesi endeksi 105.20'den 108.31'e yükseldi (günlük %2.96 artış)
+                                            </p>
+                                            <p class="mt-2 text-xs italic bg-blue-50 p-2 rounded">
+                                                💡 <strong>Önemli:</strong> Bu yöntem sayesinde her gün bir önceki güne göre değişim hesaplanır ve 
+                                                endeks kümülatif olarak (zincirleme) ilerler. Böylece baz döneme kadar tüm günlük değişimler endekse yansımış olur.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Baz Dönem -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-orange-500 pb-2 inline-block">Baz Dönem ve Güncelleme</h2>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border-2 border-orange-300">
+                                <h3 class="font-bold text-orange-900 text-lg mb-3">📅 Mevcut Baz Dönem</h3>
+                                <div class="bg-white rounded-lg p-4 mb-3">
+                                    <p class="text-3xl font-bold text-orange-600 text-center">31 Aralık 2024 = 100</p>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">
+                                    Web TÜFE'nin baz dönemi <strong>31 Aralık 2024</strong> olarak belirlenmiştir. Bu dönemdeki ortalama fiyatlar 
+                                    100 puanlık referans değeri oluşturur ve sonraki tüm dönemlerdeki endeks değerleri bu baz döneme göre hesaplanır.
+                                </p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-300">
+                                <h3 class="font-bold text-amber-900 text-lg mb-3">🔄 Güncelleme Periyodu</h3>
+                                <div class="space-y-2 text-sm text-gray-700">
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 font-bold mr-2">•</span>
+                                        <span><strong>Sepet Ağırlıkları:</strong> Yılda 1 kez (Ocak ayında) güncellenir</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 font-bold mr-2">•</span>
+                                        <span><strong>Ürün Listesi:</strong> Yılda 1 kez gözden geçirilir</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 font-bold mr-2">•</span>
+                                        <span><strong>Baz Dönem:</strong>31 Aralık 2024 = 100 olarak sabit tutulur.</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 font-bold mr-2">•</span>
+                                        <span><strong>Endeks Verileri:</strong> Günde 1 kez güncellenir.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-6 border-2 border-orange-200 shadow-sm">
+                            <h3 class="font-bold text-gray-900 text-lg mb-4">🔧 Ağırlık Güncelleme Süreci</h3>
+                            <p class="text-gray-700 leading-relaxed mb-4">
+                                Sepet ağırlıkları, hanehalkı tüketim alışkanlıklarındaki değişimleri yansıtmak amacıyla düzenli olarak güncellenir. 
+                                Bu güncelleme TÜİK'in yayınladığı Hanehalkı Tüketim Harcamaları İstatistikleri esas alınarak yapılır.
+                            </p>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="bg-orange-50 rounded-lg p-4">
+                                    <div class="text-2xl font-bold text-orange-600 mb-1">1</div>
+                                    <p class="text-sm font-semibold text-gray-900 mb-1">Veri Toplama</p>
+                                    <p class="text-xs text-gray-600">TÜİK'ten yeni tüketim harcama payları alınır</p>
+                                </div>
+                                <div class="bg-amber-50 rounded-lg p-4">
+                                    <div class="text-2xl font-bold text-amber-600 mb-1">2</div>
+                                    <p class="text-sm font-semibold text-gray-900 mb-1">Uyarlama</p>
+                                    <p class="text-xs text-gray-600">Web TÜFE sepetine uygun şekilde dönüştürülür</p>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-4">
+                                    <div class="text-2xl font-bold text-yellow-600 mb-1">3</div>
+                                    <p class="text-sm font-semibold text-gray-900 mb-1">Uygulama</p>
+                                    <p class="text-xs text-gray-600">Yeni ağırlıklar Ocak ayı başından itibaren kullanılır</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex items-start bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-5 border-l-4 border-orange-500">
+                            <svg class="w-6 h-6 text-orange-600 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold text-orange-900 mb-1">Önemli Not:</p>
+                                <p class="text-sm text-gray-700">
+                                    Ağırlık güncellemeleri geriye dönük olarak uygulanmaz. Geçmiş dönem endeks değerleri 
+                                    hesaplandıkları dönemdeki ağırlıklarla sabit kalır. Bu, zaman serilerinde tutarlılığı sağlar.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Karşılaştırma -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-green-500 pb-2 inline-block">TÜİK TÜFE ile Karşılaştırma</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                            Web TÜFE, TÜİK'in resmi TÜFE'sine alternatif değil, tamamlayıcı bir göstergedir. 
+                            İki endeks arasındaki temel farklar:
+                        </p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gradient-to-r from-green-600 to-teal-600 text-white">
+                                        <th class="border border-green-700 px-4 py-3 text-left font-semibold">Özellik</th>
+                                        <th class="border border-green-700 px-4 py-3 text-left font-semibold">Web TÜFE</th>
+                                        <th class="border border-green-700 px-4 py-3 text-left font-semibold">TÜİK TÜFE</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700">
+                                    <tr class="bg-green-50">
+                                        <td class="border border-green-200 px-4 py-3 font-semibold">Güncelleme Sıklığı</td>
+                                        <td class="border border-green-200 px-4 py-3">Günlük</td>
+                                        <td class="border border-green-200 px-4 py-3">Aylık</td>
+                                    </tr>
+                                    <tr class="bg-white">
+                                        <td class="border border-green-200 px-4 py-3 font-semibold">Veri Kaynağı</td>
+                                        <td class="border border-green-200 px-4 py-3">Online fiyatlar</td>
+                                        <td class="border border-green-200 px-4 py-3">Fiziksel mağaza fiyatları</td>
+                                    </tr>
+                                    <tr class="bg-green-50">
+                                        <td class="border border-green-200 px-4 py-3 font-semibold">Kapsam</td>
+                                        <td class="border border-green-200 px-4 py-3">E-ticaret platformları ve büyük market zincirleri</td>
+                                        <td class="border border-green-200 px-4 py-3">Türkiyeyi temsil eden örneklemde fiziksel,online ve barkod fiyatları</td>
+                                    </tr>
+                                    <tr class="bg-white">
+                                        <td class="border border-green-200 px-4 py-3 font-semibold">Erişilebilirlik</td>
+                                        <td class="border border-green-200 px-4 py-3">Günlük, online</td>
+                                        <td class="border border-green-200 px-4 py-3">Aylık yayın</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Sınırlamalar -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-red-500 pb-2 inline-block">Sınırlamalar</h2>
+                        <div class="space-y-4">
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <div>
+                                        <h4 class="font-semibold text-red-900 mb-1">Hizmet Sektörü</h4>
+                                        <p class="text-red-800">
+                                            Sigorta,sağlık,tamirat gibi çeşitli hizmet fiyatlarının online takibi zor olduğundan kapsamı görece daha dardır.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-6 h-6 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <div>
+                                        <h4 class="font-semibold text-yellow-900 mb-1">Coğrafi Temsil</h4>
+                                        <p class="text-yellow-800">
+                                            Online fiyatlar genellikle ulusal ortalama olup, bölgesel farklılıkları tam olarak yansıtmayabilir.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-6 h-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <h4 class="font-semibold text-blue-900 mb-1">Dijital Penetrasyon</h4>
+                                        <p class="text-blue-800">
+                                            E-ticaret kullanımının yaygınlığına bağlı olarak, bazı demografik gruplar yeterince temsil edilmeyebilir.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Teknik Altyapı -->
+                    <section class="mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-cyan-500 pb-2 inline-block">Teknik Altyapı ve Veri Güvenliği</h2>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-6 border border-cyan-200">
+                                <h3 class="font-bold text-cyan-900 text-lg mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                                    </svg>
+                                    Yazılım ve Teknoloji
+                                </h3>
+                                <ul class="space-y-3 text-sm text-gray-700">
+                                    <li class="flex items-start">
+                                        <span class="text-cyan-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Programlama Dilleri:</strong> Python (veri toplama ve analiz), JavaScript (web arayüzü)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-cyan-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Veri Tabanı:</strong> PostgreSQL (zaman serisi verileri için optimize edilmiş)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-cyan-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Web Framework:</strong> Flask (Python tabanlı web uygulaması)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-cyan-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Veri İşleme:</strong> Pandas, NumPy (istatistiksel hesaplamalar)
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-cyan-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Görselleştirme:</strong> Plotly (interaktif grafikler)
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                                <h3 class="font-bold text-blue-900 text-lg mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                    Veri Güvenliği
+                                </h3>
+                                <ul class="space-y-3 text-sm text-gray-700">
+                                    <li class="flex items-start">
+                                        <span class="text-blue-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>HTTPS Şifreleme:</strong> Tüm veri transferleri SSL/TLS ile korunmaktadır
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Yedekleme:</strong> Günlük otomatik yedeklemeler alınır ve 90 gün saklanır
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Erişim Kontrolü:</strong> Veritabanı erişimi rol tabanlı güvenlik sistemleriyle korunur
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Veri Bütünlüğü:</strong> Hash fonksiyonları ile veri değişiklikler tespit edilir
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-600 font-bold mr-2">•</span>
+                                        <div>
+                                            <strong>Açık Kaynak:</strong> Hesaplama algoritmaları şeffaflık için açık kaynak olarak paylaşılmaktadır
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sonuç -->
+                    <section>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4 border-b-4 border-indigo-500 pb-2 inline-block">Sonuç</h2>
+                        <div class="bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 rounded-xl p-8 border-2 border-indigo-200">
+                            <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                                Web TÜFE, modern veri toplama ve analiz yöntemleri kullanarak Türkiye'de enflasyon takibine 
+                                yenilikçi bir yaklaşım getirmektedir. Günlük güncellemeler sayesinde ekonomik aktörler ve vatandaşlar 
+                                fiyat değişimlerini daha hızlı ve detaylı şekilde takip edebilmektedir.
+                            </p>
+                            <p class="text-lg text-gray-700 leading-relaxed">
+                                Sınırlamalarına rağmen, Web TÜFE özellikle mal fiyatlarındaki günlük dalgalanmaları izlemek ve 
+                                TÜİK'in resmi verilerini tamamlamak açısından önemli bir araç sunmaktadır.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- İletişim -->
+                    <div class="mt-12 pt-8 border-t-2 border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Son güncelleme: 28 Ekim 2025</p>
+                                <p class="text-gray-500 text-xs mt-1">Metodoloji sürekli geliştirilmektedir.</p>
+                            </div>
+                            <a href="/hakkinda" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                İletişime Geçin
+                            </a>
+                        </div>
+                    </div>
             </div>
+            </article>
         </main>
     </div>
 </body>
