@@ -10,4 +10,13 @@ services:
       - key: GOOGLE_CREDENTIALS_BASE64
         sync: false
       - key: GOOGLE_CREDENTIALS_2_BASE64
-        sync: false 
+        sync: false
+      # SMTP Configuration for Contact Form
+      - key: SMTP_SERVER
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USERNAME
+        value: borakaya8@gmail.com
+      - key: SMTP_PASSWORD
+        sync: false  # Dashboard'dan manuel olarak girilecek (güvenlik için) 

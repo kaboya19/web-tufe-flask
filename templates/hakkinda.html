@@ -211,13 +211,9 @@
                         <!-- Success/Error Message -->
                         <div id="formMessage" class="hidden mb-4 p-4 rounded-lg"></div>
                         
-                        <form id="contactForm" method="POST" action="https://formsubmit.co/borakaya8@gmail.com" class="space-y-6">
-                            <!-- FormSubmit Configuration -->
-                            <input type="hidden" name="_subject" value="Web TÜFE - Yeni İletişim Formu Mesajı">
-                            <input type="hidden" name="_captcha" value="false">
-                            <input type="hidden" name="_template" value="table">
-                            <input type="hidden" name="_next" value="https://webtufe.com/hakkinda">
-                            <input type="text" name="_honey" style="display:none">
+                        <form id="contactForm" method="POST" class="space-y-6">
+                            <!-- Honeypot for spam protection -->
+                            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
                             
                             <div>
                                 <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -263,6 +259,11 @@
                             const btnText = document.getElementById('btnText');
                             const formMessage = document.getElementById('formMessage');
                             
+                            // Spam koruması - honeypot kontrolü
+                            if (form._honey.value) {
+                                return; // Bot tarafından doldurulmuş, formu gönderme
+                            }
+                            
                             // Disable button and show loading
                             submitBtn.disabled = true;
                             btnText.textContent = 'Gönderiliyor...';
@@ -270,28 +271,35 @@
                             
                             try {
                                 const formData = new FormData(form);
-                                const response = await fetch(form.action, {
+                                const response = await fetch('/send-contact', {
                                     method: 'POST',
-                                    body: formData,
-                                    headers: {
-                                        'Accept': 'application/json'
-                                    }
+                                    body: formData
                                 });
                                 
-                                if (response.ok) {
+                                const data = await response.json();
+                                
+                                if (response.ok && data.success) {
                                     // Success
                                     formMessage.className = 'mb-4 p-4 rounded-lg bg-green-100 border border-green-400 text-green-700';
-                                    formMessage.innerHTML = '<strong>Başarılı!</strong> Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.';
+                                    formMessage.innerHTML = '<strong>✓ Başarılı!</strong> Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.';
                                     formMessage.classList.remove('hidden');
                                     form.reset();
+                                    
+                                    // Scroll to message
+                                    formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                 } else {
-                                    throw new Error('Form gönderimi başarısız');
+                                    throw new Error(data.message || 'Form gönderimi başarısız');
                                 }
                             } catch (error) {
                                 // Error
                                 formMessage.className = 'mb-4 p-4 rounded-lg bg-red-100 border border-red-400 text-red-700';
-                                formMessage.innerHTML = '<strong>Hata!</strong> Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin veya doğrudan <a href="mailto:borakaya8@gmail.com" class="underline">borakaya8@gmail.com</a> adresine mail atın.';
+                                formMessage.innerHTML = '<strong>✗ Hata!</strong> Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin veya doğrudan <a href="mailto:borakaya8@gmail.com" class="underline font-semibold">borakaya8@gmail.com</a> adresine mail atın.';
                                 formMessage.classList.remove('hidden');
+                                
+                                // Scroll to message
+                                formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                
+                                console.error('Form gönderim hatası:', error);
                             } finally {
                                 // Re-enable button
                                 submitBtn.disabled = false;

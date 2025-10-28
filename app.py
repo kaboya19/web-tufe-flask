@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for
+from flask import Flask, render_template, request, send_file, flash, redirect, url_for, jsonify
 import pandas as pd
 import numpy as np
 import json
@@ -14,6 +14,9 @@ from gspread.exceptions import APIError, SpreadsheetNotFound
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
@@ -3525,6 +3528,87 @@ def mevsimsel_duzeltilmis_gostergeler():
 @app.route('/hakkinda')
 def hakkinda():
     return render_template('hakkinda.html', active_page='hakkinda')
+
+@app.route('/send-contact', methods=['POST'])
+def send_contact():
+    try:
+        # Form verilerini al
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = request.form.get('message')
+        
+        # Boş alan kontrolü
+        if not name or not email or not message:
+            return jsonify({'success': False, 'message': 'Lütfen tüm alanları doldurun'}), 400
+        
+        # Email içeriğini oluştur
+        subject = f"Web TÜFE İletişim Formu - {name}"
+        
+        # HTML formatında email içeriği
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                    <h2 style="color: #4F46E5; border-bottom: 3px solid #06B6D4; padding-bottom: 10px;">
+                        Yeni İletişim Formu Mesajı
+                    </h2>
+                    <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 10px 0;"><strong style="color: #4F46E5;">Gönderen:</strong> {name}</p>
+                        <p style="margin: 10px 0;"><strong style="color: #4F46E5;">E-posta:</strong> {email}</p>
+                    </div>
+                    <div style="background-color: #fff; padding: 20px; border-left: 4px solid #06B6D4; margin: 20px 0;">
+                        <h3 style="color: #4F46E5; margin-top: 0;">Mesaj:</h3>
+                        <p style="white-space: pre-wrap;">{message}</p>
+                    </div>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                        <p>Bu mesaj Web TÜFE iletişim formundan gönderilmiştir.</p>
+                        <p>Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        # Email mesajını oluştur
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = 'webtufe@gmail.com'  # Bu email SMTP ile gönderen adres olacak
+        msg['To'] = 'borakaya8@gmail.com'
+        msg['Reply-To'] = email  # Cevap verirken kullanıcının emailine gidecek
+        
+        # HTML içeriği ekle
+        html_part = MIMEText(html_content, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        # SMTP ile email gönder
+        # Gmail SMTP kullanıyorsanız, "Uygulama Şifresi" oluşturmanız gerekir
+        # Google Hesabınız > Güvenlik > 2 Adımlı Doğrulama > Uygulama Şifreleri
+        
+        smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+        smtp_username = os.environ.get('SMTP_USERNAME', 'borakaya8@gmail.com')
+        smtp_password = os.environ.get('SMTP_PASSWORD', '')
+        
+        if not smtp_password:
+            # Eğer SMTP şifresi yoksa, basit bir mail gönder (development için)
+            print(f"Email gönderilecek: {name} ({email})")
+            print(f"Mesaj: {message}")
+            return jsonify({'success': True, 'message': 'Mesajınız alındı (development mode)'}), 200
+        
+        # SMTP bağlantısı kur ve email gönder
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # TLS şifrelemesini başlat
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        
+        return jsonify({'success': True, 'message': 'Mesajınız başarıyla gönderildi'}), 200
+        
+    except smtplib.SMTPException as e:
+        print(f"SMTP Hatası: {str(e)}")
+        return jsonify({'success': False, 'message': 'Email gönderilirken bir hata oluştu'}), 500
+    except Exception as e:
+        print(f"Genel Hata: {str(e)}")
+        return jsonify({'success': False, 'message': 'Bir hata oluştu'}), 500
 
 @app.route('/bultenler', methods=['GET', 'POST'])
 def bultenler():
