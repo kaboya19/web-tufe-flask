@@ -1339,19 +1339,20 @@ def tufe():
             y_min = min(monthly_changes)
             y_max = max(monthly_changes)
 
-            # Marj hesapla
+            # Marj hesapla (üstteki text'ler için makul marj)
             y_range = y_max - y_min
-            y_margin = y_range * 0.2 if y_range != 0 else abs(y_max) * 0.2
+            y_margin_bottom = y_range * 0.1 if y_range != 0 else abs(y_max) * 0.1
+            y_margin_top = y_range * 0.2 if y_range != 0 else abs(y_max) * 0.2  # 20% üst marj
 
             # Marjlı sınırlar
-            y_min_with_margin = y_min - y_margin
-            y_max_with_margin = y_max + y_margin
+            y_min_with_margin = y_min - y_margin_bottom
+            y_max_with_margin = y_max + y_margin_top
 
             # Sıfıra yaklaşma kontrolü
             if y_min >= 0:
-                y_min_with_margin = max(0, y_min - y_margin)
+                y_min_with_margin = max(0, y_min - y_margin_bottom)
             if y_max <= 0:
-                y_max_with_margin = min(0, y_max + y_margin)
+                y_max_with_margin = min(0, y_max + y_margin_top)
             fig = go.Figure(go.Bar(
                 x=monthly_dates,
                 y=monthly_changes,
@@ -1365,7 +1366,8 @@ def tufe():
                     family='Inter, sans-serif'
                 ),
                 width=0.6,
-                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>',
+                cliponaxis=False
             ))
             
             # y ekseni aralığını hesapla (negatif ve pozitif değerler için)
@@ -1421,8 +1423,8 @@ def tufe():
                 showlegend=False,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
-                height=400,
-                margin=dict(l=10, r=10, t=40, b=20),
+                height=450,  # Yüksekliği artırdık
+                margin=dict(l=10, r=40, t=60, b=20),  # Sağ marjı artırdık (10 -> 40)
                 hovermode='x'
             )
             
@@ -1433,11 +1435,15 @@ def tufe():
             line_fig.add_trace(go.Scatter(
                 x=monthly_dates,
                 y=monthly_changes,
-                mode='lines+markers',
+                mode='lines+markers+text',
                 name=selected_madde,
                 line=dict(color='#EF476F', width=3),
                 marker=dict(size=8, color='#EF476F'),
-                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>'
+                text=[f'{v:.2f}' if v is not None else '' for v in monthly_changes],
+                textposition='top center',
+                textfont=dict(size=12, color='#EF476F', family='Inter, sans-serif'),
+                hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>',
+                cliponaxis=False
             ))
             
             line_fig.update_layout(
@@ -1476,13 +1482,14 @@ def tufe():
                         family='Inter, sans-serif',
                         color='#2B2D42'
                     ),
-                    gridcolor='#E9ECEF'
+                    gridcolor='#E9ECEF',
+                    range=[y_min_with_margin, y_max_with_margin]
                 ),
                 showlegend=False,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
-                height=400,
-                margin=dict(l=10, r=10, t=40, b=20),
+                height=450,  # Yüksekliği artırdık
+                margin=dict(l=10, r=40, t=60, b=20),  # Sağ marjı artırdık (10 -> 40)
                 hovermode='x'
             )
             line_graphJSON = line_fig.to_json()
