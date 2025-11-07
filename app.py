@@ -3754,5 +3754,129 @@ def abone():
         
     return redirect(url_for('ana_sayfa'))
 
+@app.route('/korelasyon-analizi', methods=['GET', 'POST'])
+def korelasyon_analizi():
+    try:
+        # Ana gruplar verilerini oku
+        df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        
+        # Tarih sütunlarını al (ilk sütun grup adı olduğu için atla)
+        date_columns = df.columns[1:]
+        
+        # Son 6 ay için varsayılan
+        default_months = 6
+        
+        if request.method == 'POST':
+            selected_months = int(request.form.get('months', default_months))
+            analysis_type = request.form.get('analysis_type', 'ana_gruplar')
+        else:
+            selected_months = default_months
+            analysis_type = 'ana_gruplar'
+        
+        # Veri setini seç
+        if analysis_type == 'harcama_gruplari':
+            df = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+        else:
+            df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        
+        # Grup adlarını al
+        grup_adlari = df['Grup'].tolist()
+        
+        # Seçilen ay sayısına göre veriyi filtrele
+        date_columns = df.columns[1:]  # İlk sütun 'Grup'
+        selected_columns = date_columns[-selected_months:]
+        
+        # Sadece sayısal değerleri içeren DataFrame oluştur
+        numeric_df = df[selected_columns].apply(pd.to_numeric, errors='coerce')
+        
+        # Korelasyon matrisini hesapla
+        correlation_matrix = numeric_df.T.corr()
+        
+        # Heatmap oluştur
+        fig = go.Figure(data=go.Heatmap(
+            z=correlation_matrix.values,
+            x=grup_adlari,
+            y=grup_adlari,
+            colorscale=[
+                [0, '#EF476F'],      # Negatif - Kırmızı
+                [0.5, '#FFFFFF'],    # Sıfır - Beyaz
+                [1, '#06D6A0']       # Pozitif - Yeşil
+            ],
+            zmid=0,
+            text=correlation_matrix.values.round(3),
+            texttemplate='%{text}',
+            textfont={"size": 10},
+            colorbar=dict(
+                title="Korelasyon<br>Katsayısı",
+                titleside="right",
+                tickmode="linear",
+                tick0=-1,
+                dtick=0.5,
+                thickness=15,
+                len=0.7
+            ),
+            hovertemplate='%{x} ↔ %{y}<br>Korelasyon: %{z:.3f}<extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title={
+                'text': f'{analysis_type.replace("_", " ").title()} Korelasyon Analizi<br><sub>Son {selected_months} Ay</sub>',
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 20, 'family': 'Poppins, sans-serif', 'color': '#1F2937'}
+            },
+            xaxis_title="",
+            yaxis_title="",
+            height=700 if analysis_type == 'ana_gruplar' else 1000,
+            font=dict(family="Inter, sans-serif", size=11),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            xaxis={'side': 'bottom', 'tickangle': -45},
+            yaxis={'side': 'left'},
+            margin=dict(l=150, r=50, t=100, b=150)
+        )
+        
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # En yüksek ve en düşük korelasyonları bul (kendisiyle korelasyon hariç)
+        correlation_pairs = []
+        for i in range(len(grup_adlari)):
+            for j in range(i+1, len(grup_adlari)):
+                correlation_pairs.append({
+                    'grup1': grup_adlari[i],
+                    'grup2': grup_adlari[j],
+                    'korelasyon': correlation_matrix.iloc[i, j]
+                })
+        
+        # Sırala
+        correlation_pairs_sorted = sorted(correlation_pairs, key=lambda x: abs(x['korelasyon']), reverse=True)
+        top_correlations = correlation_pairs_sorted[:5]
+        
+        # Pozitif ve negatif korelasyonları ayır
+        positive_corr = sorted([x for x in correlation_pairs if x['korelasyon'] > 0], 
+                               key=lambda x: x['korelasyon'], reverse=True)[:5]
+        negative_corr = sorted([x for x in correlation_pairs if x['korelasyon'] < 0], 
+                               key=lambda x: x['korelasyon'])[:5]
+        
+        # Mevcut tarih aralığını hesapla
+        date_range = f"{selected_columns[0][:7]} - {selected_columns[-1][:7]}"
+        
+        return render_template('korelasyon_analizi.html',
+                             graphJSON=graphJSON,
+                             selected_months=selected_months,
+                             analysis_type=analysis_type,
+                             top_correlations=top_correlations,
+                             positive_correlations=positive_corr,
+                             negative_correlations=negative_corr,
+                             date_range=date_range,
+                             active_page='korelasyon')
+    
+    except Exception as e:
+        print(f"Korelasyon analizi hatası: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        flash("Korelasyon analizi yüklenirken bir hata oluştu.", "error")
+        return redirect(url_for('ana_sayfa'))
+
 if __name__ == '__main__':
     app.run(debug=True) 
