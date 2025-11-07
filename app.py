@@ -10,7 +10,7 @@ from datetime import datetime
 import csv
 from dateutil.parser import parse
 import os
-from gspread.exceptions import APIError, SpreadsheetNotFound, CellNotFound
+from gspread.exceptions import APIError, SpreadsheetNotFound
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
