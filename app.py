@@ -10,7 +10,7 @@ from datetime import datetime
 import csv
 from dateutil.parser import parse
 import os
-from gspread.exceptions import APIError, SpreadsheetNotFound
+from gspread.exceptions import APIError, SpreadsheetNotFound, CellNotFound
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
@@ -4055,18 +4055,23 @@ def save_subscription_to_storage(endpoint, p256dh, auth, user_agent):
         # Use Google Sheets
         try:
             # Check if endpoint already exists
-            try:
-                cell = sheet.find(endpoint)
+            cell = sheet.find(endpoint)
+            if cell:
                 # Update existing row
                 row_num = cell.row
                 sheet.update(f'A{row_num}:E{row_num}', [[endpoint, p256dh, auth, user_agent, datetime.now().isoformat()]])
-            except gspread.exceptions.CellNotFound:
+            else:
                 # Add new row
                 sheet.append_row([endpoint, p256dh, auth, user_agent, datetime.now().isoformat()])
             return True
-        except Exception as e:
-            print(f"Error saving to Google Sheets: {str(e)}")
-            return False
+        except Exception as find_error:
+            # If find() raises an exception (like CellNotFound in some versions), just append
+            try:
+                sheet.append_row([endpoint, p256dh, auth, user_agent, datetime.now().isoformat()])
+                return True
+            except Exception as append_error:
+                print(f"Error appending row: {str(append_error)}")
+                return False
     
     # Fallback to SQLite
     try:
@@ -4127,11 +4132,15 @@ def delete_subscription_from_storage(endpoint):
         # Use Google Sheets
         try:
             cell = sheet.find(endpoint)
-            sheet.delete_rows(cell.row)
+            if cell:
+                sheet.delete_rows(cell.row)
+            # If cell not found, it's already deleted, so return True
             return True
-        except gspread.exceptions.CellNotFound:
-            return True  # Already deleted
         except Exception as e:
+            # If find() raises exception, assume it's already deleted
+            error_str = str(e).lower()
+            if 'not found' in error_str or 'cellnotfound' in error_str:
+                return True  # Already deleted
             print(f"Error deleting from Google Sheets: {str(e)}")
             return False
     
