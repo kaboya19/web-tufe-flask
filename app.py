@@ -4011,20 +4011,66 @@ def unsubscribe_push():
         print(f"Unsubscribe error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# Send push notification to all subscribers
-@app.route('/api/push/send', methods=['POST'])
-def send_push_notification():
-    try:
-        # Check if user is authorized (you can add authentication here)
-        notification_data = request.get_json()
+# Admin panel for sending push notifications (simple HTML form)
+@app.route('/admin/push', methods=['GET', 'POST'])
+def admin_push_panel():
+    # Simple API key authentication
+    admin_api_key = os.environ.get('ADMIN_API_KEY', '')
+    
+    if request.method == 'GET':
+        return render_template('admin_push.html', active_page='admin', has_api_key=bool(admin_api_key))
+    
+    if request.method == 'POST':
+        # Check API key if set
+        if admin_api_key:
+            provided_key = request.form.get('api_key', '')
+            if provided_key != admin_api_key:
+                flash('❌ Geçersiz API key!', 'error')
+                return redirect(url_for('admin_push_panel'))
         
+        # Get notification data from form
+        title = request.form.get('title', '').strip()
+        body = request.form.get('body', '').strip()
+        url = request.form.get('url', '/bultenler').strip()
+        
+        if not title or not body:
+            flash('❌ Başlık ve mesaj gereklidir!', 'error')
+            return redirect(url_for('admin_push_panel'))
+        
+        # Prepare notification data
+        notification_data = {
+            'title': title,
+            'body': body,
+            'url': url
+        }
+        
+        # Send notification using internal function
+        try:
+            # Call the send function directly
+            result = send_push_notification_internal(notification_data)
+            
+            if result.get('success'):
+                sent = result.get('sent', 0)
+                failed = result.get('failed', 0)
+                flash(f"✅ Bildirim gönderildi! {sent} kullanıcıya ulaştı. ({failed} başarısız)", 'success')
+            else:
+                flash(f"❌ Hata: {result.get('error', 'Bilinmeyen hata')}", 'error')
+        except Exception as e:
+            flash(f'❌ Hata: {str(e)}', 'error')
+        
+        return redirect(url_for('admin_push_panel'))
+
+# Internal function to send push notifications
+def send_push_notification_internal(notification_data):
+    """Internal function to send push notifications"""
+    try:
         title = notification_data.get('title', 'Web TÜFE')
         body = notification_data.get('body', 'Yeni bülten yayınlandı!')
         url = notification_data.get('url', '/bultenler')
         icon = notification_data.get('icon', '/static/icon-192x192.png')
         
         if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
-            return jsonify({'error': 'VAPID keys not configured'}), 500
+            return {'success': False, 'error': 'VAPID keys not configured'}
         
         # Get all subscriptions
         conn = sqlite3.connect('push_subscriptions.db')
@@ -4087,18 +4133,43 @@ def send_push_notification():
                 print(f"Error sending push: {str(e)}")
                 fail_count += 1
         
-        return jsonify({
+        return {
             'success': True,
             'sent': success_count,
             'failed': fail_count,
             'total': len(subscriptions)
-        }), 200
+        }
     
     except Exception as e:
         print(f"Send push error: {str(e)}")
         import traceback
         print(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
+        return {'success': False, 'error': str(e)}
+
+# Send push notification to all subscribers (API endpoint)
+@app.route('/api/push/send', methods=['POST'])
+def send_push_notification():
+    try:
+        # Check API key if set (optional security)
+        admin_api_key = os.environ.get('ADMIN_API_KEY', '')
+        if admin_api_key:
+            provided_key = request.headers.get('X-API-Key') or (request.get_json() or {}).get('api_key')
+            if provided_key and provided_key != admin_api_key:
+                return jsonify({'error': 'Unauthorized'}), 401
+        
+        notification_data = request.get_json() or {}
+        result = send_push_notification_internal(notification_data)
+        
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+    
+    except Exception as e:
+        print(f"Send push error: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Get subscription count (admin endpoint)
 @app.route('/api/push/subscription-count', methods=['GET'])
