@@ -30,58 +30,74 @@ VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:webtufe@example.com')
 
-def get_vapid_private_key_pem():
-    """Convert base64 VAPID private key to PEM format string (for pywebpush)"""
+def get_vapid_private_key_for_webpush():
+    """
+    Get VAPID private key in the format that pywebpush expects.
+    pywebpush expects base64 URL-safe encoded DER format (original format from generate_vapid_keys.py)
+    """
     if not VAPID_PRIVATE_KEY:
         return None
     try:
-        # Check if it's already in PEM format
+        # If it's already in PEM format, convert it to DER then to base64 URL-safe
         if '-----BEGIN' in VAPID_PRIVATE_KEY:
-            return VAPID_PRIVATE_KEY
-        
-        # Add padding if needed for base64 decode
-        padding = len(VAPID_PRIVATE_KEY) % 4
-        if padding:
-            private_key_b64 = VAPID_PRIVATE_KEY + ('=' * (4 - padding))
-        else:
-            private_key_b64 = VAPID_PRIVATE_KEY
-        
-        # Decode base64 URL-safe string
-        private_key_der = base64.urlsafe_b64decode(private_key_b64)
-        # Load the private key
-        private_key = serialization.load_der_private_key(
-            private_key_der,
-            password=None
-        )
-        
-        # Convert to PEM format string
-        private_key_pem = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        ).decode('utf-8')
-        
-        return private_key_pem
-    except Exception as e:
-        print(f"Error loading VAPID private key (DER format): {str(e)}")
-        # Fallback: try to use as PEM if it's already in PEM format
-        try:
-            if isinstance(VAPID_PRIVATE_KEY, str) and '-----BEGIN' in VAPID_PRIVATE_KEY:
-                return VAPID_PRIVATE_KEY
-            # Try to decode as PEM
+            # Load PEM format
             private_key = serialization.load_pem_private_key(
                 VAPID_PRIVATE_KEY.encode('utf-8'),
                 password=None
             )
-            # Convert back to PEM string
-            return private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
+            # Convert to DER
+            private_key_der = private_key.private_bytes(
+                encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption()
-            ).decode('utf-8')
-        except Exception as e2:
-            print(f"Error loading VAPID private key (PEM format): {str(e2)}")
-            return None
+            )
+            # Convert to base64 URL-safe (without padding)
+            private_key_b64 = base64.urlsafe_b64encode(private_key_der).decode('utf-8').rstrip('=')
+            return private_key_b64
+        
+        # If it's already in base64 URL-safe format (most common case)
+        # Just return it as is, but ensure it's properly formatted
+        # Remove any whitespace
+        key = VAPID_PRIVATE_KEY.strip().replace('\n', '').replace('\r', '')
+        
+        # Validate it's base64 URL-safe
+        try:
+            # Add padding if needed for validation
+            padding = len(key) % 4
+            if padding:
+                test_key = key + ('=' * (4 - padding))
+            else:
+                test_key = key
+            # Try to decode to verify it's valid
+            base64.urlsafe_b64decode(test_key)
+            return key
+        except Exception:
+            # If validation fails, try to convert from DER
+            # This handles edge cases
+            padding = len(key) % 4
+            if padding:
+                private_key_b64 = key + ('=' * (4 - padding))
+            else:
+                private_key_b64 = key
+            
+            private_key_der = base64.urlsafe_b64decode(private_key_b64)
+            private_key = serialization.load_der_private_key(
+                private_key_der,
+                password=None
+            )
+            # Convert back to base64 URL-safe
+            der_bytes = private_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+            return base64.urlsafe_b64encode(der_bytes).decode('utf-8').rstrip('=')
+            
+    except Exception as e:
+        print(f"Error processing VAPID private key: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return None
 
 # Initialize database for push subscriptions
 def init_push_db():
@@ -4128,15 +4144,15 @@ def send_push_notification_internal(notification_data):
                     "tag": "web-tufe-notification"
                 })
                 
-                # Get VAPID private key in PEM format (pywebpush expects PEM string)
-                vapid_private_key_pem = get_vapid_private_key_pem()
-                if not vapid_private_key_pem:
+                # Get VAPID private key in base64 URL-safe format (pywebpush expects this)
+                vapid_private_key = get_vapid_private_key_for_webpush()
+                if not vapid_private_key:
                     raise Exception("VAPID private key not configured or invalid")
                 
                 webpush(
                     subscription_info=subscription_info,
                     data=payload,
-                    vapid_private_key=vapid_private_key_pem,
+                    vapid_private_key=vapid_private_key,
                     vapid_claims=vapid_claims
                 )
                 success_count += 1
