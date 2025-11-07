@@ -233,8 +233,8 @@ function updateNotificationButton(subscribed) {
             </svg>
             Bildirimler Açık
         `;
-        button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-        button.classList.add('bg-green-600', 'hover:bg-green-700');
+        button.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:from-purple-700', 'hover:to-pink-700');
+        button.classList.add('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-700', 'hover:to-emerald-700');
         button.onclick = async () => {
             const result = await unsubscribeFromPush();
             if (result.success) {
@@ -251,8 +251,8 @@ function updateNotificationButton(subscribed) {
             </svg>
             Bildirimleri Aç
         `;
-        button.classList.remove('bg-green-600', 'hover:bg-green-700');
-        button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        button.classList.remove('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-700', 'hover:to-emerald-700');
+        button.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:from-purple-700', 'hover:to-pink-700');
         button.onclick = async () => {
             const result = await requestNotificationPermission();
             if (result.success) {

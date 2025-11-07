@@ -100,7 +100,38 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  const urlToOpen = event.notification.data?.url || '/';
+  let urlToOpen = event.notification.data?.url || '/';
+
+  // Convert relative URL to absolute URL and handle encoding
+  const origin = self.location.origin;
+  
+  if (urlToOpen.startsWith('/')) {
+    // Encode the path part properly (handle spaces and special characters)
+    try {
+      // Split URL into path and query/hash parts
+      const urlParts = urlToOpen.split('?');
+      const pathPart = urlParts[0];
+      const queryPart = urlParts[1] ? '?' + urlParts[1] : '';
+      
+      // Encode path segments properly
+      const encodedPath = pathPart.split('/').map(segment => {
+        // Don't encode the empty first segment or already encoded segments
+        if (!segment || segment.includes('%')) return segment;
+        return encodeURIComponent(segment);
+      }).join('/');
+      
+      urlToOpen = origin + encodedPath + queryPart;
+    } catch (e) {
+      // Fallback: simple concatenation
+      console.error('Error encoding URL:', e);
+      urlToOpen = origin + urlToOpen;
+    }
+  } else if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+    // If it's not a full URL and not starting with /, make it absolute
+    urlToOpen = origin + '/' + urlToOpen;
+  }
+
+  console.log('Opening URL:', urlToOpen);
 
   event.waitUntil(
     clients.matchAll({
@@ -108,13 +139,22 @@ self.addEventListener('notificationclick', (event) => {
       includeUncontrolled: true
     }).then((clientList) => {
       // Check if there is already a window/tab open with the target URL
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
+      // For PDF files or different URLs, always open new window
+      const isPDF = urlToOpen.toLowerCase().endsWith('.pdf') || urlToOpen.includes('/pdf/');
+      
+      if (!isPDF) {
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          // Check if the URL matches (handle relative vs absolute)
+          const clientUrl = new URL(client.url);
+          const targetUrl = new URL(urlToOpen);
+          if (clientUrl.pathname === targetUrl.pathname && 'focus' in client) {
+            return client.focus();
+          }
         }
       }
-      // If not, open a new window/tab
+      
+      // If not found or is PDF, open a new window/tab
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

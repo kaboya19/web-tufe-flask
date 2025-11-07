@@ -4074,6 +4074,10 @@ def admin_push_panel():
             flash('❌ Başlık ve mesaj gereklidir!', 'error')
             return redirect(url_for('admin_push_panel'))
         
+        # Ensure URL starts with / if it's a relative URL
+        if url and not url.startswith('/') and not url.startswith('http://') and not url.startswith('https://'):
+            url = '/' + url
+        
         # Prepare notification data
         notification_data = {
             'title': title,
