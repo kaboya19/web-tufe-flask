@@ -30,11 +30,15 @@ VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:webtufe@example.com')
 
-def get_vapid_private_key():
-    """Convert base64 VAPID private key to cryptography key object"""
+def get_vapid_private_key_pem():
+    """Convert base64 VAPID private key to PEM format string (for pywebpush)"""
     if not VAPID_PRIVATE_KEY:
         return None
     try:
+        # Check if it's already in PEM format
+        if '-----BEGIN' in VAPID_PRIVATE_KEY:
+            return VAPID_PRIVATE_KEY
+        
         # Add padding if needed for base64 decode
         padding = len(VAPID_PRIVATE_KEY) % 4
         if padding:
@@ -49,15 +53,32 @@ def get_vapid_private_key():
             private_key_der,
             password=None
         )
-        return private_key
+        
+        # Convert to PEM format string
+        private_key_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        ).decode('utf-8')
+        
+        return private_key_pem
     except Exception as e:
         print(f"Error loading VAPID private key (DER format): {str(e)}")
         # Fallback: try to use as PEM if it's already in PEM format
         try:
-            return serialization.load_pem_private_key(
+            if isinstance(VAPID_PRIVATE_KEY, str) and '-----BEGIN' in VAPID_PRIVATE_KEY:
+                return VAPID_PRIVATE_KEY
+            # Try to decode as PEM
+            private_key = serialization.load_pem_private_key(
                 VAPID_PRIVATE_KEY.encode('utf-8'),
                 password=None
             )
+            # Convert back to PEM string
+            return private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            ).decode('utf-8')
         except Exception as e2:
             print(f"Error loading VAPID private key (PEM format): {str(e2)}")
             return None
@@ -4107,22 +4128,23 @@ def send_push_notification_internal(notification_data):
                     "tag": "web-tufe-notification"
                 })
                 
-                # Get VAPID private key object
-                vapid_private_key_obj = get_vapid_private_key()
-                if not vapid_private_key_obj:
+                # Get VAPID private key in PEM format (pywebpush expects PEM string)
+                vapid_private_key_pem = get_vapid_private_key_pem()
+                if not vapid_private_key_pem:
                     raise Exception("VAPID private key not configured or invalid")
                 
                 webpush(
                     subscription_info=subscription_info,
                     data=payload,
-                    vapid_private_key=vapid_private_key_obj,
+                    vapid_private_key=vapid_private_key_pem,
                     vapid_claims=vapid_claims
                 )
                 success_count += 1
             except WebPushException as e:
-                print(f"WebPush error: {str(e)}")
+                print(f"WebPush error for endpoint {endpoint[:50]}...: {str(e)}")
                 # Remove invalid subscription
                 if e.response and e.response.status_code == 410:
+                    print(f"Removing invalid subscription (410 Gone): {endpoint[:50]}...")
                     conn = sqlite3.connect('push_subscriptions.db')
                     c = conn.cursor()
                     c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
@@ -4130,7 +4152,9 @@ def send_push_notification_internal(notification_data):
                     conn.close()
                 fail_count += 1
             except Exception as e:
-                print(f"Error sending push: {str(e)}")
+                print(f"Error sending push to {endpoint[:50]}...: {str(e)}")
+                import traceback
+                print(traceback.format_exc())
                 fail_count += 1
         
         return {
