@@ -4121,7 +4121,7 @@ def send_push_notification_internal(notification_data):
         conn.close()
         
         if not subscriptions:
-            return jsonify({'message': 'No subscriptions found', 'sent': 0}), 200
+            return {'success': True, 'message': 'No subscriptions found', 'sent': 0, 'failed': 0, 'total': 0}
         
         vapid_claims = {
             "sub": VAPID_CLAIM_EMAIL
