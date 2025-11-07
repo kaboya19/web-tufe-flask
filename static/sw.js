@@ -63,12 +63,15 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Generate unique tag if not provided (to ensure each notification is shown)
+  const notificationTag = notificationData.tag || `web-tufe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
   event.waitUntil(
     self.registration.showNotification(notificationData.title, {
       body: notificationData.body,
       icon: notificationData.icon || '/static/icon-192x192.png',
       badge: notificationData.badge || '/static/badge-72x72.png',
-      tag: notificationData.tag || 'web-tufe-notification',
+      tag: notificationTag,
       requireInteraction: notificationData.requireInteraction || false,
       data: notificationData.data || { url: '/' },
       actions: notificationData.actions || [

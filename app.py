@@ -4136,12 +4136,16 @@ def send_push_notification_internal(notification_data):
                     }
                 }
                 
+                # Generate unique tag for each notification (prevents browser from replacing previous notification)
+                # Use timestamp + endpoint suffix to ensure uniqueness
+                unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
+                
                 payload = json.dumps({
                     "title": title,
                     "body": body,
                     "icon": icon,
                     "url": url,
-                    "tag": "web-tufe-notification"
+                    "tag": unique_tag
                 })
                 
                 # Get VAPID private key in base64 URL-safe format (pywebpush expects this)
