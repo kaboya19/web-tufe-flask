@@ -17,9 +17,70 @@ import gspread
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pywebpush import webpush, WebPushException
+import sqlite3
+from cryptography.hazmat.primitives import serialization
+import base64
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
+
+# Web Push Notifications Configuration
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:webtufe@example.com')
+
+def get_vapid_private_key():
+    """Convert base64 VAPID private key to cryptography key object"""
+    if not VAPID_PRIVATE_KEY:
+        return None
+    try:
+        # Add padding if needed for base64 decode
+        padding = len(VAPID_PRIVATE_KEY) % 4
+        if padding:
+            private_key_b64 = VAPID_PRIVATE_KEY + ('=' * (4 - padding))
+        else:
+            private_key_b64 = VAPID_PRIVATE_KEY
+        
+        # Decode base64 URL-safe string
+        private_key_der = base64.urlsafe_b64decode(private_key_b64)
+        # Load the private key
+        private_key = serialization.load_der_private_key(
+            private_key_der,
+            password=None
+        )
+        return private_key
+    except Exception as e:
+        print(f"Error loading VAPID private key (DER format): {str(e)}")
+        # Fallback: try to use as PEM if it's already in PEM format
+        try:
+            return serialization.load_pem_private_key(
+                VAPID_PRIVATE_KEY.encode('utf-8'),
+                password=None
+            )
+        except Exception as e2:
+            print(f"Error loading VAPID private key (PEM format): {str(e2)}")
+            return None
+
+# Initialize database for push subscriptions
+def init_push_db():
+    conn = sqlite3.connect('push_subscriptions.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            endpoint TEXT UNIQUE NOT NULL,
+            p256dh TEXT NOT NULL,
+            auth TEXT NOT NULL,
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Initialize database on startup
+init_push_db()
 
 
 
@@ -3877,6 +3938,180 @@ def korelasyon_analizi():
         print(traceback.format_exc())
         flash("Korelasyon analizi yüklenirken bir hata oluştu.", "error")
         return redirect(url_for('ana_sayfa'))
+
+# Service Worker route
+@app.route('/sw.js')
+def service_worker():
+    return send_file('static/sw.js', mimetype='application/javascript')
+
+# Get VAPID public key
+@app.route('/api/push/vapid-public-key', methods=['GET'])
+def get_vapid_public_key():
+    if not VAPID_PUBLIC_KEY:
+        return jsonify({'error': 'VAPID public key not configured'}), 500
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+# Subscribe to push notifications
+@app.route('/api/push/subscribe', methods=['POST'])
+def subscribe_push():
+    try:
+        subscription_data = request.get_json()
+        
+        if not subscription_data or 'endpoint' not in subscription_data:
+            return jsonify({'error': 'Invalid subscription data'}), 400
+        
+        endpoint = subscription_data.get('endpoint')
+        keys = subscription_data.get('keys', {})
+        p256dh = keys.get('p256dh', '')
+        auth = keys.get('auth', '')
+        user_agent = request.headers.get('User-Agent', '')
+        
+        # Save subscription to database
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        try:
+            c.execute('''
+                INSERT OR REPLACE INTO subscriptions (endpoint, p256dh, auth, user_agent)
+                VALUES (?, ?, ?, ?)
+            ''', (endpoint, p256dh, auth, user_agent))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'message': 'Abonelik başarıyla kaydedildi'}), 200
+        except sqlite3.Error as e:
+            conn.close()
+            print(f"Database error: {str(e)}")
+            return jsonify({'error': 'Database error'}), 500
+    
+    except Exception as e:
+        print(f"Subscribe error: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+# Unsubscribe from push notifications
+@app.route('/api/push/unsubscribe', methods=['POST'])
+def unsubscribe_push():
+    try:
+        subscription_data = request.get_json()
+        endpoint = subscription_data.get('endpoint')
+        
+        if not endpoint:
+            return jsonify({'error': 'Endpoint required'}), 400
+        
+        # Remove subscription from database
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Abonelik iptal edildi'}), 200
+    
+    except Exception as e:
+        print(f"Unsubscribe error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Send push notification to all subscribers
+@app.route('/api/push/send', methods=['POST'])
+def send_push_notification():
+    try:
+        # Check if user is authorized (you can add authentication here)
+        notification_data = request.get_json()
+        
+        title = notification_data.get('title', 'Web TÜFE')
+        body = notification_data.get('body', 'Yeni bülten yayınlandı!')
+        url = notification_data.get('url', '/bultenler')
+        icon = notification_data.get('icon', '/static/icon-192x192.png')
+        
+        if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
+            return jsonify({'error': 'VAPID keys not configured'}), 500
+        
+        # Get all subscriptions
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('SELECT endpoint, p256dh, auth FROM subscriptions')
+        subscriptions = c.fetchall()
+        conn.close()
+        
+        if not subscriptions:
+            return jsonify({'message': 'No subscriptions found', 'sent': 0}), 200
+        
+        vapid_claims = {
+            "sub": VAPID_CLAIM_EMAIL
+        }
+        
+        success_count = 0
+        fail_count = 0
+        
+        for endpoint, p256dh, auth in subscriptions:
+            try:
+                subscription_info = {
+                    "endpoint": endpoint,
+                    "keys": {
+                        "p256dh": p256dh,
+                        "auth": auth
+                    }
+                }
+                
+                payload = json.dumps({
+                    "title": title,
+                    "body": body,
+                    "icon": icon,
+                    "url": url,
+                    "tag": "web-tufe-notification"
+                })
+                
+                # Get VAPID private key object
+                vapid_private_key_obj = get_vapid_private_key()
+                if not vapid_private_key_obj:
+                    raise Exception("VAPID private key not configured or invalid")
+                
+                webpush(
+                    subscription_info=subscription_info,
+                    data=payload,
+                    vapid_private_key=vapid_private_key_obj,
+                    vapid_claims=vapid_claims
+                )
+                success_count += 1
+            except WebPushException as e:
+                print(f"WebPush error: {str(e)}")
+                # Remove invalid subscription
+                if e.response and e.response.status_code == 410:
+                    conn = sqlite3.connect('push_subscriptions.db')
+                    c = conn.cursor()
+                    c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
+                    conn.commit()
+                    conn.close()
+                fail_count += 1
+            except Exception as e:
+                print(f"Error sending push: {str(e)}")
+                fail_count += 1
+        
+        return jsonify({
+            'success': True,
+            'sent': success_count,
+            'failed': fail_count,
+            'total': len(subscriptions)
+        }), 200
+    
+    except Exception as e:
+        print(f"Send push error: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+# Get subscription count (admin endpoint)
+@app.route('/api/push/subscription-count', methods=['GET'])
+def get_subscription_count():
+    try:
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM subscriptions')
+        count = c.fetchone()[0]
+        conn.close()
+        return jsonify({'count': count}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 
