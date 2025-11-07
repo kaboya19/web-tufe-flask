@@ -106,32 +106,56 @@ def get_vapid_private_key_for_webpush():
 def get_push_subscriptions_sheet():
     """Get Google Sheets worksheet for push subscriptions"""
     try:
+        # Use the same credentials and spreadsheet as email subscriptions
+        # This ensures we have proper permissions
         creds = get_google_credentials()
         client = gspread.authorize(creds)
-        spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
+        
+        # Use the same spreadsheet URL as email subscriptions (it has proper permissions)
+        sheet_url = "https://docs.google.com/spreadsheets/d/1Y3SpFSsASfCzrM7iM-j_x5XR5pYv__8etC4ptaA9dio"
+        try:
+            spreadsheet = client.open_by_url(sheet_url)
+        except Exception as e:
+            print(f"Error opening spreadsheet by URL: {str(e)}")
+            # Try by ID as fallback
+            spreadsheet_id = "1Y3SpFSsASfCzrM7iM-j_x5XR5pYv__8etC4ptaA9dio"
+            spreadsheet = client.open_by_key(spreadsheet_id)
         
         # Try to get the worksheet, create if it doesn't exist
         try:
             worksheet = spreadsheet.worksheet('Push Subscriptions')
+            # Check if headers exist, if not add them
+            try:
+                headers = worksheet.row_values(1)
+                if not headers or len(headers) == 0 or headers[0] != 'Endpoint':
+                    # Clear and add headers
+                    worksheet.clear()
+                    worksheet.append_row(['Endpoint', 'P256DH', 'Auth', 'User Agent', 'Created At'])
+            except Exception as e:
+                print(f"Warning: Could not check headers: {str(e)}")
+                # Headers might be empty, add them
+                worksheet.append_row(['Endpoint', 'P256DH', 'Auth', 'User Agent', 'Created At'])
         except gspread.exceptions.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(title='Push Subscriptions', rows=1000, cols=5)
-            # Add headers
-            worksheet.append_row(['Endpoint', 'P256DH', 'Auth', 'User Agent', 'Created At'])
+            # Create new worksheet
+            try:
+                worksheet = spreadsheet.add_worksheet(title='Push Subscriptions', rows=1000, cols=5)
+                # Add headers
+                worksheet.append_row(['Endpoint', 'P256DH', 'Auth', 'User Agent', 'Created At'])
+            except Exception as e:
+                print(f"Error creating worksheet: {str(e)}")
+                return None
         
         return worksheet
     except Exception as e:
         print(f"Error accessing Google Sheets for push subscriptions: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return None
 
 def init_push_db():
-    """Initialize push subscriptions storage"""
-    # Try Google Sheets first (for production)
-    sheet = get_push_subscriptions_sheet()
-    if sheet:
-        print("✅ Using Google Sheets for push subscriptions (persistent)")
-        return
-    
-    # Fallback to SQLite (for local development)
+    """Initialize push subscriptions storage - lazy initialization"""
+    # Just initialize SQLite for fallback
+    # Google Sheets will be initialized on first use
     try:
         conn = sqlite3.connect('push_subscriptions.db')
         c = conn.cursor()
@@ -147,11 +171,10 @@ def init_push_db():
         ''')
         conn.commit()
         conn.close()
-        print("✅ Using SQLite for push subscriptions (local)")
     except Exception as e:
         print(f"Error initializing SQLite: {str(e)}")
 
-# Initialize database on startup
+# Initialize SQLite on startup (Google Sheets will be initialized on first use)
 init_push_db()
 
 
