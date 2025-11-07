@@ -2,8 +2,12 @@
 const CACHE_NAME = 'web-tufe-v1';
 const STATIC_CACHE_URLS = [
   '/',
-  '/static/sw.js'
+  '/static/sw.js',
+  '/manifest.json'
 ];
+
+// Service Worker version (increment for cache updates)
+const SW_VERSION = '1.0.0';
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -66,27 +70,43 @@ self.addEventListener('push', (event) => {
   // Generate unique tag if not provided (to ensure each notification is shown)
   const notificationTag = notificationData.tag || `web-tufe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
+  // Determine if we're on a mobile device (for notification options)
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+  
+  const notificationOptions = {
+    body: notificationData.body,
+    icon: notificationData.icon || '/static/icon-192x192.png',
+    badge: notificationData.badge || '/static/icon-72x72.png',
+    tag: notificationTag,
+    requireInteraction: notificationData.requireInteraction || false,
+    data: notificationData.data || { url: '/' },
+    timestamp: Date.now(),
+    silent: false
+  };
+  
+  // Add vibration for mobile devices (if supported)
+  if (isMobile && 'vibrate' in navigator) {
+    notificationOptions.vibrate = [200, 100, 200];
+  }
+  
+  // Add actions (may not be supported on all mobile browsers)
+  // iOS Safari doesn't support notification actions well
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+  if (!isIOS) {
+    notificationOptions.actions = notificationData.actions || [
+      {
+        action: 'open',
+        title: 'Aç'
+      },
+      {
+        action: 'close',
+        title: 'Kapat'
+      }
+    ];
+  }
+  
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.body,
-      icon: notificationData.icon || '/static/icon-192x192.png',
-      badge: notificationData.badge || '/static/badge-72x72.png',
-      tag: notificationTag,
-      requireInteraction: notificationData.requireInteraction || false,
-      data: notificationData.data || { url: '/' },
-      actions: notificationData.actions || [
-        {
-          action: 'open',
-          title: 'Aç'
-        },
-        {
-          action: 'close',
-          title: 'Kapat'
-        }
-      ],
-      vibrate: [200, 100, 200],
-      timestamp: Date.now()
-    })
+    self.registration.showNotification(notificationData.title, notificationOptions)
   );
 });
 

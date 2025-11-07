@@ -1,0 +1,55 @@
+{
+  "name": "Web TÜFE",
+  "short_name": "Web TÜFE",
+  "description": "Türkiye Tüketici Fiyat Endeksi (TÜFE) verilerini takip edin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366F1",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/static/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["finance", "business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "TÜFE",
+      "short_name": "TÜFE",
+      "description": "TÜFE verilerini görüntüle",
+      "url": "/tufe",
+      "icons": [
+        {
+          "src": "/static/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Bültenler",
+      "short_name": "Bültenler",
+      "description": "Yeni bültenleri görüntüle",
+      "url": "/bultenler",
+      "icons": [
+        {
+          "src": "/static/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}
+

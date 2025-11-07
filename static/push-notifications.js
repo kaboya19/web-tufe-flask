@@ -4,7 +4,35 @@ let subscription = null;
 
 // Check if browser supports service workers and push notifications
 function isPushNotificationSupported() {
-    return 'serviceWorker' in navigator && 'PushManager' in window;
+    // Check for service worker support
+    if (!('serviceWorker' in navigator)) {
+        return false;
+    }
+    
+    // Check for push manager support
+    if (!('PushManager' in window)) {
+        return false;
+    }
+    
+    // iOS Safari check (requires iOS 16.4+)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS && isSafari) {
+        // iOS 16.4+ support check
+        const iOSVersion = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+        if (iOSVersion) {
+            const major = parseInt(iOSVersion[1]);
+            const minor = parseInt(iOSVersion[2]);
+            // iOS 16.4+ required for web push
+            if (major < 16 || (major === 16 && minor < 4)) {
+                console.log('iOS version too old for push notifications (requires iOS 16.4+)');
+                return false;
+            }
+        }
+    }
+    
+    return true;
 }
 
 // Register service worker
@@ -15,11 +43,40 @@ async function registerServiceWorker() {
     }
 
     try {
-        registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('Service Worker registered successfully');
+        // Register service worker with proper scope for mobile devices
+        registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/'
+        });
+        
+        console.log('Service Worker registered successfully', registration);
+        
+        // Wait for service worker to be ready (important for mobile)
+        if (registration.installing) {
+            console.log('Service Worker installing...');
+            await new Promise((resolve) => {
+                registration.installing.addEventListener('statechange', () => {
+                    if (registration.installing.state === 'installed') {
+                        resolve();
+                    }
+                });
+            });
+        } else if (registration.waiting) {
+            console.log('Service Worker waiting...');
+        } else if (registration.active) {
+            console.log('Service Worker active');
+        }
+        
         return true;
     } catch (error) {
         console.error('Service Worker registration failed:', error);
+        
+        // Provide helpful error messages for mobile users
+        if (error.message.includes('not allowed')) {
+            console.error('Service Worker registration not allowed. Make sure you are on HTTPS.');
+        } else if (error.message.includes('scope')) {
+            console.error('Service Worker scope error. Check manifest.json scope setting.');
+        }
+        
         return false;
     }
 }
@@ -188,16 +245,51 @@ async function requestNotificationPermission() {
         return { success: false, error: 'Bu tarayıcı bildirimleri desteklemiyor' };
     }
 
+    // Check if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
     let permission = Notification.permission;
 
+    // For mobile devices, especially iOS, we need to request permission explicitly
     if (permission === 'default') {
-        permission = await Notification.requestPermission();
+        // On mobile, especially iOS, permission must be requested from a user gesture
+        try {
+            permission = await Notification.requestPermission();
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            if (isIOS) {
+                return { 
+                    success: false, 
+                    error: 'iOS\'ta bildirimler için lütfen "Ana Ekrana Ekle" yapın ve ayarlardan izin verin.' 
+                };
+            }
+            return { success: false, error: 'Bildirim izni alınamadı: ' + error.message };
+        }
     }
 
     if (permission === 'granted') {
+        // Ensure service worker is registered before subscribing
+        if (!registration) {
+            const registered = await registerServiceWorker();
+            if (!registered) {
+                return { success: false, error: 'Service Worker kaydı başarısız oldu' };
+            }
+        }
+        
         return await subscribeToPush();
     } else if (permission === 'denied') {
-        return { success: false, error: 'Bildirim izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.' };
+        let errorMessage = 'Bildirim izni reddedildi. ';
+        if (isMobile) {
+            if (isIOS) {
+                errorMessage += 'iOS\'ta Ayarlar > Safari > Bildirimler\'den izin verebilirsiniz.';
+            } else {
+                errorMessage += 'Tarayıcı ayarlarından bildirim izni verebilirsiniz.';
+            }
+        } else {
+            errorMessage += 'Tarayıcı ayarlarından izin verebilirsiniz.';
+        }
+        return { success: false, error: errorMessage };
     } else {
         return { success: false, error: 'Bildirim izni alınamadı' };
     }
@@ -206,11 +298,47 @@ async function requestNotificationPermission() {
 // Initialize push notifications on page load
 async function initPushNotifications() {
     if (!isPushNotificationSupported()) {
+        // Hide button or show unsupported message
+        const button = document.getElementById('push-notification-btn');
+        if (button) {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            if (isIOS && isSafari) {
+                button.innerHTML = `
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    iOS 16.4+ Gerekli
+                `;
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                button.style.display = 'none';
+            }
+        }
         return;
     }
 
+    // Wait a bit for page to fully load (important for mobile)
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', resolve);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    // Small delay for mobile devices to ensure everything is ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Register service worker
-    await registerServiceWorker();
+    const registered = await registerServiceWorker();
+    if (!registered) {
+        console.warn('Service Worker registration failed, but continuing...');
+    }
 
     // Check subscription status
     const status = await checkSubscriptionStatus();
@@ -253,22 +381,105 @@ function updateNotificationButton(subscribed) {
         `;
         button.classList.remove('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-700', 'hover:to-emerald-700');
         button.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:from-purple-700', 'hover:to-pink-700');
-        button.onclick = async () => {
-            const result = await requestNotificationPermission();
-            if (result.success) {
-                alert(result.message);
-                updateNotificationButton(true);
-            } else {
-                alert('Hata: ' + result.error);
+        button.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Show loading state
+            const originalHTML = button.innerHTML;
+            button.innerHTML = `
+                <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Yükleniyor...
+            `;
+            button.disabled = true;
+            
+            try {
+                const result = await requestNotificationPermission();
+                if (result.success) {
+                    // Use a more mobile-friendly notification method
+                    showNotificationMessage(result.message, 'success');
+                    updateNotificationButton(true);
+                } else {
+                    showNotificationMessage('Hata: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error in button click handler:', error);
+                showNotificationMessage('Bir hata oluştu: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
             }
         };
     }
 }
 
+// Show notification message (mobile-friendly)
+function showNotificationMessage(message, type = 'info') {
+    // Try to use a more user-friendly notification method
+    // On mobile, alerts can be intrusive, so we'll use a toast-style notification
+    
+    // Create a toast element
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        font-weight: 500;
+        max-width: 90%;
+        text-align: center;
+        animation: slideDown 0.3s ease-out;
+    `;
+    toast.textContent = message;
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(toast);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease-out reverse';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
+        }, 300);
+    }, 4000);
+}
+
 // Initialize on page load
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPushNotifications);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay for mobile to ensure everything is ready
+        setTimeout(initPushNotifications, 200);
+    });
 } else {
-    initPushNotifications();
+    // Small delay for mobile to ensure everything is ready
+    setTimeout(initPushNotifications, 200);
 }
 

@@ -4039,6 +4039,12 @@ def korelasyon_analizi():
 def service_worker():
     return send_file('static/sw.js', mimetype='application/javascript')
 
+# Manifest route
+@app.route('/manifest.json')
+def manifest():
+    return send_file('static/manifest.json', mimetype='application/manifest+json')
+
+
 # Get VAPID public key
 @app.route('/api/push/vapid-public-key', methods=['GET'])
 def get_vapid_public_key():
