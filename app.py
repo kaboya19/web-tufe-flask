@@ -99,22 +99,57 @@ def get_vapid_private_key_for_webpush():
         print(traceback.format_exc())
         return None
 
-# Initialize database for push subscriptions
+# Push Subscriptions Storage
+# Use Google Sheets for persistent storage (survives deploys)
+# Fallback to SQLite for local development
+
+def get_push_subscriptions_sheet():
+    """Get Google Sheets worksheet for push subscriptions"""
+    try:
+        creds = get_google_credentials()
+        client = gspread.authorize(creds)
+        spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
+        
+        # Try to get the worksheet, create if it doesn't exist
+        try:
+            worksheet = spreadsheet.worksheet('Push Subscriptions')
+        except gspread.exceptions.WorksheetNotFound:
+            worksheet = spreadsheet.add_worksheet(title='Push Subscriptions', rows=1000, cols=5)
+            # Add headers
+            worksheet.append_row(['Endpoint', 'P256DH', 'Auth', 'User Agent', 'Created At'])
+        
+        return worksheet
+    except Exception as e:
+        print(f"Error accessing Google Sheets for push subscriptions: {str(e)}")
+        return None
+
 def init_push_db():
-    conn = sqlite3.connect('push_subscriptions.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS subscriptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            endpoint TEXT UNIQUE NOT NULL,
-            p256dh TEXT NOT NULL,
-            auth TEXT NOT NULL,
-            user_agent TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    """Initialize push subscriptions storage"""
+    # Try Google Sheets first (for production)
+    sheet = get_push_subscriptions_sheet()
+    if sheet:
+        print("✅ Using Google Sheets for push subscriptions (persistent)")
+        return
+    
+    # Fallback to SQLite (for local development)
+    try:
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                endpoint TEXT UNIQUE NOT NULL,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ Using SQLite for push subscriptions (local)")
+    except Exception as e:
+        print(f"Error initializing SQLite: {str(e)}")
 
 # Initialize database on startup
 init_push_db()
@@ -3988,6 +4023,107 @@ def get_vapid_public_key():
         return jsonify({'error': 'VAPID public key not configured'}), 500
     return jsonify({'publicKey': VAPID_PUBLIC_KEY})
 
+# Helper functions for push subscriptions storage
+def save_subscription_to_storage(endpoint, p256dh, auth, user_agent):
+    """Save subscription to Google Sheets or SQLite"""
+    sheet = get_push_subscriptions_sheet()
+    
+    if sheet:
+        # Use Google Sheets
+        try:
+            # Check if endpoint already exists
+            try:
+                cell = sheet.find(endpoint)
+                # Update existing row
+                row_num = cell.row
+                sheet.update(f'A{row_num}:E{row_num}', [[endpoint, p256dh, auth, user_agent, datetime.now().isoformat()]])
+            except gspread.exceptions.CellNotFound:
+                # Add new row
+                sheet.append_row([endpoint, p256dh, auth, user_agent, datetime.now().isoformat()])
+            return True
+        except Exception as e:
+            print(f"Error saving to Google Sheets: {str(e)}")
+            return False
+    
+    # Fallback to SQLite
+    try:
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('''
+            INSERT OR REPLACE INTO subscriptions (endpoint, p256dh, auth, user_agent)
+            VALUES (?, ?, ?, ?)
+        ''', (endpoint, p256dh, auth, user_agent))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error saving to SQLite: {str(e)}")
+        return False
+
+def get_all_subscriptions():
+    """Get all subscriptions from Google Sheets or SQLite"""
+    sheet = get_push_subscriptions_sheet()
+    
+    if sheet:
+        # Use Google Sheets
+        try:
+            # Get all values (skip header row)
+            all_values = sheet.get_all_values()
+            if len(all_values) <= 1:
+                return []  # Only header or empty
+            
+            subscriptions = []
+            for row in all_values[1:]:  # Skip header row
+                if len(row) >= 3 and row[0]:  # Ensure we have at least endpoint, p256dh, auth
+                    subscriptions.append((row[0], row[1], row[2]))
+            
+            return subscriptions
+        except Exception as e:
+            print(f"Error reading from Google Sheets: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return []
+    
+    # Fallback to SQLite
+    try:
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('SELECT endpoint, p256dh, auth FROM subscriptions')
+        subscriptions = c.fetchall()
+        conn.close()
+        return subscriptions
+    except Exception as e:
+        print(f"Error reading from SQLite: {str(e)}")
+        return []
+
+def delete_subscription_from_storage(endpoint):
+    """Delete subscription from Google Sheets or SQLite"""
+    sheet = get_push_subscriptions_sheet()
+    
+    if sheet:
+        # Use Google Sheets
+        try:
+            cell = sheet.find(endpoint)
+            sheet.delete_rows(cell.row)
+            return True
+        except gspread.exceptions.CellNotFound:
+            return True  # Already deleted
+        except Exception as e:
+            print(f"Error deleting from Google Sheets: {str(e)}")
+            return False
+    
+    # Fallback to SQLite
+    try:
+        conn = sqlite3.connect('push_subscriptions.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error deleting from SQLite: {str(e)}")
+        return False
+
 # Subscribe to push notifications
 @app.route('/api/push/subscribe', methods=['POST'])
 def subscribe_push():
@@ -4003,21 +4139,11 @@ def subscribe_push():
         auth = keys.get('auth', '')
         user_agent = request.headers.get('User-Agent', '')
         
-        # Save subscription to database
-        conn = sqlite3.connect('push_subscriptions.db')
-        c = conn.cursor()
-        try:
-            c.execute('''
-                INSERT OR REPLACE INTO subscriptions (endpoint, p256dh, auth, user_agent)
-                VALUES (?, ?, ?, ?)
-            ''', (endpoint, p256dh, auth, user_agent))
-            conn.commit()
-            conn.close()
+        # Save subscription to storage (Google Sheets or SQLite)
+        if save_subscription_to_storage(endpoint, p256dh, auth, user_agent):
             return jsonify({'success': True, 'message': 'Abonelik başarıyla kaydedildi'}), 200
-        except sqlite3.Error as e:
-            conn.close()
-            print(f"Database error: {str(e)}")
-            return jsonify({'error': 'Database error'}), 500
+        else:
+            return jsonify({'error': 'Failed to save subscription'}), 500
     
     except Exception as e:
         print(f"Subscribe error: {str(e)}")
@@ -4035,14 +4161,11 @@ def unsubscribe_push():
         if not endpoint:
             return jsonify({'error': 'Endpoint required'}), 400
         
-        # Remove subscription from database
-        conn = sqlite3.connect('push_subscriptions.db')
-        c = conn.cursor()
-        c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Abonelik iptal edildi'}), 200
+        # Remove subscription from storage
+        if delete_subscription_from_storage(endpoint):
+            return jsonify({'success': True, 'message': 'Abonelik iptal edildi'}), 200
+        else:
+            return jsonify({'error': 'Failed to delete subscription'}), 500
     
     except Exception as e:
         print(f"Unsubscribe error: {str(e)}")
@@ -4113,12 +4236,8 @@ def send_push_notification_internal(notification_data):
         if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
             return {'success': False, 'error': 'VAPID keys not configured'}
         
-        # Get all subscriptions
-        conn = sqlite3.connect('push_subscriptions.db')
-        c = conn.cursor()
-        c.execute('SELECT endpoint, p256dh, auth FROM subscriptions')
-        subscriptions = c.fetchall()
-        conn.close()
+        # Get all subscriptions from storage
+        subscriptions = get_all_subscriptions()
         
         if not subscriptions:
             return {'success': True, 'message': 'No subscriptions found', 'sent': 0, 'failed': 0, 'total': 0}
@@ -4169,11 +4288,7 @@ def send_push_notification_internal(notification_data):
                 # Remove invalid subscription
                 if e.response and e.response.status_code == 410:
                     print(f"Removing invalid subscription (410 Gone): {endpoint[:50]}...")
-                    conn = sqlite3.connect('push_subscriptions.db')
-                    c = conn.cursor()
-                    c.execute('DELETE FROM subscriptions WHERE endpoint = ?', (endpoint,))
-                    conn.commit()
-                    conn.close()
+                    delete_subscription_from_storage(endpoint)
                 fail_count += 1
             except Exception as e:
                 print(f"Error sending push to {endpoint[:50]}...: {str(e)}")
@@ -4223,11 +4338,8 @@ def send_push_notification():
 @app.route('/api/push/subscription-count', methods=['GET'])
 def get_subscription_count():
     try:
-        conn = sqlite3.connect('push_subscriptions.db')
-        c = conn.cursor()
-        c.execute('SELECT COUNT(*) FROM subscriptions')
-        count = c.fetchone()[0]
-        conn.close()
+        subscriptions = get_all_subscriptions()
+        count = len(subscriptions)
         return jsonify({'count': count}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
