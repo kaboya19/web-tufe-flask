@@ -4254,12 +4254,13 @@ def admin_push_panel():
             if result.get('success'):
                 sent = result.get('sent', 0)
                 failed = result.get('failed', 0)
-                removed = result.get('removed', 0)
+                error_summary = result.get('error_summary', {})
                 message = f"✅ Bildirim gönderildi! {sent} kullanıcıya ulaştı."
                 if failed > 0:
                     message += f" ({failed} başarısız)"
-                if removed > 0:
-                    message += f" ({removed} geçersiz abonelik temizlendi)"
+                    if error_summary:
+                        error_types = ", ".join([f"{k}: {v}" for k, v in error_summary.items()])
+                        message += f" - Hata tipleri: {error_types}"
                 flash(message, 'success')
             else:
                 flash(f"❌ Hata: {result.get('error', 'Bilinmeyen hata')}", 'error')
@@ -4302,92 +4303,180 @@ def send_push_notification_internal(notification_data):
         if not subscriptions:
             return {'success': True, 'message': 'No subscriptions found', 'sent': 0, 'failed': 0, 'total': 0}
         
+        # VAPID claims - ensure email is properly formatted with mailto: prefix
+        # This is required by the Web Push Protocol specification
+        vapid_sub = VAPID_CLAIM_EMAIL
+        if vapid_sub and not vapid_sub.startswith('mailto:'):
+            vapid_sub = f'mailto:{vapid_sub}'
+        elif not vapid_sub:
+            vapid_sub = 'mailto:webtufe@example.com'
+        
         vapid_claims = {
-            "sub": VAPID_CLAIM_EMAIL
+            "sub": vapid_sub
         }
+        
+        # Get VAPID private key in base64 URL-safe format (pywebpush expects this)
+        vapid_private_key = get_vapid_private_key_for_webpush()
+        if not vapid_private_key:
+            return {'success': False, 'error': 'VAPID private key not configured or invalid'}
         
         success_count = 0
         fail_count = 0
-        removed_count = 0
+        error_details = {}
         
         for endpoint, p256dh, auth in subscriptions:
             endpoint_type = detect_endpoint_type(endpoint)
-            try:
-                subscription_info = {
-                    "endpoint": endpoint,
-                    "keys": {
-                        "p256dh": p256dh,
-                        "auth": auth
+            max_retries = 2
+            retry_count = 0
+            success = False
+            
+            while retry_count <= max_retries and not success:
+                try:
+                    subscription_info = {
+                        "endpoint": endpoint,
+                        "keys": {
+                            "p256dh": p256dh,
+                            "auth": auth
+                        }
                     }
-                }
-                
-                # Generate unique tag for each notification (prevents browser from replacing previous notification)
-                # Use timestamp + endpoint suffix to ensure uniqueness
-                unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
-                
-                payload = json.dumps({
-                    "title": title,
-                    "body": body,
-                    "icon": icon,
-                    "url": url,
-                    "tag": unique_tag
-                })
-                
-                # Get VAPID private key in base64 URL-safe format (pywebpush expects this)
-                vapid_private_key = get_vapid_private_key_for_webpush()
-                if not vapid_private_key:
-                    raise Exception("VAPID private key not configured or invalid")
-                
-                webpush(
-                    subscription_info=subscription_info,
-                    data=payload,
-                    vapid_private_key=vapid_private_key,
-                    vapid_claims=vapid_claims
-                )
-                success_count += 1
-            except WebPushException as e:
-                status_code = e.response.status_code if e.response else None
-                endpoint_type = detect_endpoint_type(endpoint)
-                error_msg = str(e)
-                
-                print(f"WebPush error for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
-                
-                # Remove invalid subscriptions for these status codes:
-                # 410: Gone - subscription no longer exists
-                # 401: Unauthorized - invalid/expired subscription or authentication failed
-                # 403: Forbidden - subscription expired or revoked
-                # 404: Not Found - endpoint doesn't exist
-                if status_code in [410, 401, 403, 404]:
-                    print(f"Removing invalid subscription ({status_code}): {endpoint_type} - {endpoint[:50]}...")
-                    if delete_subscription_from_storage(endpoint):
-                        removed_count += 1
+                    
+                    # Generate unique tag for each notification (prevents browser from replacing previous notification)
+                    # Use timestamp + endpoint suffix to ensure uniqueness
+                    unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
+                    
+                    payload = json.dumps({
+                        "title": title,
+                        "body": body,
+                        "icon": icon,
+                        "url": url,
+                        "tag": unique_tag
+                    })
+                    
+                    # Prepare webpush parameters
+                    webpush_params = {
+                        "subscription_info": subscription_info,
+                        "data": payload,
+                        "vapid_private_key": vapid_private_key,
+                        "vapid_claims": vapid_claims,
+                        "ttl": 86400,  # 24 hours TTL - some endpoints require this
+                    }
+                    
+                    # For WNS endpoints, try with different configurations
+                    if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                        # WNS endpoints might need explicit content-type
+                        # pywebpush should handle this, but we ensure TTL is set
+                        webpush_params["ttl"] = 86400
+                    
+                    # Send push notification
+                    webpush(**webpush_params)
+                    
+                    success_count += 1
+                    success = True
+                    
+                except WebPushException as e:
+                    status_code = e.response.status_code if e.response else None
+                    error_msg = str(e)
+                    response_text = ""
+                    
+                    # Get response details if available
+                    if e.response:
+                        try:
+                            response_text = e.response.text[:200] if hasattr(e.response, 'text') else ""
+                        except:
+                            pass
+                    
+                    # For 401 errors, try to get more details
+                    if status_code == 401:
+                        # Check if it's a VAPID authentication issue
+                        if "unauthorized" in error_msg.lower() or "authentication" in error_msg.lower():
+                            # Log detailed error for debugging
+                            print(f"⚠️ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...")
+                            print(f"   Error: {error_msg}")
+                            if response_text:
+                                print(f"   Response: {response_text}")
+                            
+                            # For 401 errors, don't retry - it's likely an authentication/config issue
+                            # but we keep the subscription as requested by user
+                            if endpoint_type not in error_details:
+                                error_details[endpoint_type] = []
+                            error_details[endpoint_type].append({
+                                'endpoint': endpoint[:50],
+                                'status': status_code,
+                                'error': error_msg
+                            })
+                            fail_count += 1
+                            break
+                    
+                    # For 410 (Gone) errors, subscription is invalid but we keep it as requested
+                    elif status_code == 410:
+                        print(f"⚠️ 410 Gone for {endpoint_type} endpoint {endpoint[:50]}... (subscription kept)")
+                        if endpoint_type not in error_details:
+                            error_details[endpoint_type] = []
+                        error_details[endpoint_type].append({
+                            'endpoint': endpoint[:50],
+                            'status': status_code,
+                            'error': 'Subscription expired or invalid'
+                        })
+                        fail_count += 1
+                        break
+                    
+                    # For other errors, retry once
+                    elif retry_count < max_retries:
+                        retry_count += 1
+                        print(f"⚠️ Retry {retry_count}/{max_retries} for {endpoint_type} endpoint {endpoint[:50]}... (Status: {status_code})")
+                        import time
+                        time.sleep(0.5)  # Small delay before retry
+                        continue
                     else:
-                        print(f"Warning: Failed to remove subscription from storage: {endpoint[:50]}...")
-                fail_count += 1
-            except Exception as e:
-                endpoint_type = detect_endpoint_type(endpoint)
-                print(f"Error sending push to {endpoint_type} endpoint {endpoint[:50]}...: {str(e)}")
-                import traceback
-                print(traceback.format_exc())
-                fail_count += 1
+                        # Max retries reached
+                        print(f"❌ Failed after {max_retries} retries for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
+                        if endpoint_type not in error_details:
+                            error_details[endpoint_type] = []
+                        error_details[endpoint_type].append({
+                            'endpoint': endpoint[:50],
+                            'status': status_code,
+                            'error': error_msg
+                        })
+                        fail_count += 1
+                        break
+                        
+                except Exception as e:
+                    # For non-WebPush exceptions, log and continue
+                    error_msg = str(e)
+                    print(f"❌ Exception for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
+                    if endpoint_type not in error_details:
+                        error_details[endpoint_type] = []
+                    error_details[endpoint_type].append({
+                        'endpoint': endpoint[:50],
+                        'status': 'Exception',
+                        'error': error_msg
+                    })
+                    fail_count += 1
+                    break
         
+        # Prepare result
         result = {
             'success': True,
             'sent': success_count,
             'failed': fail_count,
-            'removed': removed_count,
-            'total': len(subscriptions)
+            'total': len(subscriptions),
+            'error_summary': {k: len(v) for k, v in error_details.items()} if error_details else {}
         }
         
-        if removed_count > 0:
-            print(f"Push notification summary: {success_count} sent, {fail_count} failed, {removed_count} invalid subscriptions removed")
-        else:
-            print(f"Push notification summary: {success_count} sent, {fail_count} failed")
+        # Log summary
+        print(f"\n📊 Push notification summary:")
+        print(f"   ✅ Sent: {success_count}")
+        print(f"   ❌ Failed: {fail_count}")
+        print(f"   Total: {len(subscriptions)}")
+        if error_details:
+            print(f"   ⚠️  Errors by type:")
+            for endpoint_type, errors in error_details.items():
+                print(f"      {endpoint_type}: {len(errors)} errors")
         
         return result
     
     except Exception as e:
-        print(f"Send push error: {str(e)}")
+        print(f"❌ Send push error: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return {'success': False, 'error': str(e)}
