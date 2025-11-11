@@ -4254,13 +4254,35 @@ def admin_push_panel():
             if result.get('success'):
                 sent = result.get('sent', 0)
                 failed = result.get('failed', 0)
-                flash(f"✅ Bildirim gönderildi! {sent} kullanıcıya ulaştı. ({failed} başarısız)", 'success')
+                removed = result.get('removed', 0)
+                message = f"✅ Bildirim gönderildi! {sent} kullanıcıya ulaştı."
+                if failed > 0:
+                    message += f" ({failed} başarısız)"
+                if removed > 0:
+                    message += f" ({removed} geçersiz abonelik temizlendi)"
+                flash(message, 'success')
             else:
                 flash(f"❌ Hata: {result.get('error', 'Bilinmeyen hata')}", 'error')
         except Exception as e:
             flash(f'❌ Hata: {str(e)}', 'error')
         
         return redirect(url_for('admin_push_panel'))
+
+def detect_endpoint_type(endpoint):
+    """Detect the type of push notification endpoint"""
+    if not endpoint:
+        return "unknown"
+    endpoint_lower = endpoint.lower()
+    if "fcm.googleapis.com" in endpoint_lower or "googleapis.com" in endpoint_lower:
+        return "FCM (Chrome)"
+    elif "notify.windows.com" in endpoint_lower or "wns" in endpoint_lower:
+        return "WNS (Windows/Edge)"
+    elif "updates.push.services.mozilla.com" in endpoint_lower:
+        return "Mozilla (Firefox)"
+    elif "push.apple.com" in endpoint_lower or "api.push.apple.com" in endpoint_lower:
+        return "APNs (Safari)"
+    else:
+        return "Unknown"
 
 # Internal function to send push notifications
 def send_push_notification_internal(notification_data):
@@ -4286,8 +4308,10 @@ def send_push_notification_internal(notification_data):
         
         success_count = 0
         fail_count = 0
+        removed_count = 0
         
         for endpoint, p256dh, auth in subscriptions:
+            endpoint_type = detect_endpoint_type(endpoint)
             try:
                 subscription_info = {
                     "endpoint": endpoint,
@@ -4322,24 +4346,45 @@ def send_push_notification_internal(notification_data):
                 )
                 success_count += 1
             except WebPushException as e:
-                print(f"WebPush error for endpoint {endpoint[:50]}...: {str(e)}")
-                # Remove invalid subscription
-                if e.response and e.response.status_code == 410:
-                    print(f"Removing invalid subscription (410 Gone): {endpoint[:50]}...")
-                    delete_subscription_from_storage(endpoint)
+                status_code = e.response.status_code if e.response else None
+                endpoint_type = detect_endpoint_type(endpoint)
+                error_msg = str(e)
+                
+                print(f"WebPush error for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
+                
+                # Remove invalid subscriptions for these status codes:
+                # 410: Gone - subscription no longer exists
+                # 401: Unauthorized - invalid/expired subscription or authentication failed
+                # 403: Forbidden - subscription expired or revoked
+                # 404: Not Found - endpoint doesn't exist
+                if status_code in [410, 401, 403, 404]:
+                    print(f"Removing invalid subscription ({status_code}): {endpoint_type} - {endpoint[:50]}...")
+                    if delete_subscription_from_storage(endpoint):
+                        removed_count += 1
+                    else:
+                        print(f"Warning: Failed to remove subscription from storage: {endpoint[:50]}...")
                 fail_count += 1
             except Exception as e:
-                print(f"Error sending push to {endpoint[:50]}...: {str(e)}")
+                endpoint_type = detect_endpoint_type(endpoint)
+                print(f"Error sending push to {endpoint_type} endpoint {endpoint[:50]}...: {str(e)}")
                 import traceback
                 print(traceback.format_exc())
                 fail_count += 1
         
-        return {
+        result = {
             'success': True,
             'sent': success_count,
             'failed': fail_count,
+            'removed': removed_count,
             'total': len(subscriptions)
         }
+        
+        if removed_count > 0:
+            print(f"Push notification summary: {success_count} sent, {fail_count} failed, {removed_count} invalid subscriptions removed")
+        else:
+            print(f"Push notification summary: {success_count} sent, {fail_count} failed")
+        
+        return result
     
     except Exception as e:
         print(f"Send push error: {str(e)}")
