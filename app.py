@@ -4361,11 +4361,13 @@ def send_push_notification_internal(notification_data):
                         "ttl": 86400,  # 24 hours TTL - some endpoints require this
                     }
                     
-                    # For WNS endpoints, try with different configurations
+                    # For WNS endpoints, ensure proper configuration
+                    # Note: WNS endpoints use web push protocol but may have stricter VAPID requirements
                     if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
-                        # WNS endpoints might need explicit content-type
-                        # pywebpush should handle this, but we ensure TTL is set
+                        # Ensure TTL is set (required by some endpoints)
                         webpush_params["ttl"] = 86400
+                        # WNS may require specific VAPID claim format
+                        # The vapid_claims with 'mailto:' prefix should be correct
                     
                     # Send push notification
                     webpush(**webpush_params)
@@ -4374,38 +4376,84 @@ def send_push_notification_internal(notification_data):
                     success = True
                     
                 except WebPushException as e:
-                    status_code = e.response.status_code if e.response else None
+                    # Try to get status code from response object
+                    status_code = None
+                    if e.response:
+                        try:
+                            status_code = e.response.status_code
+                        except:
+                            pass
+                    
+                    # If status_code is None, try to extract from error message
                     error_msg = str(e)
+                    if status_code is None:
+                        # Extract status code from error message (e.g., "401 Unauthorized", "Push failed: 401")
+                        import re
+                        status_match = re.search(r'\b(\d{3})\b', error_msg)
+                        if status_match:
+                            status_code = int(status_match.group(1))
+                    
                     response_text = ""
+                    response_headers = {}
                     
                     # Get response details if available
                     if e.response:
                         try:
                             response_text = e.response.text[:200] if hasattr(e.response, 'text') else ""
-                        except:
-                            pass
+                            if hasattr(e.response, 'headers'):
+                                response_headers = dict(e.response.headers)
+                        except Exception as resp_error:
+                            print(f"   Warning: Could not parse response details: {resp_error}")
                     
                     # For 401 errors, try to get more details
-                    if status_code == 401:
+                    if status_code == 401 or "401" in error_msg or "unauthorized" in error_msg.lower():
+                        # Ensure status_code is set to 401
+                        if status_code != 401:
+                            status_code = 401
                         # Check if it's a VAPID authentication issue
-                        if "unauthorized" in error_msg.lower() or "authentication" in error_msg.lower():
-                            # Log detailed error for debugging
-                            print(f"⚠️ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...")
-                            print(f"   Error: {error_msg}")
-                            if response_text:
-                                print(f"   Response: {response_text}")
+                        # Log detailed error for debugging
+                        print(f"⚠️ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...")
+                        print(f"   Error: {error_msg}")
+                        
+                        # Special handling for WNS endpoints
+                        if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                            print(f"   ℹ️  WNS endpoint detected - this may be a VAPID authentication issue")
+                            print(f"   ℹ️  WNS requires valid VAPID keys with proper 'mailto:' claim format")
+                            print(f"   ℹ️  VAPID claim used: {vapid_claims.get('sub', 'Not set')}")
+                        
+                        if response_text:
+                            print(f"   Response body: {response_text}")
+                        if response_headers:
+                            # Log relevant headers for debugging
+                            relevant_headers = {k: v for k, v in response_headers.items() 
+                                              if k.lower() in ['www-authenticate', 'x-wns-notificationstatus', 
+                                                              'x-wns-msg-id', 'x-wns-debug-trace', 'retry-after']}
+                            if relevant_headers:
+                                print(f"   Response headers: {relevant_headers}")
                             
-                            # For 401 errors, don't retry - it's likely an authentication/config issue
-                            # but we keep the subscription as requested by user
-                            if endpoint_type not in error_details:
-                                error_details[endpoint_type] = []
-                            error_details[endpoint_type].append({
-                                'endpoint': endpoint[:50],
-                                'status': status_code,
-                                'error': error_msg
-                            })
-                            fail_count += 1
-                            break
+                            # Check for WNS-specific error indicators
+                            if 'www-authenticate' in response_headers:
+                                print(f"   ⚠️  WWW-Authenticate header: {response_headers.get('www-authenticate', 'Not found')}")
+                        
+                        # For WNS endpoints with 401, this might be a VAPID configuration issue
+                        # Possible causes:
+                        # 1. VAPID keys are invalid or incorrectly formatted
+                        # 2. VAPID claim (sub) is not properly formatted with 'mailto:' prefix
+                        # 3. WNS endpoint requires additional authentication (though this shouldn't happen with web push)
+                        # 4. The subscription endpoint itself might be invalid (though we keep it as requested)
+                        # We keep the subscription as requested by user, but log the issue
+                        if endpoint_type not in error_details:
+                            error_details[endpoint_type] = []
+                        error_details[endpoint_type].append({
+                            'endpoint': endpoint[:50],
+                            'status': 401,
+                            'error': error_msg,
+                            'response_body': response_text if response_text else None,
+                            'vapid_claim': vapid_claims.get('sub', 'Not set')
+                        })
+                        fail_count += 1
+                        # Don't retry 401 errors - it's an authentication issue
+                        break
                     
                     # For 410 (Gone) errors, subscription is invalid but we keep it as requested
                     elif status_code == 410:
@@ -4420,22 +4468,29 @@ def send_push_notification_internal(notification_data):
                         fail_count += 1
                         break
                     
-                    # For other errors, retry once
-                    elif retry_count < max_retries:
+                    # For other errors (not 401, not 410), check if we should retry
+                    # Don't retry 401 errors (already handled above)
+                    elif status_code != 401 and retry_count < max_retries:
                         retry_count += 1
                         print(f"⚠️ Retry {retry_count}/{max_retries} for {endpoint_type} endpoint {endpoint[:50]}... (Status: {status_code})")
                         import time
                         time.sleep(0.5)  # Small delay before retry
                         continue
                     else:
-                        # Max retries reached
-                        print(f"❌ Failed after {max_retries} retries for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
+                        # Max retries reached or non-retryable error
+                        if status_code == 401:
+                            # This shouldn't happen as we break above, but just in case
+                            print(f"❌ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
+                        else:
+                            print(f"❌ Failed after {max_retries} retries for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
+                        
                         if endpoint_type not in error_details:
                             error_details[endpoint_type] = []
                         error_details[endpoint_type].append({
                             'endpoint': endpoint[:50],
-                            'status': status_code,
-                            'error': error_msg
+                            'status': status_code if status_code else 'Unknown',
+                            'error': error_msg,
+                            'response_body': response_text if response_text else None
                         })
                         fail_count += 1
                         break
