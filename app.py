@@ -4353,387 +4353,408 @@ def send_push_notification_internal(notification_data):
         error_details = {}
         
         for endpoint, p256dh, auth in subscriptions:
-            endpoint_type = detect_endpoint_type(endpoint)
-            max_retries = 2
-            retry_count = 0
-            success = False
-            
-            while retry_count <= max_retries and not success:
-                try:
-                    subscription_info = {
-                        "endpoint": endpoint,
-                        "keys": {
-                            "p256dh": p256dh,
-                            "auth": auth
+            # Wrap each endpoint processing in its own try-except to ensure loop continues
+            try:
+                endpoint_type = detect_endpoint_type(endpoint)
+                max_retries = 2
+                retry_count = 0
+                success = False
+                
+                while retry_count <= max_retries and not success:
+                    try:
+                        subscription_info = {
+                            "endpoint": endpoint,
+                            "keys": {
+                                "p256dh": p256dh,
+                                "auth": auth
+                            }
                         }
-                    }
-                    
-                    # Generate unique tag for each notification (prevents browser from replacing previous notification)
-                    # Use timestamp + endpoint suffix to ensure uniqueness
-                    unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
-                    
-                    payload = json.dumps({
-                        "title": title,
-                        "body": body,
-                        "icon": icon,
-                        "url": url,
-                        "tag": unique_tag
-                    })
-                    
-                    # Prepare webpush parameters
-                    webpush_params = {
-                        "subscription_info": subscription_info,
-                        "data": payload,
-                        "vapid_private_key": vapid_private_key,
-                        "vapid_claims": vapid_claims,
-                        "ttl": 86400,  # 24 hours TTL - some endpoints require this
-                    }
-                    
-                    # For WNS endpoints, ensure proper configuration
-                    # Note: WNS endpoints use web push protocol but may have stricter VAPID requirements
-                    is_wns_endpoint = "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()
-                    if is_wns_endpoint:
-                        # Ensure TTL is set (required by some endpoints)
-                        webpush_params["ttl"] = 86400
-                        # WNS may require specific VAPID claim format
-                        # The vapid_claims with 'mailto:' prefix should be correct
-                        # Note: Some WNS endpoints may have issues with VAPID authentication
-                        # This is a known issue with certain Edge browser versions
-                    
-                    # Send push notification
-                    webpush(**webpush_params)
-                    
-                    success_count += 1
-                    success = True
-                    
-                except WebPushException as e:
-                    # Try to get status code from response object
-                    status_code = None
-                    if e.response:
-                        try:
-                            status_code = e.response.status_code
-                        except:
-                            pass
-                    
-                    # If status_code is None, try to extract from error message
-                    error_msg = str(e)
-                    if status_code is None:
-                        # Extract status code from error message (e.g., "401 Unauthorized", "Push failed: 401")
-                        import re
-                        status_match = re.search(r'\b(\d{3})\b', error_msg)
-                        if status_match:
-                            status_code = int(status_match.group(1))
-                    
-                    response_text = ""
-                    response_headers = {}
-                    request_headers_sent = {}
-                    
-                    # Get response details if available - enhanced for WNS
-                    if e.response:
-                        try:
-                            # Try to get response text - multiple methods
-                            response_text = ""
-                            if hasattr(e.response, 'text'):
-                                try:
-                                    response_text = e.response.text[:500] if e.response.text else ""
-                                except:
-                                    pass
-                            
-                            if not response_text and hasattr(e.response, 'content'):
-                                try:
-                                    content = e.response.content
-                                    if isinstance(content, bytes):
-                                        response_text = content[:500].decode('utf-8', errors='ignore')
-                                    else:
-                                        response_text = str(content)[:500]
-                                except:
-                                    pass
-                            
-                            if not response_text and hasattr(e.response, 'body'):
-                                try:
-                                    response_text = str(e.response.body)[:500]
-                                except:
-                                    pass
-                            
-                            # Try to get response headers - enhanced methods
-                            if hasattr(e.response, 'headers'):
-                                try:
-                                    headers_obj = e.response.headers
-                                    # Try different header object types
-                                    if hasattr(headers_obj, 'get'):
-                                        # Case-insensitive dict or similar
-                                        response_headers = dict(headers_obj)
-                                    elif hasattr(headers_obj, 'items'):
-                                        # Dict-like object
-                                        try:
-                                            response_headers = {str(k): str(v) for k, v in headers_obj.items()}
-                                        except:
-                                            response_headers = {}
-                                    elif isinstance(headers_obj, dict):
-                                        response_headers = dict(headers_obj)
-                                    else:
-                                        # Try to convert to dict
-                                        try:
+                        
+                        # Generate unique tag for each notification (prevents browser from replacing previous notification)
+                        # Use timestamp + endpoint suffix to ensure uniqueness
+                        unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
+                        
+                        payload = json.dumps({
+                            "title": title,
+                            "body": body,
+                            "icon": icon,
+                            "url": url,
+                            "tag": unique_tag
+                        })
+                        
+                        # Prepare webpush parameters
+                        webpush_params = {
+                            "subscription_info": subscription_info,
+                            "data": payload,
+                            "vapid_private_key": vapid_private_key,
+                            "vapid_claims": vapid_claims,
+                            "ttl": 86400,  # 24 hours TTL - some endpoints require this
+                        }
+                        
+                        # For WNS endpoints, ensure proper configuration
+                        # Note: WNS endpoints use web push protocol but may have stricter VAPID requirements
+                        is_wns_endpoint = "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()
+                        if is_wns_endpoint:
+                            # Ensure TTL is set (required by some endpoints)
+                            webpush_params["ttl"] = 86400
+                            # WNS may require specific VAPID claim format
+                            # The vapid_claims with 'mailto:' prefix should be correct
+                            # Note: Some WNS endpoints may have issues with VAPID authentication
+                            # This is a known issue with certain Edge browser versions
+                        
+                        # Send push notification
+                        webpush(**webpush_params)
+                        
+                        success_count += 1
+                        success = True
+                        
+                    except WebPushException as e:
+                        # Try to get status code from response object
+                        status_code = None
+                        if e.response:
+                            try:
+                                status_code = e.response.status_code
+                            except:
+                                pass
+                        
+                        # If status_code is None, try to extract from error message
+                        error_msg = str(e)
+                        if status_code is None:
+                            # Extract status code from error message (e.g., "401 Unauthorized", "Push failed: 401")
+                            import re
+                            status_match = re.search(r'\b(\d{3})\b', error_msg)
+                            if status_match:
+                                status_code = int(status_match.group(1))
+                        
+                        response_text = ""
+                        response_headers = {}
+                        request_headers_sent = {}
+                        
+                        # Get response details if available - enhanced for WNS
+                        if e.response:
+                            try:
+                                # Try to get response text - multiple methods
+                                response_text = ""
+                                if hasattr(e.response, 'text'):
+                                    try:
+                                        response_text = e.response.text[:500] if e.response.text else ""
+                                    except:
+                                        pass
+                                
+                                if not response_text and hasattr(e.response, 'content'):
+                                    try:
+                                        content = e.response.content
+                                        if isinstance(content, bytes):
+                                            response_text = content[:500].decode('utf-8', errors='ignore')
+                                        else:
+                                            response_text = str(content)[:500]
+                                    except:
+                                        pass
+                                
+                                if not response_text and hasattr(e.response, 'body'):
+                                    try:
+                                        response_text = str(e.response.body)[:500]
+                                    except:
+                                        pass
+                                
+                                # Try to get response headers - enhanced methods
+                                if hasattr(e.response, 'headers'):
+                                    try:
+                                        headers_obj = e.response.headers
+                                        # Try different header object types
+                                        if hasattr(headers_obj, 'get'):
+                                            # Case-insensitive dict or similar
                                             response_headers = dict(headers_obj)
+                                        elif hasattr(headers_obj, 'items'):
+                                            # Dict-like object
+                                            try:
+                                                response_headers = {str(k): str(v) for k, v in headers_obj.items()}
+                                            except:
+                                                response_headers = {}
+                                        elif isinstance(headers_obj, dict):
+                                            response_headers = dict(headers_obj)
+                                        else:
+                                            # Try to convert to dict
+                                            try:
+                                                response_headers = dict(headers_obj)
+                                            except:
+                                                response_headers = {}
+                                    except Exception as header_error:
+                                        print(f"   ⚠️  Could not parse response headers: {header_error}")
+                                        response_headers = {}
+                                
+                                # Try to get request headers that were sent
+                                if hasattr(e.response, 'request'):
+                                    try:
+                                        req = e.response.request
+                                        if hasattr(req, 'headers'):
+                                            req_headers = req.headers
+                                            if hasattr(req_headers, 'items'):
+                                                request_headers_sent = {str(k): str(v) for k, v in req_headers.items()}
+                                            elif isinstance(req_headers, dict):
+                                                request_headers_sent = dict(req_headers)
+                                    except:
+                                        pass
+                                            
+                                # Also try to get status code from response if not already set
+                                if status_code is None:
+                                    if hasattr(e.response, 'status_code'):
+                                        try:
+                                            status_code = e.response.status_code
                                         except:
-                                            response_headers = {}
-                                except Exception as header_error:
-                                    print(f"   ⚠️  Could not parse response headers: {header_error}")
-                                    response_headers = {}
+                                            pass
+                                    elif hasattr(e.response, 'status'):
+                                        try:
+                                            status_code = e.response.status
+                                        except:
+                                            pass
+                                            
+                            except Exception as resp_error:
+                                print(f"   ⚠️  Warning: Could not parse response details: {resp_error}")
+                                import traceback
+                                print(f"   Traceback: {traceback.format_exc()}")
+                        
+                        # Also try to get info from exception itself
+                        if not status_code:
+                            # Try to extract from exception message or args
+                            if hasattr(e, 'args') and e.args:
+                                for arg in e.args:
+                                    if isinstance(arg, str) and '401' in arg:
+                                        status_code = 401
+                                    elif isinstance(arg, str) and '403' in arg:
+                                        status_code = 403
+                        
+                        # For 401 errors, try to get more details
+                        if status_code == 401 or "401" in error_msg or "unauthorized" in error_msg.lower():
+                            # Ensure status_code is set to 401
+                            if status_code != 401:
+                                status_code = 401
+                            # Check if it's a VAPID authentication issue
+                            # Log detailed error for debugging
+                            print(f"⚠️ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...")
+                            print(f"   Error: {error_msg}")
                             
-                            # Try to get request headers that were sent
-                            if hasattr(e.response, 'request'):
-                                try:
-                                    req = e.response.request
-                                    if hasattr(req, 'headers'):
-                                        req_headers = req.headers
-                                        if hasattr(req_headers, 'items'):
-                                            request_headers_sent = {str(k): str(v) for k, v in req_headers.items()}
-                                        elif isinstance(req_headers, dict):
-                                            request_headers_sent = dict(req_headers)
-                                except:
-                                    pass
-                                        
-                            # Also try to get status code from response if not already set
-                            if status_code is None:
-                                if hasattr(e.response, 'status_code'):
-                                    try:
-                                        status_code = e.response.status_code
-                                    except:
-                                        pass
-                                elif hasattr(e.response, 'status'):
-                                    try:
-                                        status_code = e.response.status
-                                    except:
-                                        pass
-                                        
-                        except Exception as resp_error:
-                            print(f"   ⚠️  Warning: Could not parse response details: {resp_error}")
-                            import traceback
-                            print(f"   Traceback: {traceback.format_exc()}")
-                    
-                    # Also try to get info from exception itself
-                    if not status_code:
-                        # Try to extract from exception message or args
-                        if hasattr(e, 'args') and e.args:
-                            for arg in e.args:
-                                if isinstance(arg, str) and '401' in arg:
-                                    status_code = 401
-                                elif isinstance(arg, str) and '403' in arg:
-                                    status_code = 403
-                    
-                    # For 401 errors, try to get more details
-                    if status_code == 401 or "401" in error_msg or "unauthorized" in error_msg.lower():
-                        # Ensure status_code is set to 401
-                        if status_code != 401:
-                            status_code = 401
-                        # Check if it's a VAPID authentication issue
-                        # Log detailed error for debugging
-                        print(f"⚠️ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...")
-                        print(f"   Error: {error_msg}")
-                        
-                        # Special handling for WNS endpoints
-                        if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
-                            print(f"   ℹ️  WNS endpoint detected - this may be a VAPID authentication issue")
-                            print(f"   ℹ️  WNS requires valid VAPID keys with proper 'mailto:' claim format")
-                            print(f"   ℹ️  VAPID claim used: {vapid_claims.get('sub', 'Not set')}")
-                        
-                        # Log response body
-                        if response_text:
-                            print(f"   Response body: {response_text}")
-                        else:
-                            print(f"   Response body: (empty or not available)")
-                        
-                        # Log all response headers for WNS endpoints, or relevant ones for others
-                        if response_headers:
+                            # Special handling for WNS endpoints
                             if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
-                                # For WNS, log all headers for debugging
-                                print(f"   📋 All response headers: {response_headers}")
-                            else:
-                                # For other endpoints, log only relevant headers
-                                relevant_headers = {k: v for k, v in response_headers.items() 
-                                                  if k.lower() in ['www-authenticate', 'x-wns-notificationstatus', 
-                                                                  'x-wns-msg-id', 'x-wns-debug-trace', 'retry-after',
-                                                                  'content-type', 'content-length']}
-                                if relevant_headers:
-                                    print(f"   📋 Response headers: {relevant_headers}")
+                                print(f"   ℹ️  WNS endpoint detected - this may be a VAPID authentication issue")
+                                print(f"   ℹ️  WNS requires valid VAPID keys with proper 'mailto:' claim format")
+                                print(f"   ℹ️  VAPID claim used: {vapid_claims.get('sub', 'Not set')}")
                             
-                            # Check for WNS-specific error indicators
-                            headers_lower = {k.lower(): v for k, v in response_headers.items()}
-                            if 'www-authenticate' in headers_lower:
-                                print(f"   ⚠️  WWW-Authenticate header: {headers_lower.get('www-authenticate', 'Not found')}")
-                            if 'x-wns-notificationstatus' in headers_lower:
-                                print(f"   ℹ️  X-WNS-NotificationStatus: {headers_lower.get('x-wns-notificationstatus', 'Not found')}")
-                            if 'x-wns-debug-trace' in headers_lower:
-                                print(f"   ℹ️  X-WNS-Debug-Trace: {headers_lower.get('x-wns-debug-trace', 'Not found')}")
-                        else:
-                            print(f"   📋 Response headers: (not available - this might indicate a pywebpush parsing issue)")
-                        
-                        # Log request headers that were sent (especially for WNS)
-                        if request_headers_sent and ("notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()):
-                            print(f"   📤 Request headers sent:")
-                            # Log Authorization header (masked) and other important headers
-                            for key, value in request_headers_sent.items():
-                                if key.lower() == 'authorization':
-                                    # Mask the token part
-                                    if 'Bearer' in value or 'WebPush' in value:
-                                        parts = value.split(' ', 1)
-                                        if len(parts) > 1:
-                                            token = parts[1]
-                                            masked = token[:20] + '...' + token[-10:] if len(token) > 30 else '***'
-                                            print(f"      {key}: {parts[0]} {masked}")
+                            # Log response body
+                            if response_text:
+                                print(f"   Response body: {response_text}")
+                            else:
+                                print(f"   Response body: (empty or not available)")
+                            
+                            # Log all response headers for WNS endpoints, or relevant ones for others
+                            if response_headers:
+                                if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                                    # For WNS, log all headers for debugging
+                                    print(f"   📋 All response headers: {response_headers}")
+                                else:
+                                    # For other endpoints, log only relevant headers
+                                    relevant_headers = {k: v for k, v in response_headers.items() 
+                                                      if k.lower() in ['www-authenticate', 'x-wns-notificationstatus', 
+                                                                      'x-wns-msg-id', 'x-wns-debug-trace', 'retry-after',
+                                                                      'content-type', 'content-length']}
+                                    if relevant_headers:
+                                        print(f"   📋 Response headers: {relevant_headers}")
+                                
+                                # Check for WNS-specific error indicators
+                                headers_lower = {k.lower(): v for k, v in response_headers.items()}
+                                if 'www-authenticate' in headers_lower:
+                                    print(f"   ⚠️  WWW-Authenticate header: {headers_lower.get('www-authenticate', 'Not found')}")
+                                if 'x-wns-notificationstatus' in headers_lower:
+                                    print(f"   ℹ️  X-WNS-NotificationStatus: {headers_lower.get('x-wns-notificationstatus', 'Not found')}")
+                                if 'x-wns-debug-trace' in headers_lower:
+                                    print(f"   ℹ️  X-WNS-Debug-Trace: {headers_lower.get('x-wns-debug-trace', 'Not found')}")
+                            else:
+                                print(f"   📋 Response headers: (not available - this might indicate a pywebpush parsing issue)")
+                            
+                            # Log request headers that were sent (especially for WNS)
+                            if request_headers_sent and ("notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()):
+                                print(f"   📤 Request headers sent:")
+                                # Log Authorization header (masked) and other important headers
+                                for key, value in request_headers_sent.items():
+                                    if key.lower() == 'authorization':
+                                        # Mask the token part
+                                        if 'Bearer' in value or 'WebPush' in value:
+                                            parts = value.split(' ', 1)
+                                            if len(parts) > 1:
+                                                token = parts[1]
+                                                masked = token[:20] + '...' + token[-10:] if len(token) > 30 else '***'
+                                                print(f"      {key}: {parts[0]} {masked}")
+                                            else:
+                                                print(f"      {key}: {value[:50]}...")
                                         else:
                                             print(f"      {key}: {value[:50]}...")
-                                    else:
-                                        print(f"      {key}: {value[:50]}...")
-                                elif key.lower() in ['content-type', 'content-encoding', 'ttl', 'content-length']:
-                                    print(f"      {key}: {value}")
+                                    elif key.lower() in ['content-type', 'content-encoding', 'ttl', 'content-length']:
+                                        print(f"      {key}: {value}")
+                                
+                            # Log additional debugging info for WNS
+                            if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                                print(f"   🔍 WNS Debugging info:")
+                                print(f"      - Endpoint: {endpoint[:80]}")
+                                print(f"      - Has p256dh key: {'Yes' if p256dh else 'No'} ({len(p256dh) if p256dh else 0} chars)")
+                                print(f"      - Has auth key: {'Yes' if auth else 'No'} ({len(auth) if auth else 0} chars)")
+                                print(f"      - VAPID private key format: {'Set' if vapid_private_key else 'Not set'}")
+                                if vapid_private_key:
+                                    print(f"      - VAPID private key length: {len(vapid_private_key)} chars")
+                                    print(f"      - VAPID private key starts with: {vapid_private_key[:20]}...")
+                                print(f"      - VAPID claim (sub): {vapid_claims.get('sub', 'Not set')}")
+                                print(f"      - Payload size: {len(payload)} bytes")
+                                print(f"      - TTL: {webpush_params.get('ttl', 'Not set')}")
+                                
+                                # Check if this might be a VAPID key mismatch issue or pywebpush bug
+                                print(f"   💡 Possible causes for WNS 401 error:")
+                                print(f"      1. VAPID keys don't match the subscription (user subscribed with different keys)")
+                                print(f"      2. pywebpush library issue with WNS endpoints (known issue)")
+                                print(f"      3. WNS endpoint doesn't fully support VAPID authentication")
+                                print(f"      4. VAPID key format issue (should be base64 URL-safe)")
+                                print(f"      5. Edge browser version compatibility issue")
+                                print(f"   💡 Solutions to try:")
+                                print(f"      a) User should unsubscribe and re-subscribe with current VAPID keys")
+                                print(f"      b) Check if pywebpush needs to be updated")
+                                print(f"      c) Verify VAPID keys are correctly formatted")
+                                print(f"      d) Test with a different Edge browser version")
+                                
+                                # Additional debugging: Check if VAPID public key matches
+                                print(f"   🔍 VAPID Key Verification:")
+                                print(f"      - VAPID Public Key (first 30 chars): {VAPID_PUBLIC_KEY[:30] if VAPID_PUBLIC_KEY else 'Not set'}...")
+                                print(f"      - VAPID Private Key length: {len(vapid_private_key) if vapid_private_key else 0} chars")
+                                print(f"      - VAPID Claim: {vapid_claims.get('sub', 'Not set')}")
+                                
+                                # Check if this is a known pywebpush WNS issue
+                                print(f"   ⚠️  NOTE: This might be a known issue with pywebpush and WNS endpoints")
+                                print(f"      Some users report that WNS endpoints don't work properly with pywebpush")
+                                print(f"      even with correct VAPID keys. This could be a library limitation.")
                             
-                        # Log additional debugging info for WNS
-                        if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
-                            print(f"   🔍 WNS Debugging info:")
-                            print(f"      - Endpoint: {endpoint[:80]}")
-                            print(f"      - Has p256dh key: {'Yes' if p256dh else 'No'} ({len(p256dh) if p256dh else 0} chars)")
-                            print(f"      - Has auth key: {'Yes' if auth else 'No'} ({len(auth) if auth else 0} chars)")
-                            print(f"      - VAPID private key format: {'Set' if vapid_private_key else 'Not set'}")
-                            if vapid_private_key:
-                                print(f"      - VAPID private key length: {len(vapid_private_key)} chars")
-                                print(f"      - VAPID private key starts with: {vapid_private_key[:20]}...")
-                            print(f"      - VAPID claim (sub): {vapid_claims.get('sub', 'Not set')}")
-                            print(f"      - Payload size: {len(payload)} bytes")
-                            print(f"      - TTL: {webpush_params.get('ttl', 'Not set')}")
+                            # For WNS endpoints with 401, this might be a VAPID configuration issue
+                            # Possible causes:
+                            # 1. VAPID keys are invalid or incorrectly formatted
+                            # 2. VAPID claim (sub) is not properly formatted with 'mailto:' prefix
+                            # 3. WNS endpoint requires additional authentication (though this shouldn't happen with web push)
+                            # 4. The subscription endpoint itself might be invalid (though we keep it as requested)
+                            # We keep the subscription as requested by user, but log the issue
+                            if endpoint_type not in error_details:
+                                error_details[endpoint_type] = []
+                            error_details[endpoint_type].append({
+                                'endpoint': endpoint[:50],
+                                'status': 401,
+                                'error': error_msg,
+                                'response_body': response_text if response_text else None,
+                                'vapid_claim': vapid_claims.get('sub', 'Not set')
+                            })
+                            fail_count += 1
+                            # Don't retry 401 errors - it's an authentication issue
+                            break
+                        
+                        # For 403 (Forbidden) errors - VAPID credentials don't match
+                        # This happens when VAPID keys were changed after subscriptions were created
+                        elif status_code == 403 or "403" in error_msg or "forbidden" in error_msg.lower():
+                            # Ensure status_code is set to 403
+                            if status_code != 403:
+                                status_code = 403
                             
-                            # Check if this might be a VAPID key mismatch issue or pywebpush bug
-                            print(f"   💡 Possible causes for WNS 401 error:")
-                            print(f"      1. VAPID keys don't match the subscription (user subscribed with different keys)")
-                            print(f"      2. pywebpush library issue with WNS endpoints (known issue)")
-                            print(f"      3. WNS endpoint doesn't fully support VAPID authentication")
-                            print(f"      4. VAPID key format issue (should be base64 URL-safe)")
-                            print(f"      5. Edge browser version compatibility issue")
-                            print(f"   💡 Solutions to try:")
-                            print(f"      a) User should unsubscribe and re-subscribe with current VAPID keys")
-                            print(f"      b) Check if pywebpush needs to be updated")
-                            print(f"      c) Verify VAPID keys are correctly formatted")
-                            print(f"      d) Test with a different Edge browser version")
+                            print(f"⚠️ 403 Forbidden for {endpoint_type} endpoint {endpoint[:50]}...")
+                            print(f"   Error: {error_msg}")
                             
-                            # Additional debugging: Check if VAPID public key matches
-                            print(f"   🔍 VAPID Key Verification:")
-                            print(f"      - VAPID Public Key (first 30 chars): {VAPID_PUBLIC_KEY[:30] if VAPID_PUBLIC_KEY else 'Not set'}...")
-                            print(f"      - VAPID Private Key length: {len(vapid_private_key) if vapid_private_key else 0} chars")
-                            print(f"      - VAPID Claim: {vapid_claims.get('sub', 'Not set')}")
+                            # Check if it's a VAPID credentials mismatch
+                            if "vapid credentials" in error_msg.lower() or "credentials used to create" in error_msg.lower():
+                                print(f"   ⚠️  VAPID credentials mismatch detected!")
+                                print(f"   ℹ️  This subscription was created with different VAPID keys")
+                                print(f"   ℹ️  Current VAPID claim: {vapid_claims.get('sub', 'Not set')}")
+                                print(f"   ⚠️  This subscription is invalid and needs to be re-subscribed")
+                                print(f"   💡 Solution: User needs to unsubscribe and re-subscribe with new VAPID keys")
                             
-                            # Check if this is a known pywebpush WNS issue
-                            print(f"   ⚠️  NOTE: This might be a known issue with pywebpush and WNS endpoints")
-                            print(f"      Some users report that WNS endpoints don't work properly with pywebpush")
-                            print(f"      even with correct VAPID keys. This could be a library limitation.")
+                            if response_text:
+                                print(f"   Response body: {response_text}")
+                            
+                            if endpoint_type not in error_details:
+                                error_details[endpoint_type] = []
+                            error_details[endpoint_type].append({
+                                'endpoint': endpoint[:50],
+                                'status': 403,
+                                'error': error_msg,
+                                'response_body': response_text if response_text else None,
+                                'vapid_mismatch': True
+                            })
+                            fail_count += 1
+                            # Don't retry 403 errors - it's a credentials mismatch issue
+                            break
                         
-                        # For WNS endpoints with 401, this might be a VAPID configuration issue
-                        # Possible causes:
-                        # 1. VAPID keys are invalid or incorrectly formatted
-                        # 2. VAPID claim (sub) is not properly formatted with 'mailto:' prefix
-                        # 3. WNS endpoint requires additional authentication (though this shouldn't happen with web push)
-                        # 4. The subscription endpoint itself might be invalid (though we keep it as requested)
-                        # We keep the subscription as requested by user, but log the issue
-                        if endpoint_type not in error_details:
-                            error_details[endpoint_type] = []
-                        error_details[endpoint_type].append({
-                            'endpoint': endpoint[:50],
-                            'status': 401,
-                            'error': error_msg,
-                            'response_body': response_text if response_text else None,
-                            'vapid_claim': vapid_claims.get('sub', 'Not set')
-                        })
-                        fail_count += 1
-                        # Don't retry 401 errors - it's an authentication issue
-                        break
-                    
-                    # For 403 (Forbidden) errors - VAPID credentials don't match
-                    # This happens when VAPID keys were changed after subscriptions were created
-                    elif status_code == 403 or "403" in error_msg or "forbidden" in error_msg.lower():
-                        # Ensure status_code is set to 403
-                        if status_code != 403:
-                            status_code = 403
+                        # For 410 (Gone) errors, subscription is invalid but we keep it as requested
+                        elif status_code == 410:
+                            print(f"⚠️ 410 Gone for {endpoint_type} endpoint {endpoint[:50]}... (subscription kept)")
+                            if endpoint_type not in error_details:
+                                error_details[endpoint_type] = []
+                            error_details[endpoint_type].append({
+                                'endpoint': endpoint[:50],
+                                'status': status_code,
+                                'error': 'Subscription expired or invalid'
+                            })
+                            fail_count += 1
+                            break
                         
-                        print(f"⚠️ 403 Forbidden for {endpoint_type} endpoint {endpoint[:50]}...")
-                        print(f"   Error: {error_msg}")
-                        
-                        # Check if it's a VAPID credentials mismatch
-                        if "vapid credentials" in error_msg.lower() or "credentials used to create" in error_msg.lower():
-                            print(f"   ⚠️  VAPID credentials mismatch detected!")
-                            print(f"   ℹ️  This subscription was created with different VAPID keys")
-                            print(f"   ℹ️  Current VAPID claim: {vapid_claims.get('sub', 'Not set')}")
-                            print(f"   ⚠️  This subscription is invalid and needs to be re-subscribed")
-                            print(f"   💡 Solution: User needs to unsubscribe and re-subscribe with new VAPID keys")
-                        
-                        if response_text:
-                            print(f"   Response body: {response_text}")
-                        
-                        if endpoint_type not in error_details:
-                            error_details[endpoint_type] = []
-                        error_details[endpoint_type].append({
-                            'endpoint': endpoint[:50],
-                            'status': 403,
-                            'error': error_msg,
-                            'response_body': response_text if response_text else None,
-                            'vapid_mismatch': True
-                        })
-                        fail_count += 1
-                        # Don't retry 403 errors - it's a credentials mismatch issue
-                        break
-                    
-                    # For 410 (Gone) errors, subscription is invalid but we keep it as requested
-                    elif status_code == 410:
-                        print(f"⚠️ 410 Gone for {endpoint_type} endpoint {endpoint[:50]}... (subscription kept)")
-                        if endpoint_type not in error_details:
-                            error_details[endpoint_type] = []
-                        error_details[endpoint_type].append({
-                            'endpoint': endpoint[:50],
-                            'status': status_code,
-                            'error': 'Subscription expired or invalid'
-                        })
-                        fail_count += 1
-                        break
-                    
-                    # For other errors (not 401, not 403, not 410), check if we should retry
-                    # Don't retry 401/403 errors (already handled above)
-                    elif status_code not in [401, 403] and retry_count < max_retries:
-                        retry_count += 1
-                        print(f"⚠️ Retry {retry_count}/{max_retries} for {endpoint_type} endpoint {endpoint[:50]}... (Status: {status_code})")
-                        import time
-                        time.sleep(0.5)  # Small delay before retry
-                        continue
-                    else:
-                        # Max retries reached or non-retryable error
-                        if status_code == 401:
-                            # This shouldn't happen as we break above, but just in case
-                            print(f"❌ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
+                        # For other errors (not 401, not 403, not 410), check if we should retry
+                        # Don't retry 401/403 errors (already handled above)
+                        elif status_code not in [401, 403] and retry_count < max_retries:
+                            retry_count += 1
+                            print(f"⚠️ Retry {retry_count}/{max_retries} for {endpoint_type} endpoint {endpoint[:50]}... (Status: {status_code})")
+                            import time
+                            time.sleep(0.5)  # Small delay before retry
+                            continue
                         else:
-                            print(f"❌ Failed after {max_retries} retries for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
-                        
+                            # Max retries reached or non-retryable error
+                            if status_code == 401:
+                                # This shouldn't happen as we break above, but just in case
+                                print(f"❌ 401 Unauthorized for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
+                            else:
+                                print(f"❌ Failed after {max_retries} retries for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg} (Status: {status_code})")
+                            
+                            if endpoint_type not in error_details:
+                                error_details[endpoint_type] = []
+                            error_details[endpoint_type].append({
+                                'endpoint': endpoint[:50],
+                                'status': status_code if status_code else 'Unknown',
+                                'error': error_msg,
+                                'response_body': response_text if response_text else None
+                            })
+                            fail_count += 1
+                            break
+                            
+                    except Exception as e:
+                        # For non-WebPush exceptions, log and continue
+                        error_msg = str(e)
+                        print(f"❌ Exception for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
                         if endpoint_type not in error_details:
                             error_details[endpoint_type] = []
                         error_details[endpoint_type].append({
                             'endpoint': endpoint[:50],
-                            'status': status_code if status_code else 'Unknown',
-                            'error': error_msg,
-                            'response_body': response_text if response_text else None
+                            'status': 'Exception',
+                            'error': error_msg
                         })
                         fail_count += 1
                         break
-                        
-                except Exception as e:
-                    # For non-WebPush exceptions, log and continue
-                    error_msg = str(e)
-                    print(f"❌ Exception for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
-                    if endpoint_type not in error_details:
-                        error_details[endpoint_type] = []
-                    error_details[endpoint_type].append({
-                        'endpoint': endpoint[:50],
-                        'status': 'Exception',
-                        'error': error_msg
-                    })
-                    fail_count += 1
-                    break
+                    
+            except Exception as outer_exception:
+                # Catch any exception that might occur outside the while loop
+                # This ensures the for loop continues even if there's an unexpected error
+                error_msg = str(outer_exception)
+                endpoint_type = detect_endpoint_type(endpoint) if 'endpoint' in locals() else "Unknown"
+                print(f"❌ Outer exception for {endpoint_type} endpoint {endpoint[:50] if 'endpoint' in locals() else 'unknown'}...: {error_msg}")
+                import traceback
+                print(f"   Traceback: {traceback.format_exc()}")
+                if endpoint_type not in error_details:
+                    error_details[endpoint_type] = []
+                error_details[endpoint_type].append({
+                    'endpoint': endpoint[:50] if 'endpoint' in locals() else 'unknown',
+                    'status': 'OuterException',
+                    'error': error_msg
+                })
+                fail_count += 1
+                # Continue to next endpoint in for loop
+                continue
         
         # Prepare result
         result = {
