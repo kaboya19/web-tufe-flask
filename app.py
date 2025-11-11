@@ -4363,14 +4363,33 @@ def send_push_notification_internal(notification_data):
                     
                     # For WNS endpoints, ensure proper configuration
                     # Note: WNS endpoints use web push protocol but may have stricter VAPID requirements
-                    if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                    is_wns_endpoint = "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()
+                    if is_wns_endpoint:
                         # Ensure TTL is set (required by some endpoints)
                         webpush_params["ttl"] = 86400
                         # WNS may require specific VAPID claim format
                         # The vapid_claims with 'mailto:' prefix should be correct
+                        # Note: Some WNS endpoints may have issues with VAPID authentication
+                        # This is a known issue with certain Edge browser versions
                     
                     # Send push notification
-                    webpush(**webpush_params)
+                    try:
+                        webpush(**webpush_params)
+                    except WebPushException as wns_exception:
+                        # For WNS endpoints, log additional debugging before re-raising
+                        if is_wns_endpoint:
+                            # Try to inspect the exception more closely
+                            if hasattr(wns_exception, 'response') and wns_exception.response:
+                                print(f"   🔍 WNS Exception Details:")
+                                print(f"      - Exception type: {type(wns_exception).__name__}")
+                                print(f"      - Exception args: {wns_exception.args}")
+                                if hasattr(wns_exception.response, 'request'):
+                                    req = wns_exception.response.request
+                                    if hasattr(req, 'headers'):
+                                        print(f"      - Request headers sent: {dict(req.headers) if req.headers else 'None'}")
+                                if hasattr(wns_exception.response, 'url'):
+                                    print(f"      - Response URL: {wns_exception.response.url}")
+                        raise  # Re-raise the exception to be handled by outer except block
                     
                     success_count += 1
                     success = True
@@ -4399,11 +4418,42 @@ def send_push_notification_internal(notification_data):
                     # Get response details if available
                     if e.response:
                         try:
-                            response_text = e.response.text[:200] if hasattr(e.response, 'text') else ""
+                            # Try to get response text
+                            if hasattr(e.response, 'text'):
+                                try:
+                                    response_text = e.response.text[:500] if e.response.text else ""
+                                except:
+                                    response_text = str(e.response.content)[:500] if hasattr(e.response, 'content') else ""
+                            else:
+                                response_text = str(e.response.content)[:500] if hasattr(e.response, 'content') else ""
+                            
+                            # Try to get response headers - try multiple methods
                             if hasattr(e.response, 'headers'):
-                                response_headers = dict(e.response.headers)
+                                try:
+                                    # Try dict conversion first
+                                    if isinstance(e.response.headers, dict):
+                                        response_headers = dict(e.response.headers)
+                                    else:
+                                        # Try to convert from case-insensitive dict or other types
+                                        response_headers = {str(k): str(v) for k, v in e.response.headers.items()}
+                                except:
+                                    try:
+                                        # Fallback: convert to dict manually
+                                        response_headers = dict(e.response.headers)
+                                    except:
+                                        response_headers = {}
+                                        
+                            # Also try to get status code from response if not already set
+                            if status_code is None and hasattr(e.response, 'status_code'):
+                                try:
+                                    status_code = e.response.status_code
+                                except:
+                                    pass
+                                    
                         except Exception as resp_error:
                             print(f"   Warning: Could not parse response details: {resp_error}")
+                            import traceback
+                            print(f"   Traceback: {traceback.format_exc()}")
                     
                     # For 401 errors, try to get more details
                     if status_code == 401 or "401" in error_msg or "unauthorized" in error_msg.lower():
@@ -4421,19 +4471,48 @@ def send_push_notification_internal(notification_data):
                             print(f"   ℹ️  WNS requires valid VAPID keys with proper 'mailto:' claim format")
                             print(f"   ℹ️  VAPID claim used: {vapid_claims.get('sub', 'Not set')}")
                         
+                        # Log response body
                         if response_text:
                             print(f"   Response body: {response_text}")
+                        else:
+                            print(f"   Response body: (empty or not available)")
+                        
+                        # Log all response headers for WNS endpoints, or relevant ones for others
                         if response_headers:
-                            # Log relevant headers for debugging
-                            relevant_headers = {k: v for k, v in response_headers.items() 
-                                              if k.lower() in ['www-authenticate', 'x-wns-notificationstatus', 
-                                                              'x-wns-msg-id', 'x-wns-debug-trace', 'retry-after']}
-                            if relevant_headers:
-                                print(f"   Response headers: {relevant_headers}")
+                            if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                                # For WNS, log all headers for debugging
+                                print(f"   All response headers: {response_headers}")
+                            else:
+                                # For other endpoints, log only relevant headers
+                                relevant_headers = {k: v for k, v in response_headers.items() 
+                                                  if k.lower() in ['www-authenticate', 'x-wns-notificationstatus', 
+                                                                  'x-wns-msg-id', 'x-wns-debug-trace', 'retry-after',
+                                                                  'content-type', 'content-length']}
+                                if relevant_headers:
+                                    print(f"   Response headers: {relevant_headers}")
                             
                             # Check for WNS-specific error indicators
-                            if 'www-authenticate' in response_headers:
-                                print(f"   ⚠️  WWW-Authenticate header: {response_headers.get('www-authenticate', 'Not found')}")
+                            headers_lower = {k.lower(): v for k, v in response_headers.items()}
+                            if 'www-authenticate' in headers_lower:
+                                print(f"   ⚠️  WWW-Authenticate header: {headers_lower.get('www-authenticate', 'Not found')}")
+                            if 'x-wns-notificationstatus' in headers_lower:
+                                print(f"   ℹ️  X-WNS-NotificationStatus: {headers_lower.get('x-wns-notificationstatus', 'Not found')}")
+                            if 'x-wns-debug-trace' in headers_lower:
+                                print(f"   ℹ️  X-WNS-Debug-Trace: {headers_lower.get('x-wns-debug-trace', 'Not found')}")
+                        else:
+                            print(f"   Response headers: (not available)")
+                            
+                        # Log additional debugging info for WNS
+                        if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
+                            print(f"   🔍 Debugging info:")
+                            print(f"      - Endpoint: {endpoint[:80]}")
+                            print(f"      - Has p256dh key: {'Yes' if p256dh else 'No'}")
+                            print(f"      - Has auth key: {'Yes' if auth else 'No'}")
+                            print(f"      - VAPID private key format: {'Set' if vapid_private_key else 'Not set'}")
+                            if vapid_private_key:
+                                print(f"      - VAPID private key length: {len(vapid_private_key)} chars")
+                            print(f"      - VAPID claim (sub): {vapid_claims.get('sub', 'Not set')}")
+                            print(f"      - Payload size: {len(payload)} bytes")
                         
                         # For WNS endpoints with 401, this might be a VAPID configuration issue
                         # Possible causes:
