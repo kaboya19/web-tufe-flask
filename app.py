@@ -4352,7 +4352,22 @@ def send_push_notification_internal(notification_data):
         fail_count = 0
         error_details = {}
         
+        # Separate WNS and non-WNS endpoints to avoid potential pywebpush state issues
+        # Process WNS endpoints first, then others, to isolate any potential issues
+        wns_subscriptions = []
+        other_subscriptions = []
+        
         for endpoint, p256dh, auth in subscriptions:
+            is_wns = "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower()
+            if is_wns:
+                wns_subscriptions.append((endpoint, p256dh, auth))
+            else:
+                other_subscriptions.append((endpoint, p256dh, auth))
+        
+        # Process all subscriptions: WNS first, then others
+        all_subscriptions_ordered = wns_subscriptions + other_subscriptions
+        
+        for endpoint, p256dh, auth in all_subscriptions_ordered:
             # Wrap each endpoint processing in its own try-except to ensure loop continues
             try:
                 endpoint_type = detect_endpoint_type(endpoint)
@@ -4360,8 +4375,15 @@ def send_push_notification_internal(notification_data):
                 retry_count = 0
                 success = False
                 
+                # Create fresh VAPID claims for each endpoint to avoid any state issues
+                # This ensures each endpoint gets a clean, isolated set of parameters
+                endpoint_vapid_claims = {
+                    "sub": vapid_sub
+                }
+                
                 while retry_count <= max_retries and not success:
                     try:
+                        # Create fresh subscription info for each attempt
                         subscription_info = {
                             "endpoint": endpoint,
                             "keys": {
@@ -4382,12 +4404,13 @@ def send_push_notification_internal(notification_data):
                             "tag": unique_tag
                         })
                         
-                        # Prepare webpush parameters
+                        # Prepare webpush parameters - create fresh dict for each endpoint
+                        # Use endpoint-specific VAPID claims to ensure isolation
                         webpush_params = {
                             "subscription_info": subscription_info,
                             "data": payload,
-                            "vapid_private_key": vapid_private_key,
-                            "vapid_claims": vapid_claims,
+                            "vapid_private_key": vapid_private_key,  # This should be safe to reuse
+                            "vapid_claims": endpoint_vapid_claims,  # Use endpoint-specific claims
                             "ttl": 86400,  # 24 hours TTL - some endpoints require this
                         }
                         
@@ -4403,6 +4426,12 @@ def send_push_notification_internal(notification_data):
                             # This is a known issue with certain Edge browser versions
                         
                         # Send push notification
+                        # Each webpush call is isolated with its own parameters
+                        # Add a small delay between endpoints to avoid potential connection pooling issues
+                        if retry_count > 0 or endpoint != all_subscriptions_ordered[0][0]:
+                            import time
+                            time.sleep(0.1)  # Small delay to ensure clean state between endpoints
+                        
                         webpush(**webpush_params)
                         
                         success_count += 1
@@ -4538,7 +4567,7 @@ def send_push_notification_internal(notification_data):
                             if "notify.windows.com" in endpoint.lower() or "wns" in endpoint.lower():
                                 print(f"   ℹ️  WNS endpoint detected - this may be a VAPID authentication issue")
                                 print(f"   ℹ️  WNS requires valid VAPID keys with proper 'mailto:' claim format")
-                                print(f"   ℹ️  VAPID claim used: {vapid_claims.get('sub', 'Not set')}")
+                                print(f"   ℹ️  VAPID claim used: {endpoint_vapid_claims.get('sub', 'Not set')}")
                             
                             # Log response body
                             if response_text:
@@ -4601,7 +4630,7 @@ def send_push_notification_internal(notification_data):
                                 if vapid_private_key:
                                     print(f"      - VAPID private key length: {len(vapid_private_key)} chars")
                                     print(f"      - VAPID private key starts with: {vapid_private_key[:20]}...")
-                                print(f"      - VAPID claim (sub): {vapid_claims.get('sub', 'Not set')}")
+                                print(f"      - VAPID claim (sub): {endpoint_vapid_claims.get('sub', 'Not set')}")
                                 print(f"      - Payload size: {len(payload)} bytes")
                                 print(f"      - TTL: {webpush_params.get('ttl', 'Not set')}")
                                 
@@ -4622,7 +4651,7 @@ def send_push_notification_internal(notification_data):
                                 print(f"   🔍 VAPID Key Verification:")
                                 print(f"      - VAPID Public Key (first 30 chars): {VAPID_PUBLIC_KEY[:30] if VAPID_PUBLIC_KEY else 'Not set'}...")
                                 print(f"      - VAPID Private Key length: {len(vapid_private_key) if vapid_private_key else 0} chars")
-                                print(f"      - VAPID Claim: {vapid_claims.get('sub', 'Not set')}")
+                                print(f"      - VAPID Claim: {endpoint_vapid_claims.get('sub', 'Not set')}")
                                 
                                 # Check if this is a known pywebpush WNS issue
                                 print(f"   ⚠️  NOTE: This might be a known issue with pywebpush and WNS endpoints")
@@ -4643,7 +4672,7 @@ def send_push_notification_internal(notification_data):
                                 'status': 401,
                                 'error': error_msg,
                                 'response_body': response_text if response_text else None,
-                                'vapid_claim': vapid_claims.get('sub', 'Not set')
+                                'vapid_claim': endpoint_vapid_claims.get('sub', 'Not set')
                             })
                             fail_count += 1
                             # Don't retry 401 errors - it's an authentication issue
@@ -4663,7 +4692,7 @@ def send_push_notification_internal(notification_data):
                             if "vapid credentials" in error_msg.lower() or "credentials used to create" in error_msg.lower():
                                 print(f"   ⚠️  VAPID credentials mismatch detected!")
                                 print(f"   ℹ️  This subscription was created with different VAPID keys")
-                                print(f"   ℹ️  Current VAPID claim: {vapid_claims.get('sub', 'Not set')}")
+                                print(f"   ℹ️  Current VAPID claim: {endpoint_vapid_claims.get('sub', 'Not set')}")
                                 print(f"   ⚠️  This subscription is invalid and needs to be re-subscribed")
                                 print(f"   💡 Solution: User needs to unsubscribe and re-subscribe with new VAPID keys")
                             
