@@ -4359,27 +4359,27 @@ def send_push_notification_internal(notification_data):
             success = False
             
             while retry_count <= max_retries and not success:
-            try:
-                subscription_info = {
-                    "endpoint": endpoint,
-                    "keys": {
-                        "p256dh": p256dh,
-                        "auth": auth
+                try:
+                    subscription_info = {
+                        "endpoint": endpoint,
+                        "keys": {
+                            "p256dh": p256dh,
+                            "auth": auth
+                        }
                     }
-                }
-                
-                # Generate unique tag for each notification (prevents browser from replacing previous notification)
-                # Use timestamp + endpoint suffix to ensure uniqueness
-                unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
-                
-                payload = json.dumps({
-                    "title": title,
-                    "body": body,
-                    "icon": icon,
-                    "url": url,
-                    "tag": unique_tag
-                })
-                
+                    
+                    # Generate unique tag for each notification (prevents browser from replacing previous notification)
+                    # Use timestamp + endpoint suffix to ensure uniqueness
+                    unique_tag = f"web-tufe-{int(datetime.now().timestamp() * 1000)}-{endpoint[-10:]}"
+                    
+                    payload = json.dumps({
+                        "title": title,
+                        "body": body,
+                        "icon": icon,
+                        "url": url,
+                        "tag": unique_tag
+                    })
+                    
                     # Prepare webpush parameters
                     webpush_params = {
                         "subscription_info": subscription_info,
@@ -4406,7 +4406,7 @@ def send_push_notification_internal(notification_data):
                     success_count += 1
                     success = True
                     
-            except WebPushException as e:
+                except WebPushException as e:
                     # Try to get status code from response object
                     status_code = None
                     if e.response:
@@ -4643,7 +4643,7 @@ def send_push_notification_internal(notification_data):
                             'response_body': response_text if response_text else None,
                             'vapid_claim': vapid_claims.get('sub', 'Not set')
                         })
-                fail_count += 1
+                        fail_count += 1
                         # Don't retry 401 errors - it's an authentication issue
                         break
                     
@@ -4721,7 +4721,7 @@ def send_push_notification_internal(notification_data):
                         fail_count += 1
                         break
                         
-            except Exception as e:
+                except Exception as e:
                     # For non-WebPush exceptions, log and continue
                     error_msg = str(e)
                     print(f"❌ Exception for {endpoint_type} endpoint {endpoint[:50]}...: {error_msg}")
@@ -4732,7 +4732,7 @@ def send_push_notification_internal(notification_data):
                         'status': 'Exception',
                         'error': error_msg
                     })
-                fail_count += 1
+                    fail_count += 1
                     break
         
         # Prepare result
