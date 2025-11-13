@@ -216,15 +216,29 @@
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Form -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <form method="POST" class="flex items-center space-x-4">
+                <form method="POST" id="indicator-form"
+                    class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <input type="hidden" name="view_type" id="view_type_input" value="{{ view_type }}">
                     <select name="indicator"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#EF476F] focus:ring focus:ring-[#EF476F] focus:ring-opacity-50"
-                        onchange="this.form.submit()">
+                        class="block w-full md:w-auto rounded-md border-gray-300 shadow-sm focus:border-[#EF476F] focus:ring focus:ring-[#EF476F] focus:ring-opacity-50"
+                        onchange="document.getElementById('indicator-form').submit()">
                         {% for indicator in indicator_names %}
                         <option value="{{ indicator }}" {% if indicator==selected_indicator %}selected{% endif %}>{{
                             indicator }}</option>
                         {% endfor %}
                     </select>
+                    <div class="inline-flex rounded-lg border border-indigo-200 overflow-hidden">
+                        <button type="button" onclick="setViewType('graph')"
+                            aria-pressed="{{ 'true' if view_type == 'graph' else 'false' }}"
+                            class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if view_type == 'graph' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                            Grafik
+                        </button>
+                        <button type="button" onclick="setViewType('table')"
+                            aria-pressed="{{ 'true' if view_type == 'table' else 'false' }}"
+                            class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none {% if view_type == 'table' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                            Tablo
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -268,6 +282,7 @@
                 </div>
             </div>
 
+            {% if view_type == 'graph' %}
             <!-- Index Chart -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
                 <div id="index-chart" class="w-full" style="height: 500px;"></div>
@@ -282,6 +297,87 @@
                 <div id="bar-chart" class="graph-content active" style="height: 400px;"></div>
                 <div id="line-chart" class="graph-content" style="height: 400px;"></div>
             </div>
+            {% else %}
+            <!-- Table View -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                {% if table_rows %}
+                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Özel Kapsamlı Göstergeler Tablosu</h3>
+                        <p class="text-sm text-gray-500">Aylık değişimler ve yılbaşından itibaren değişimler.</p>
+                    </div>
+                    <div class="text-sm text-gray-500 space-x-2">
+                        {% if previous_month_label and current_month_label %}
+                        <span class="inline-flex items-center gap-1">
+                            <span class="font-semibold text-gray-700">{{ previous_month_label }}</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="font-semibold text-gray-700">{{ current_month_label }}</span>
+                        </span>
+                        {% elif current_month_label %}
+                        <span class="font-semibold text-gray-700">{{ current_month_label }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-indigo-600 text-white">
+                            <tr>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide">Gösterge</th>
+                                <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide">
+                                    {{ previous_month_label or 'Önceki Ay' }}
+                                </th>
+                                <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide">
+                                    {{ current_month_label or 'Bu Ay' }}
+                                </th>
+                                <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide">
+                                    Yılbaşından İtibaren
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            {% for row in table_rows %}
+                            {% if row.is_header_only %}
+                            <tr class="bg-gray-50 text-gray-600 font-semibold uppercase tracking-wide text-xs">
+                                <td colspan="4" class="py-3 px-4">{{ row.label }}</td>
+                            </tr>
+                            {% else %}
+                            <tr class="{% if row.is_total %}bg-indigo-100 font-semibold text-gray-900{% elif row.is_section %}bg-indigo-50 font-semibold text-gray-900{% else %}text-gray-700{% endif %}">
+                                <td class="py-3 text-sm" style="padding-left: {{ (row.indent_px or 0) + 16 }}px;">
+                                    {{ row.label }}
+                                </td>
+                                {% set prev_val = row.previous %}
+                                <td class="py-3 px-4 text-sm text-center {% if prev_val is not none and prev_val > 0 %}text-red-600{% elif prev_val is not none and prev_val < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                                    {% if prev_val is not none %}
+                                    {{ '%.2f'|format(prev_val)|replace('.', ',') }}%
+                                    {% else %}-{% endif %}
+                                </td>
+                                {% set curr_val = row.current %}
+                                <td class="py-3 px-4 text-sm text-center {% if curr_val is not none and curr_val > 0 %}text-red-600{% elif curr_val is not none and curr_val < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                                    {% if curr_val is not none %}
+                                    {{ '%.2f'|format(curr_val)|replace('.', ',') }}%
+                                    {% else %}-{% endif %}
+                                </td>
+                                {% set ytd_val = row.ytd %}
+                                <td class="py-3 px-4 text-sm text-center {% if ytd_val is not none and ytd_val > 0 %}text-red-600{% elif ytd_val is not none and ytd_val < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                                    {% if ytd_val is not none %}
+                                    {{ '%.2f'|format(ytd_val)|replace('.', ',') }}%
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="mt-4 text-xs text-gray-500 leading-relaxed">
+                    * Nihai aylık değişim verileri ayın 24'ünde kesinleşir. Yılbaşından itibaren değişim, 31 Aralık 2024 baz
+                    değerine göre hesaplanır.
+                </p>
+                {% else %}
+                <p class="text-sm text-gray-500">Tablo verisi şu an için görüntülenemiyor.</p>
+                {% endif %}
+            </div>
+            {% endif %}
         </main>
 
         <!-- Footer -->
@@ -296,16 +392,24 @@
 
     <script>
         console.log('Script started');  // Test log
+        const isGraphView = '{{ view_type }}' === 'graph';
 
-        // Check if Plotly is loaded
-        if (typeof Plotly === 'undefined') {
-            console.error('Plotly library is not loaded!');
-        } else {
-            console.log('Plotly library is loaded successfully');
+        if (isGraphView) {
+            // Check if Plotly is loaded
+            if (typeof Plotly === 'undefined') {
+                console.error('Plotly library is not loaded!');
+            } else {
+                console.log('Plotly library is loaded successfully');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             console.log('DOM Content Loaded');  // Test log
+
+            if (!isGraphView) {
+                return;
+            }
+
             try {
                 // Index Chart
                 const rawGraphJSON = '{{ graphJSON | tojson | safe }}';
@@ -392,15 +496,35 @@
         });
 
         function showGraph(type) {
+            if (!isGraphView) {
+                return;
+            }
+
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
-            document.getElementById(`${type}-chart`).classList.add('active');
+            const targetButton = document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`);
+            const targetChart = document.getElementById(`${type}-chart`);
 
-            // Resize the chart after showing it
-            setTimeout(function () {
-                Plotly.Plots.resize(`${type}-chart`);
-            }, 100);
+            if (targetButton && targetChart) {
+                targetButton.classList.add('active');
+                targetChart.classList.add('active');
+
+                // Resize the chart after showing it
+                setTimeout(function () {
+                    Plotly.Plots.resize(`${type}-chart`);
+                }, 100);
+            }
+        }
+
+        function setViewType(view) {
+            const viewInput = document.getElementById('view_type_input');
+            if (viewInput) {
+                viewInput.value = view;
+            }
+            const form = document.getElementById('indicator-form');
+            if (form) {
+                form.submit();
+            }
         }
     </script>
 </body>

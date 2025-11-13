@@ -3099,23 +3099,42 @@ def ozel_kapsamli_gostergeler():
     # Get indicator names (column names except 'Tarih')
     indicator_names = [col for col in df.columns if col != 'Tarih']
     
-    # Get selected indicator from form
-    selected_indicator = request.form.get('indicator') if request.method == 'POST' else indicator_names[0]
+    # Handle selected indicator and view type
+    if request.method == 'POST':
+        selected_indicator = request.form.get('indicator', indicator_names[0])
+        view_type = request.form.get('view_type', 'graph')
+    else:
+        selected_indicator = indicator_names[0]
+        view_type = request.args.get('view_type', 'graph')
+    
+    if not view_type:
+        view_type = 'graph'
     
     # Get monthly change data
     """monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
     monthly_data = monthly_worksheet.get_all_values()
     df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])"""
-    df_monthly=pd.read_csv("özelgöstergeleraylık.csv",index_col=0)
+    df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+    df_monthly_norm = df_monthly_raw.copy()
+    first_column_name = df_monthly_norm.columns[0] if not df_monthly_norm.empty else None
+    if first_column_name:
+        df_monthly_norm[first_column_name] = (
+            df_monthly_norm[first_column_name]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+    
+    selected_indicator_norm = selected_indicator.strip().lower()
     
     # Get monthly change for selected indicator
     monthly_change = None
-    if not df_monthly.empty:
-        indicator_row = df_monthly[df_monthly.iloc[:,0].str.strip().str.lower() == selected_indicator.strip().lower()]
+    if not df_monthly_norm.empty and first_column_name:
+        indicator_row = df_monthly_norm[df_monthly_norm.iloc[:, 0] == selected_indicator_norm]
         if not indicator_row.empty:
             try:
-                monthly_change = float(str(indicator_row.iloc[:,-1].values[0]).replace(',', '.'))
-            except:
+                monthly_change = float(str(indicator_row.iloc[:, -1].values[0]).replace(',', '.'))
+            except Exception:
                 monthly_change = None
     
     # Calculate total change
@@ -3253,16 +3272,15 @@ def ozel_kapsamli_gostergeler():
     """monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
     monthly_data = monthly_worksheet.get_all_values()
     df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])"""
-    df_monthly=pd.read_csv("özelgöstergeleraylık.csv",index_col=0)
-    df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
-    selected_indicator_norm = selected_indicator.strip().lower()
-    monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_indicator_norm]
+    monthly_row = pd.DataFrame()
+    if not df_monthly_norm.empty and first_column_name:
+        monthly_row = df_monthly_norm[df_monthly_norm.iloc[:, 0] == selected_indicator_norm]
 
     # Aylık değişim verilerini hazırla
     monthly_changes = []
     monthly_dates = []
     if not monthly_row.empty:
-        for col in df_monthly.columns[1:]:
+        for col in df_monthly_norm.columns[1:]:
             try:
                 value = float(str(monthly_row[col].values[0]).replace(',', '.'))
                 monthly_changes.append(value)
@@ -3468,17 +3486,116 @@ def ozel_kapsamli_gostergeler():
         
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # Get the last month from the monthly CSV file
+    # Get the last month from the monthly CSV file and prepare table data
     last_month_from_csv = None
-    if not df_monthly.empty:
-        # Get the last column (excluding the first column which is the group name)
-        last_column = df_monthly.columns[-1]
+    previous_month_label = None
+    current_month_label = None
+    table_rows = []
+    
+    def format_month_label(column_name):
         try:
-            # Parse the date from the column name (format: YYYY-MM-DD)
-            date_obj = datetime.strptime(last_column, '%Y-%m-%d')
-            last_month_from_csv = get_turkish_month(date_obj.strftime('%Y-%m-%d'))
-        except:
-            last_month_from_csv = None
+            date_obj = datetime.strptime(column_name, '%Y-%m-%d')
+            month_name = get_turkish_month(date_obj.strftime('%Y-%m-%d'))
+            short_year = date_obj.strftime('%y')
+            return f"{month_name} {short_year}"
+        except Exception:
+            return column_name
+    
+    def parse_numeric(value):
+        try:
+            return float(str(value).replace(',', '.'))
+        except Exception:
+            return None
+    
+    def get_ytd_value(series_name):
+        try:
+            if series_name in df.columns:
+                return float(df[series_name].iloc[-1]) - 100
+            if tuik_endeks_df is not None and series_name in tuik_endeks_df.columns:
+                return float(tuik_endeks_df.iloc[-1][series_name]) - 100
+        except Exception:
+            return None
+        return None
+    
+    if not df_monthly_raw.empty:
+        date_columns = df_monthly_raw.columns[1:]
+        if len(date_columns) >= 1:
+            last_column = date_columns[-1]
+            current_month_label = format_month_label(last_column)
+            try:
+                date_obj = datetime.strptime(last_column, '%Y-%m-%d')
+                last_month_from_csv = get_turkish_month(date_obj.strftime('%Y-%m-%d'))
+            except Exception:
+                last_month_from_csv = None
+        if len(date_columns) >= 2:
+            previous_month_label = format_month_label(date_columns[-2])
+        
+        if first_column_name and len(date_columns) >= 2:
+            previous_col = date_columns[-2]
+            current_col = date_columns[-1]
+            
+            table_values = {}
+            for _, row in df_monthly_raw.iterrows():
+                group_raw = row[first_column_name]
+                if pd.isna(group_raw):
+                    continue
+                group_name = str(group_raw).strip()
+                if not group_name or group_name.lower() == 'nan':
+                    continue
+                
+                previous_value = parse_numeric(row.get(previous_col))
+                current_value = parse_numeric(row.get(current_col))
+                ytd_value = get_ytd_value(group_name)
+                
+                table_values[group_name] = {
+                    'previous': previous_value,
+                    'current': current_value,
+                    'ytd': ytd_value
+                }
+            
+            table_layout = [
+                {"label": "Web TÜFE", "source": "Web TÜFE", "indent_px": 0, "is_total": True},
+                {"label": "1. Mallar", "source": "Mallar", "indent_px": 0, "is_section": True},
+                {"label": "Enerji", "source": "Enerji", "indent_px": 24},
+                {"label": "Gıda ve Alkolsüz İçecekler", "source": "Gıda ve alkolsüz içecekler", "indent_px": 24},
+                {"label": "İşlenmemiş Gıda", "source": "İşlenmemiş gıda", "indent_px": 40},
+                {"label": "Taze Meyve-Sebze", "source": "Taze meyve ve sebze", "indent_px": 40},
+                {"label": "Diğer İşlenmemiş Gıda", "source": "Diğer işlenmemiş gıda", "indent_px": 40},
+                {"label": "İşlenmiş Gıda", "source": "İşlenmiş Gıda", "indent_px": 40},
+                {"label": "Ekmek ve Tahıllar", "source": "Ekmek ve tahıllar", "indent_px": 56},
+                {"label": "Diğer İşlenmiş", "source": "Diğer işlenmiş gıda", "indent_px": 56},
+                {"label": "Enerji ve Gıda Dışı Mallar", "source": "Enerji ve gıda dışı mallar", "indent_px": 24},
+                {"label": "Temel Mallar", "source": "Temel mallar", "indent_px": 24},
+                {"label": "Dayanıklı Mallar (Altın Hariç)", "source": "Dayanıklı Mallar (altın hariç)", "indent_px": 40},
+                {"label": "Giyim ve Ayakkabı", "source": "Giyim ve ayakkabı", "indent_px": 40},
+                {"label": "Diğer Temel Mallar", "source": "Diğer Temel Mallar", "indent_px": 40},
+                {"label": "Alkollü İçecekler, Tütün ve Altın", "source": "Alkollü içecekler, tütün ve altın", "indent_px": 24},
+                {"label": "2. Hizmetler", "source": "Hizmet", "indent_px": 0, "is_section": True},
+                {"label": "Kira", "source": "Kira", "indent_px": 24},
+                {"label": "Lokanta ve Oteller", "source": "Lokanta ve oteller", "indent_px": 24},
+                {"label": "Ulaştırma Hizmetleri", "source": "Ulaştırma hizmetleri", "indent_px": 24},
+                {"label": "Haberleşme Hizmetleri", "source": "Haberleşme hizmetleri", "indent_px": 24},
+                {"label": "Diğer Hizmetler", "source": "Diğer hizmetler", "indent_px": 24},
+                {"label": "3. Temel Göstergeler", "source": None, "indent_px": 0, "is_section": True, "is_header_only": True},
+                {"label": "B- İşlenmemiş Gıda, Enerji, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE B", "indent_px": 24},
+                {"label": "C- Gıda ve Alkolsüz İçecekler, Enerji, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE C", "indent_px": 24},
+                {"label": "D- İşlenmemiş Gıda, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE D", "indent_px": 24},
+                {"label": "E- Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE E", "indent_px": 24},
+                {"label": "F- Yönetilen Yönlendirilen Fiyatlar Hariç TÜFE", "source": "TÜFE F", "indent_px": 24},
+            ]
+            
+            for item in table_layout:
+                data = table_values.get(item.get("source"), {}) if item.get("source") else {}
+                table_rows.append({
+                    "label": item["label"],
+                    "previous": data.get("previous"),
+                    "current": data.get("current"),
+                    "ytd": data.get("ytd"),
+                    "indent_px": item.get("indent_px", 0),
+                    "is_section": item.get("is_section", False),
+                    "is_total": item.get("is_total", False),
+                    "is_header_only": item.get("is_header_only", False)
+                })
     
     return render_template('ozel_kapsamli_gostergeler.html',
     graphJSON=graphJSON,
@@ -3489,6 +3606,10 @@ def ozel_kapsamli_gostergeler():
     active_page='ozel_kapsamli_gostergeler',
     last_date=dates.iloc[-1] if not df.empty else None,
     month_name=last_month_from_csv if last_month_from_csv else (get_turkish_month(dates.iloc[-1].strftime('%Y-%m-%d')) if not df.empty else None),
+    view_type=view_type,
+    table_rows=table_rows,
+    previous_month_label=previous_month_label,
+    current_month_label=current_month_label,
     bar_graphJSON=bar_graphJSON,
     line_graphJSON=line_graphJSON
 )
