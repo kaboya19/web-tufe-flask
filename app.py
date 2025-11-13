@@ -3103,9 +3103,13 @@ def ozel_kapsamli_gostergeler():
     if request.method == 'POST':
         selected_indicator = request.form.get('indicator', indicator_names[0])
         view_type = request.form.get('view_type', 'graph')
+        selected_current_month = request.form.get('current_month')
+        selected_previous_month = request.form.get('previous_month')
     else:
         selected_indicator = indicator_names[0]
         view_type = request.args.get('view_type', 'graph')
+        selected_current_month = request.args.get('current_month')
+        selected_previous_month = request.args.get('previous_month')
     
     if not view_type:
         view_type = 'graph'
@@ -3117,7 +3121,9 @@ def ozel_kapsamli_gostergeler():
     df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
     df_monthly_norm = df_monthly_raw.copy()
     first_column_name = df_monthly_norm.columns[0] if not df_monthly_norm.empty else None
-    if first_column_name:
+    month_columns = list(df_monthly_norm.columns[1:]) if not df_monthly_norm.empty else []
+    
+    if first_column_name and not df_monthly_norm.empty:
         df_monthly_norm[first_column_name] = (
             df_monthly_norm[first_column_name]
             .astype(str)
@@ -3518,22 +3524,33 @@ def ozel_kapsamli_gostergeler():
         return None
     
     if not df_monthly_raw.empty:
-        date_columns = df_monthly_raw.columns[1:]
-        if len(date_columns) >= 1:
-            last_column = date_columns[-1]
-            current_month_label = format_month_label(last_column)
+        date_columns = month_columns
+        month_options = [{"value": col, "label": format_month_label(col)} for col in date_columns]
+        
+        default_current_col = date_columns[-1] if date_columns else None
+        default_previous_col = date_columns[-2] if len(date_columns) >= 2 else None
+        
+        selected_current_col = selected_current_month if selected_current_month in date_columns else default_current_col
+        selected_previous_col = selected_previous_month if selected_previous_month in date_columns else default_previous_col
+        
+        if selected_current_col is None and date_columns:
+            selected_current_col = date_columns[-1]
+        if selected_previous_col is None:
+            selected_previous_col = default_previous_col if default_previous_col else selected_current_col
+        
+        if selected_current_col:
+            current_month_label = format_month_label(selected_current_col)
+        if selected_previous_col:
+            previous_month_label = format_month_label(selected_previous_col)
+        
+        if default_current_col:
             try:
-                date_obj = datetime.strptime(last_column, '%Y-%m-%d')
+                date_obj = datetime.strptime(default_current_col, '%Y-%m-%d')
                 last_month_from_csv = get_turkish_month(date_obj.strftime('%Y-%m-%d'))
             except Exception:
                 last_month_from_csv = None
-        if len(date_columns) >= 2:
-            previous_month_label = format_month_label(date_columns[-2])
         
-        if first_column_name and len(date_columns) >= 2:
-            previous_col = date_columns[-2]
-            current_col = date_columns[-1]
-            
+        if first_column_name and selected_current_col:
             table_values = {}
             for _, row in df_monthly_raw.iterrows():
                 group_raw = row[first_column_name]
@@ -3543,8 +3560,8 @@ def ozel_kapsamli_gostergeler():
                 if not group_name or group_name.lower() == 'nan':
                     continue
                 
-                previous_value = parse_numeric(row.get(previous_col))
-                current_value = parse_numeric(row.get(current_col))
+                previous_value = parse_numeric(row.get(selected_previous_col)) if selected_previous_col else None
+                current_value = parse_numeric(row.get(selected_current_col))
                 ytd_value = get_ytd_value(group_name)
                 
                 table_values[group_name] = {
@@ -3552,7 +3569,7 @@ def ozel_kapsamli_gostergeler():
                     'current': current_value,
                     'ytd': ytd_value
                 }
-            
+        
             table_layout = [
                 {"label": "Web TÜFE", "source": "Web TÜFE", "indent_px": 0, "is_total": True},
                 {"label": "1. Mallar", "source": "Mallar", "indent_px": 0, "is_section": True},
@@ -3596,6 +3613,12 @@ def ozel_kapsamli_gostergeler():
                     "is_total": item.get("is_total", False),
                     "is_header_only": item.get("is_header_only", False)
                 })
+        selected_current_col_for_template = selected_current_col
+        selected_previous_col_for_template = selected_previous_col
+    else:
+        month_options = []
+        selected_current_col_for_template = None
+        selected_previous_col_for_template = None
     
     return render_template('ozel_kapsamli_gostergeler.html',
     graphJSON=graphJSON,
@@ -3610,6 +3633,9 @@ def ozel_kapsamli_gostergeler():
     table_rows=table_rows,
     previous_month_label=previous_month_label,
     current_month_label=current_month_label,
+    selected_previous_month=selected_previous_col_for_template,
+    selected_current_month=selected_current_col_for_template,
+    month_options=month_options,
     bar_graphJSON=bar_graphJSON,
     line_graphJSON=line_graphJSON
 )
