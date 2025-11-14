@@ -5135,8 +5135,8 @@ def aclik_siniri():
                 color='#EF476F',
                 width=3
             ),
-            hovertemplate='%{customdata[0]}<br>Açlık Sınırı: %{customdata[1]:,.2f} TL<extra></extra>',
-            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y] for date, y in zip(df.index, df['Açlık Sınırı'])]
+            hovertemplate='<b>%{customdata[0]}</b><br>Açlık Sınırı: %{customdata[1]:,.2f} TL<extra></extra>',
+            customdata=[[f"{date.strftime('%Y-%m-%d')}", y] for date, y in zip(df.index, df['Açlık Sınırı'])]
         ))
         
         fig.update_layout(
