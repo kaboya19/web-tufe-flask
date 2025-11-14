@@ -14,6 +14,7 @@
     <title>Web TÜFE</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5889238450559775"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -53,52 +54,31 @@
             letter-spacing: -0.02em;
         }
 
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 800;
-            font-size: 1.5rem;
+        .gradient-text {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -0.02em;
-            position: relative;
         }
 
-        .navbar-brand::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            transition: width 0.3s ease;
-            border-radius: 2px;
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
         }
 
-        .navbar-brand:hover::after {
-            width: 100%;
-        }
-
-        .nav-link {
+        .nav-link-modern {
             color: var(--text-color) !important;
             font-weight: 500;
             padding: 0.6rem 1.2rem !important;
             border-radius: 12px;
             position: relative;
             font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-block;
         }
 
-        .nav-link::before {
+        .nav-link-modern::before {
             content: '';
             position: absolute;
             top: 0;
@@ -112,30 +92,26 @@
             transition: opacity 0.3s ease;
         }
 
-        .nav-link:hover {
+        .nav-link-modern:hover {
             color: white !important;
             transform: translateY(-2px);
+            text-decoration: none;
         }
 
-        .nav-link:hover::before {
+        .nav-link-modern:hover::before {
             opacity: 1;
         }
 
-        .nav-link.active {
+        .nav-link-modern.text-indigo-600 {
             color: white !important;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
-        .dropdown-item.active {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
+        .nav-link-modern.text-indigo-600::before {
+            opacity: 1;
         }
 
-        .dropdown-item:hover {
-            background-color: #f1f5f9;
-            transform: translateX(5px);
-        }
 
         .container {
             padding: 1.5rem;
@@ -318,22 +294,6 @@
                 padding: 0.75rem;
             }
 
-            .navbar-brand {
-                font-size: 1.25rem;
-            }
-
-            .nav-link {
-                padding: 0.5rem 1rem !important;
-                font-size: 0.9rem;
-            }
-
-            .navbar-nav {
-                flex-wrap: wrap;
-            }
-
-            .nav-item {
-                margin-bottom: 0.25rem;
-            }
 
             .card {
                 margin-bottom: 1rem;
@@ -415,14 +375,6 @@
                 padding: 0.5rem;
             }
 
-            .navbar-brand {
-                font-size: 1.1rem;
-            }
-
-            .nav-link {
-                font-size: 0.85rem;
-                padding: 0.4rem 0.8rem !important;
-            }
 
             .card-header {
                 font-size: 0.95rem;
@@ -524,59 +476,50 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('ana_sayfa') }}">Web TÜFE</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'tufe' %}active{% endif %}"
-                            href="{{ url_for('tufe') }}">TÜFE</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'ana_gruplar' %}active{% endif %}"
-                            href="{{ url_for('ana_gruplar') }}">Ana Gruplar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'harcama_gruplari' %}active{% endif %}"
-                            href="{{ url_for('harcama_gruplari') }}">Harcama</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'maddeler' %}active{% endif %}"
-                            href="{{ url_for('maddeler') }}">Maddeler</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}"
-                            href="{{ url_for('ozel_kapsamli_gostergeler') }}">Özel</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}active{% endif %}"
-                            href="{{ url_for('mevsimsel_duzeltilmis_gostergeler') }}">Mevsimsel</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'aclik_siniri' %}active{% endif %}"
-                            href="{{ url_for('aclik_siniri') }}">Açlık Sınırı</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'bultenler' %}active{% endif %}"
-                            href="{{ url_for('bultenler') }}">Bültenler</a>
-                    </li>
-                    <li class="nav-item" style="position: relative;">
-                        <a class="nav-link {% if active_page == 'metodoloji' %}active{% endif %}"
-                            href="{{ url_for('metodoloji') }}">Metodoloji</a>
-                        <span class="badge bg-danger text-white" style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; padding: 2px 5px; white-space: nowrap;">Yeni!</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_page == 'hakkinda' %}active{% endif %}"
-                            href="{{ url_for('hakkinda') }}">Hakkında</a>
-                    </li>
-                </ul>
+    <header>
+        <div class="w-full px-6 lg:px-8 py-5">
+            <div class="flex items-center space-x-3">
+                <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/tufe"
+                    class="nav-link-modern font-semibold {% if active_page == 'tufe' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">TÜFE</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/ana-gruplar"
+                    class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Ana
+                    Gruplar</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/harcama-gruplari"
+                    class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Harcama
+                    Grupları</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/maddeler"
+                    class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Maddeler</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/ozel-kapsamli-gostergeler"
+                    class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Özel
+                    Kapsamlı Göstergeler</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/mevsimsel-duzeltilmis-gostergeler"
+                    class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Mevsimsel
+                    Düzeltilmiş Göstergeler</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/aclik-siniri"
+                    class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Açlık Sınırı</a>
+                <span class="text-gray-300 font-light">|</span>
+                <a href="/bultenler" class="nav-link-modern font-semibold {% if active_page == 'bultenler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Bültenler</a>
+                <span class="text-gray-300 font-light">|</span>
+                <span style="position: relative; display: inline-block;">
+                    <a href="/metodoloji" class="nav-link-modern font-semibold {% if active_page == 'metodoloji' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Metodoloji</a>
+                    <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
+                </span>
+                <span class="text-gray-300 font-light">|</span>
+                <span style="position: relative; display: inline-block;">
+                    <a href="/hakkinda" class="nav-link-modern font-semibold {% if active_page == 'hakkinda' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Hakkında</a>
+                    <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
+                </span>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Floating Açlık Sınırı Button -->
     <a href="{{ url_for('aclik_siniri') }}" class="floating-aclik-siniri-btn" title="Açlık Sınırı">
