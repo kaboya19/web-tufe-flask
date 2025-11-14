@@ -206,6 +206,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         var monthlyGraph = {{ monthly_graphJSON|safe }};
         Plotly.newPlot('monthly-chart', monthlyGraph.data, monthlyGraph.layout, plotlyConfig);
+        
     });
     {% endif %}
     
@@ -214,6 +215,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         var yearlyGraph = {{ yearly_graphJSON|safe }};
         Plotly.newPlot('yearly-chart', yearlyGraph.data, yearlyGraph.layout, plotlyConfig);
+        
     });
     {% endif %}
     
@@ -276,6 +278,7 @@
     .modal-body .card {
         margin-bottom: 1rem;
     }
+    
 </style>
 {% endblock %}
 

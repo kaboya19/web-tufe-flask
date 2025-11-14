@@ -553,7 +553,7 @@ def create_monthly_graph(tufe_data):
             plot_bgcolor='white',
             paper_bgcolor='white',
             hovermode='x unified',
-            height=500,
+            height=600,
             margin=dict(l=20, r=20, t=80, b=20)
         )
         
@@ -3266,7 +3266,7 @@ def ozel_kapsamli_gostergeler():
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=500,
+            height=600,
             margin=dict(l=5, r=5, t=20, b=10),
             hovermode='x unified',
             hoverlabel=dict(
@@ -5393,10 +5393,12 @@ def aclik_siniri():
             monthly_fig.add_trace(go.Scatter(
                 x=monthly_change_dates,
                 y=monthly_change_data,
-                mode='lines+markers',
+                mode='lines',
                 name='Aylık Değişim',
-                line=dict(color='#06B6D4', width=2),
-                marker=dict(size=6),
+                line=dict(
+                    color='#06B6D4',
+                    width=3
+                ),
                 hovertemplate='<b>%{customdata[0]}</b><br>Aylık Değişim: %{y:+.2f}%<extra></extra>',
                 customdata=[[f"{date.strftime('%Y-%m')}"] for date in monthly_change_dates]
             ))
@@ -5404,32 +5406,39 @@ def aclik_siniri():
         monthly_fig.update_layout(
             title=dict(
                 text='Aylık Değişim (%)',
-                font=dict(size=20, family='Inter, sans-serif', color='#2B2D42')
+                font=dict(
+                    size=24,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                y=0.95
             ),
             xaxis=dict(
                 title='Tarih',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                tickformat='%Y-%m',
-                dtick='M1',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 gridcolor='#E9ECEF',
-                zeroline=True,
                 zerolinecolor='#E9ECEF',
-                zerolinewidth=2
+                tickformat='%Y-%m',
+                dtick='M1'
             ),
             yaxis=dict(
                 title='Değişim (%)',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF',
-                zeroline=True,
-                zerolinecolor='#E9ECEF',
-                zerolinewidth=2
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF'
+            ),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=500,
-            margin=dict(l=20, r=20, t=50, b=20),
+            height=600,
+            margin=dict(l=20, r=20, t=80, b=20),
             hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
@@ -5438,7 +5447,7 @@ def aclik_siniri():
                 align='left',
                 namelength=-1
             ),
-            hoverdistance=10
+            hoverdistance=100
         )
         
         monthly_graphJSON = json.dumps(monthly_fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -5451,7 +5460,10 @@ def aclik_siniri():
                 y=yearly_df['Yıllık Enflasyon'],
                 mode='lines',
                 name='Yıllık Değişim',
-                line=dict(color='#F97316', width=2),
+                line=dict(
+                    color='#F97316',
+                    width=3
+                ),
                 hovertemplate='<b>%{customdata[0]}</b><br>Yıllık Değişim: %{y:+.2f}%<extra></extra>',
                 customdata=[[f"{date.strftime('%Y-%m-%d')}"] for date in yearly_df.index]
             ))
@@ -5459,30 +5471,38 @@ def aclik_siniri():
         yearly_fig.update_layout(
             title=dict(
                 text='Yıllık Değişim (%)',
-                font=dict(size=20, family='Inter, sans-serif', color='#2B2D42')
+                font=dict(
+                    size=24,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                y=0.95
             ),
             xaxis=dict(
                 title='Tarih',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                tickformat='%Y-%m',
-                dtick='M1',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 gridcolor='#E9ECEF',
-                zerolinecolor='#E9ECEF'
+                zerolinecolor='#E9ECEF',
+                tickformat='%Y-%m-%d'
             ),
             yaxis=dict(
                 title='Değişim (%)',
-                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF',
-                zeroline=True,
-                zerolinecolor='#E9ECEF',
-                zerolinewidth=2
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF'
+            ),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=500,
-            margin=dict(l=20, r=20, t=50, b=20),
+            height=600,
+            margin=dict(l=20, r=20, t=80, b=20),
             hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
@@ -5491,7 +5511,7 @@ def aclik_siniri():
                 align='left',
                 namelength=-1
             ),
-            hoverdistance=10
+            hoverdistance=100
         )
         
         yearly_graphJSON = json.dumps(yearly_fig, cls=plotly.utils.PlotlyJSONEncoder)
