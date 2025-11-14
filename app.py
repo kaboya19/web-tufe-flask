@@ -5465,8 +5465,7 @@ def aclik_siniri():
                 title='Tarih',
                 title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                tickformat='%Y-%m',
-                dtick='M1',
+                tickformat='%Y-%m-%d',
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF'
             ),
