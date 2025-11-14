@@ -25,6 +25,20 @@ import base64
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
 
+# Make get_turkish_month available in templates
+@app.template_global()
+def get_turkish_month(date_str):
+    aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+    try:
+        if len(date_str) == 7:  # 'YYYY-MM'
+            y, m = date_str.split('-')
+            return aylar[int(m)-1]
+        else:  # 'YYYY-MM-DD'
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            return aylar[date_obj.month-1]
+    except:
+        return date_str
+
 # Web Push Notifications Configuration
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
@@ -180,17 +194,6 @@ init_push_db()
 
 
 
-def get_turkish_month(date_str):
-    aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
-    try:
-        if len(date_str) == 7:  # 'YYYY-MM'
-            y, m = date_str.split('-')
-            return aylar[int(m)-1]
-        else:  # 'YYYY-MM-DD'
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            return aylar[date_obj.month-1]
-    except:
-        return date_str
 #test
 def get_google_credentials():
     scope = ['https://spreadsheets.google.com/feeds',
@@ -5021,11 +5024,14 @@ def get_subscription_count():
 def aclik_siniri():
     try:
         # Load açlıksınırı.csv
-        df = pd.read_csv('açlıksınırı.csv', index_col=0)
+        df_raw = pd.read_csv('açlıksınırı.csv', index_col=0)
         # Clean column names (remove quotes and extra spaces)
-        df.columns = df.columns.str.strip().str.strip('"').str.strip("'")
-        df.index = pd.to_datetime(df.index)
-        df = df.sort_index()
+        df_raw.columns = df_raw.columns.str.strip().str.strip('"').str.strip("'")
+        df_raw.index = pd.to_datetime(df_raw.index)
+        df_raw = df_raw.sort_index()
+        
+        # Create a copy for default calculations (before any user modifications)
+        df_default = df_raw.copy()
         
         # Default quantities for each item
         default_quantities = {
@@ -5110,7 +5116,42 @@ def aclik_siniri():
                     except:
                         pass
         
-        # Calculate Açlık Sınırı based on quantities
+        # Check if user is using custom basket (different from default)
+        is_custom_basket = False
+        for item in default_quantities.keys():
+            if abs(quantities.get(item, 0) - default_quantities.get(item, 0)) > 0.001:
+                is_custom_basket = True
+                break
+        
+        # For monthly/yearly change calculations:
+        # - If using default basket: use CSV's existing "Açlık Sınırı" column
+        # - If using custom basket: calculate with user's quantities
+        if is_custom_basket:
+            # User modified basket - calculate with their quantities
+            calculated_values_default = []
+            for date in df_default.index:
+                total = 0
+                for item, qty in quantities.items():
+                    if item in df_default.columns:
+                        total += df_default.loc[date, item] * qty
+                calculated_values_default.append(total)
+            df_default['Açlık Sınırı'] = calculated_values_default
+        else:
+            # Using default basket - use CSV's existing "Açlık Sınırı" column if available
+            if 'Açlık Sınırı' not in df_default.columns:
+                calculated_values_default = []
+                for date in df_default.index:
+                    total = 0
+                    for item, qty in default_quantities.items():
+                        if item in df_default.columns:
+                            total += df_default.loc[date, item] * qty
+                    calculated_values_default.append(total)
+                df_default['Açlık Sınırı'] = calculated_values_default
+            # If CSV already has "Açlık Sınırı" column, use it directly (don't recalculate)
+        
+        # Create df for display (with user-modified quantities if any)
+        df = df_raw.copy()
+        # Calculate Açlık Sınırı based on quantities (for display)
         if 'Açlık Sınırı' in df.columns:
             # Use the formula to calculate
             calculated_values = []
@@ -5192,10 +5233,11 @@ def aclik_siniri():
         # 2024-12 tarihi ile başlayacak
         # Normal aylar: Ayın 24'ünde hesaplanır (ilk 24 günün ortalaması vs önceki ay ilk 24 günün ortalaması)
         # Son ay (eğer son gün < 24 ise): Son güne kadar olan ortalamayı önceki ayın aynı dönem ortalamasıyla kıyasla
+        # NOTE: Monthly change is always calculated with default quantities, not user-modified quantities
         monthly_change_data = []
         monthly_change_dates = []
         
-        df_monthly = df[df.index >= '2024-12-01'].copy()
+        df_monthly = df_default[df_default.index >= '2024-12-01'].copy()
         if not df_monthly.empty:
             # Son ayı bul
             last_date = df_monthly.index.max()
@@ -5224,9 +5266,9 @@ def aclik_siniri():
                         current_mean = current_month_data['Açlık Sınırı'].mean()
                         
                         # Önceki ayın ilk last_day gününün ortalaması
-                        prev_month_data = df[(df.index.year == prev_year) & 
-                                            (df.index.month == prev_month) & 
-                                            (df.index.day <= last_day)]
+                        prev_month_data = df_default[(df_default.index.year == prev_year) & 
+                                            (df_default.index.month == prev_month) & 
+                                            (df_default.index.day <= last_day)]
                         if len(prev_month_data) > 0:
                             prev_mean = prev_month_data['Açlık Sınırı'].mean()
                             
@@ -5239,15 +5281,15 @@ def aclik_siniri():
                     # Ayın 24'ünü bul
                     date_24 = pd.Timestamp(year, month, 24)
                     if date_24 in group.index:
-                        # Bu ayın ilk 24 gününün ortalaması
+                        # Bu ayın ilk 24 gününün ortalaması (1'den 24'e kadar, 24 dahil)
                         current_month_data = group[group.index.day <= 24]
                         if len(current_month_data) > 0:
                             current_mean = current_month_data['Açlık Sınırı'].mean()
                             
-                            # Önceki ayın ilk 24 gününün ortalaması
-                            prev_month_data = df[(df.index.year == prev_year) & 
-                                                (df.index.month == prev_month) & 
-                                                (df.index.day <= 24)]
+                            # Önceki ayın ilk 24 gününün ortalaması (1'den 24'e kadar, 24 dahil)
+                            prev_month_data = df_default[(df_default.index.year == prev_year) & 
+                                                (df_default.index.month == prev_month) & 
+                                                (df_default.index.day <= 24)]
                             if len(prev_month_data) > 0:
                                 prev_mean = prev_month_data['Açlık Sınırı'].mean()
                                 
@@ -5263,9 +5305,9 @@ def aclik_siniri():
                             current_month_data = group[group.index.day <= 24]
                             if len(current_month_data) > 0:
                                 current_mean = current_month_data['Açlık Sınırı'].mean()
-                                prev_month_data = df[(df.index.year == prev_year) & 
-                                                    (df.index.month == prev_month) & 
-                                                    (df.index.day <= 24)]
+                                prev_month_data = df_default[(df_default.index.year == prev_year) & 
+                                                    (df_default.index.month == prev_month) & 
+                                                    (df_default.index.day <= 24)]
                                 if len(prev_month_data) > 0:
                                     prev_mean = prev_month_data['Açlık Sınırı'].mean()
                                     if prev_mean > 0:
@@ -5276,6 +5318,7 @@ def aclik_siniri():
                                             monthly_change_dates.append(date_after_24)
         
         # Calculate yearly change (yıllık değişim)
+        # NOTE: Yearly change is always calculated with default quantities, not user-modified quantities
         def gunluk_yillik_enflasyon(df, col="Açlık Sınırı"):
             df = df.copy()
             df.index = pd.to_datetime(df.index)
@@ -5340,8 +5383,8 @@ def aclik_siniri():
             df_final = pd.concat(sabit_df).sort_index()
             return df_final[["Yıllık Enflasyon"]]
         
-        # Calculate yearly change
-        yearly_df = gunluk_yillik_enflasyon(df, "Açlık Sınırı").dropna()
+        # Calculate yearly change (using default quantities)
+        yearly_df = gunluk_yillik_enflasyon(df_default, "Açlık Sınırı").dropna()
         yearly_df = yearly_df.sort_index()
         
         # Create monthly change chart
@@ -5355,7 +5398,7 @@ def aclik_siniri():
                 line=dict(color='#06B6D4', width=2),
                 marker=dict(size=6),
                 hovertemplate='<b>%{customdata[0]}</b><br>Aylık Değişim: %{y:+.2f}%<extra></extra>',
-                customdata=[[f"{date.strftime('%Y-%m-%d')}"] for date in monthly_change_dates]
+                customdata=[[f"{date.strftime('%Y-%m')}"] for date in monthly_change_dates]
             ))
         
         monthly_fig.update_layout(
@@ -5511,6 +5554,7 @@ def aclik_siniri():
         latest_aclik_siniri = df.loc[latest_date, 'Açlık Sınırı']
         
         return render_template('aclik_siniri.html',
+                               is_custom_basket=is_custom_basket,
                              main_graphJSON=main_graphJSON,
                              monthly_graphJSON=monthly_graphJSON,
                              yearly_graphJSON=yearly_graphJSON,
@@ -5530,6 +5574,7 @@ def aclik_siniri():
         print(traceback.format_exc())
         flash(f'Hata: {str(e)}', 'error')
         return render_template('aclik_siniri.html',
+                               is_custom_basket=False,
                              main_graphJSON=None,
                              monthly_graphJSON=None,
                              yearly_graphJSON=None,

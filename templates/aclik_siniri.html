@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if is_custom_basket %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>⚠️ Uyarı:</strong> Varsayılan sepette değilsiniz. Aylık ve yıllık değişim grafikleri özel sepetinize göre hesaplanmaktadır.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
 <div class="row">
     <div class="col-lg-8">
         <div class="card mb-3">
@@ -54,7 +60,7 @@
                     <strong>Son Güncelleme:</strong><br>
                     <small class="text-muted">
                         {% if latest_date %}
-                        {{ latest_date.strftime('%d %B %Y') }}
+                        {{ latest_date.strftime('%d') }} {{ get_turkish_month(latest_date.strftime('%Y-%m-%d')) }} {{ latest_date.strftime('%Y') }}
                         {% endif %}
                     </small>
                 </div>
@@ -90,6 +96,18 @@
         <button type="button" class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#itemsModal">
             🔄 Yeniden Hesapla
         </button>
+        
+        <!-- Reset to Default Basket Button -->
+        <form method="POST" action="{{ url_for('aclik_siniri') }}" style="display: inline-block; width: 100%;">
+            {% for item in item_names %}
+            {% if item in default_quantities %}
+            <input type="hidden" name="qty_{{ item }}" value="{{ default_quantities[item] }}">
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="btn btn-warning w-100 {% if not is_custom_basket %}disabled{% endif %}" {% if not is_custom_basket %}disabled{% endif %}>
+                🔄 Varsayılan Sepete Dön
+            </button>
+        </form>
     </div>
 </div>
 
