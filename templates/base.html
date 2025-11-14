@@ -451,6 +451,75 @@
                 font-size: 1.1rem;
             }
         }
+        
+        /* Floating Açlık Sınırı Button */
+        .floating-aclik-siniri-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #EF476F, #F78C6B);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(239, 71, 111, 0.4);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+        }
+        
+        .floating-aclik-siniri-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(239, 71, 111, 0.6);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .floating-btn-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        
+        .floating-btn-text {
+            font-size: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .floating-aclik-siniri-btn {
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+            }
+            
+            .floating-btn-text {
+                font-size: 0.9rem;
+            }
+            
+            .floating-btn-icon {
+                font-size: 1.3rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .floating-aclik-siniri-btn {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 15px;
+            }
+            
+            .floating-btn-text {
+                display: none;
+            }
+            
+            .floating-btn-icon {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 
@@ -488,6 +557,10 @@
                             href="{{ url_for('mevsimsel_duzeltilmis_gostergeler') }}">Mevsimsel</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'aclik_siniri' %}active{% endif %}"
+                            href="{{ url_for('aclik_siniri') }}">Açlık Sınırı</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if active_page == 'bultenler' %}active{% endif %}"
                             href="{{ url_for('bultenler') }}">Bültenler</a>
                     </li>
@@ -497,14 +570,19 @@
                         <span class="badge bg-danger text-white" style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; padding: 2px 5px; white-space: nowrap;">Yeni!</span>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/?manual=1" style="color: #667eea;" title="Platform Seçimi">
-                            📱💻
-                        </a>
+                        <a class="nav-link {% if active_page == 'hakkinda' %}active{% endif %}"
+                            href="{{ url_for('hakkinda') }}">Hakkında</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Floating Açlık Sınırı Button -->
+    <a href="{{ url_for('aclik_siniri') }}" class="floating-aclik-siniri-btn" title="Açlık Sınırı">
+        <span class="floating-btn-text">Açlık Sınırı</span>
+        <span class="floating-btn-icon">🍞</span>
+    </a>
 
     <div class="container mt-4">
         {% with messages = get_flashed_messages(with_categories=true) %}

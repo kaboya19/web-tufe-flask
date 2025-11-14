@@ -5017,5 +5017,241 @@ def get_subscription_count():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/aclik-siniri', methods=['GET', 'POST'])
+def aclik_siniri():
+    try:
+        # Load açlıksınırı.csv
+        df = pd.read_csv('açlıksınırı.csv', index_col=0)
+        # Clean column names (remove quotes and extra spaces)
+        df.columns = df.columns.str.strip().str.strip('"').str.strip("'")
+        df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
+        
+        # Default quantities for each item
+        default_quantities = {
+            'Süt': 50,
+            'Yoğurt': 18,
+            'Beyaz Peynir': 4,
+            'Dana Eti': 10,
+            'Tavuk Eti': 10,
+            'Balık': 4,
+            'Mercimek': 2,
+            'Kuru Fasulye': 3,
+            'Nohut': 2,
+            'Yumurta': 150,
+            'Kuruyemiş (Fındık,Ceviz,Ayçekirdeği)': 1,
+            'Ekmek': 45,
+            'Pirinç': 7,
+            'Makarna': 6,
+            'Bulgur': 4,
+            'Un': 4,
+            'Patates': 10,
+            'Soğan': 7,
+            'Domates': 10,
+            'Biber': 6,
+            'Havuç': 5,
+            'Mevsim Sebzeleri': 12,
+            'Meyve': 35,
+            'Ayçiçek Yağı': 4,
+            'Margarin': 0.5,
+            'Şeker': 3,
+            'Reçel': 1,
+            'Bal': 0.5,
+            'Tuz': 0.7,
+            'Çay': 0.7,
+            'Salça': 2,
+            'Baharat': 0.3
+        }
+        
+        # Units for each item
+        units = {
+            'Süt': 'L',
+            'Yoğurt': 'kg',
+            'Beyaz Peynir': 'kg',
+            'Dana Eti': 'kg',
+            'Tavuk Eti': 'kg',
+            'Balık': 'kg',
+            'Mercimek': 'kg',
+            'Kuru Fasulye': 'kg',
+            'Nohut': 'kg',
+            'Yumurta': 'Adet',
+            'Kuruyemiş (Fındık,Ceviz,Ayçekirdeği)': 'kg',
+            'Ekmek': 'Adet',
+            'Pirinç': 'kg',
+            'Makarna': 'kg',
+            'Bulgur': 'kg',
+            'Un': 'kg',
+            'Patates': 'kg',
+            'Soğan': 'kg',
+            'Domates': 'kg',
+            'Biber': 'kg',
+            'Havuç': 'kg',
+            'Mevsim Sebzeleri': 'kg',
+            'Meyve': 'kg',
+            'Ayçiçek Yağı': 'L',
+            'Margarin': 'kg',
+            'Şeker': 'kg',
+            'Reçel': 'kg',
+            'Bal': 'kg',
+            'Tuz': 'kg',
+            'Çay': 'kg',
+            'Salça': 'kg',
+            'Baharat': 'kg'
+        }
+        
+        # Get quantities from POST request if available
+        quantities = default_quantities.copy()
+        if request.method == 'POST':
+            for item in default_quantities.keys():
+                qty = request.form.get(f'qty_{item}')
+                if qty:
+                    try:
+                        quantities[item] = float(qty)
+                    except:
+                        pass
+        
+        # Calculate Açlık Sınırı based on quantities
+        if 'Açlık Sınırı' in df.columns:
+            # Use the formula to calculate
+            calculated_values = []
+            for date in df.index:
+                total = 0
+                for item, qty in quantities.items():
+                    if item in df.columns:
+                        total += df.loc[date, item] * qty
+                calculated_values.append(total)
+            
+            # Update the Açlık Sınırı column with calculated values
+            df['Açlık Sınırı'] = calculated_values
+        
+        # Create main line plot for Açlık Sınırı
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df['Açlık Sınırı'],
+            mode='lines',
+            name='Açlık Sınırı',
+            line=dict(
+                color='#EF476F',
+                width=3
+            ),
+            hovertemplate='%{customdata[0]}<br>Açlık Sınırı: %{customdata[1]:,.2f} TL<extra></extra>',
+            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y] for date, y in zip(df.index, df['Açlık Sınırı'])]
+        ))
+        
+        fig.update_layout(
+            title=dict(
+                text='Açlık Sınırı',
+                font=dict(
+                    size=24,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                y=0.95
+            ),
+            xaxis=dict(
+                title='Tarih',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF',
+                zerolinecolor='#E9ECEF',
+                tickformat='%Y-%m',
+                dtick='M1'  # Her ay için bir tick
+            ),
+            yaxis=dict(
+                title='Tutar (TL)',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF'
+            ),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=600,
+            margin=dict(l=20, r=20, t=80, b=20),
+            hovermode='closest',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=12,
+                font_family='Inter, sans-serif'
+            )
+        )
+        
+        main_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # Prepare item data for popup charts
+        item_names = [col for col in df.columns if col != 'Açlık Sınırı']
+        item_charts = {}
+        
+        for item in item_names:
+            item_fig = go.Figure()
+            item_fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[item],
+                mode='lines',
+                name=item,
+                line=dict(color='#6366F1', width=2)
+            ))
+            item_fig.update_layout(
+                title=dict(text=item, font=dict(size=14, family='Inter, sans-serif')),
+                xaxis=dict(
+                    title='Tarih', 
+                    title_font=dict(size=10),
+                    tickfont=dict(size=9),
+                    tickformat='%Y-%m',
+                    dtick='M1'  # Her ay için bir tick
+                ),
+                yaxis=dict(title='Fiyat (TL)', title_font=dict(size=10)),
+                height=250,
+                margin=dict(l=40, r=20, t=40, b=40),
+                plot_bgcolor='white',
+                paper_bgcolor='white'
+            )
+            item_charts[item] = json.dumps(item_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # Get latest values for display
+        latest_date = df.index[-1]
+        latest_values = {}
+        for item in item_names:
+            if item in df.columns:
+                latest_values[item] = df.loc[latest_date, item]
+        
+        latest_aclik_siniri = df.loc[latest_date, 'Açlık Sınırı']
+        
+        return render_template('aclik_siniri.html',
+                             main_graphJSON=main_graphJSON,
+                             item_names=item_names,
+                             item_charts=item_charts,
+                             quantities=quantities,
+                             default_quantities=default_quantities,
+                             units=units,
+                             latest_values=latest_values,
+                             latest_aclik_siniri=latest_aclik_siniri,
+                             latest_date=latest_date,
+                             active_page='aclik_siniri')
+    
+    except Exception as e:
+        import traceback
+        print(f"Error in aclik_siniri route: {str(e)}")
+        print(traceback.format_exc())
+        flash(f'Hata: {str(e)}', 'error')
+        return render_template('aclik_siniri.html',
+                             main_graphJSON=None,
+                             item_names=[],
+                             item_charts={},
+                             quantities={},
+                             default_quantities={},
+                             units={},
+                             latest_values={},
+                             latest_aclik_siniri=0,
+                             latest_date=None,
+                             active_page='aclik_siniri')
+
 if __name__ == '__main__':
     app.run(debug=True) 

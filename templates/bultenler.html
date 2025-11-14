@@ -56,23 +56,48 @@
         }
 
         .nav-link-modern {
-            transition: all 0.3s ease;
+            color: var(--text-color) !important;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem !important;
+            border-radius: 12px;
             position: relative;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-block;
         }
 
-        .nav-link-modern::after {
+        .nav-link-modern::before {
             content: '';
             position: absolute;
-            bottom: -2px;
+            top: 0;
             left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            transition: width 0.3s ease;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            opacity: 0;
+            border-radius: 12px;
+            z-index: -1;
+            transition: opacity 0.3s ease;
         }
 
-        .nav-link-modern:hover::after {
-            width: 100%;
+        .nav-link-modern:hover {
+            color: white !important;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .nav-link-modern:hover::before {
+            opacity: 1;
+        }
+
+        .nav-link-modern.text-indigo-600 {
+            color: white !important;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .nav-link-modern.text-indigo-600::before {
+            opacity: 1;
         }
     </style>
 </head>
@@ -97,6 +122,9 @@
                     <span class="text-gray-300 font-light">|</span>
                     <a href="/mevsimsel-duzeltilmis-gostergeler" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Mevsimsel
                         Düzeltilmiş Göstergeler</a>
+                    <span class="text-gray-300 font-light">|</span>
+                    <a href="/aclik-siniri"
+                        class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Açlık Sınırı</a>
                     <span class="text-gray-300 font-light">|</span>
                     <a href="/bultenler" class="nav-link-modern font-semibold text-indigo-600">Bültenler</a>
                     <span class="text-gray-300 font-light">|</span>

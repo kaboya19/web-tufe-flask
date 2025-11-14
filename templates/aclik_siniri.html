@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Açlık Sınırı</h2>
+            </div>
+            <div class="card-body">
+                {% if main_graphJSON %}
+                <div id="main-chart" class="plot-container"></div>
+                {% else %}
+                <div class="alert alert-danger">Grafik yüklenemedi.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Basket Contents Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Sepet İçeriği</h5>
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <div class="mb-3">
+                    <strong>Son Güncelleme:</strong><br>
+                    <small class="text-muted">
+                        {% if latest_date %}
+                        {{ latest_date.strftime('%d %B %Y') }}
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="mb-3">
+                    <strong>Açlık Sınırı:</strong><br>
+                    <span class="h4 text-primary">{{ "%.2f"|format(latest_aclik_siniri) }} TL</span>
+                </div>
+                <hr>
+                <div id="basket-items">
+                    {% for item in item_names %}
+                    {% if item in quantities %}
+                    <div class="mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item }}</strong><br>
+                                <small class="text-muted">
+                                    {{ "%.2f"|format(quantities[item]) }} {{ units.get(item, '') }}
+                                    {% if item in latest_values %}
+                                    × {{ "%.2f"|format(latest_values[item]) }} TL
+                                    = {{ "%.2f"|format(quantities[item] * latest_values[item]) }} TL
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Items Popup Button -->
+        <button type="button" class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#itemsModal">
+            🔄 Yeniden Hesapla
+        </button>
+    </div>
+</div>
+
+<!-- Items Modal -->
+<div class="modal fade" id="itemsModal" tabindex="-1" aria-labelledby="itemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemsModalLabel">Maddeler ve Fiyatları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="quantitiesForm" method="POST">
+                    <div class="row">
+                        {% for item in item_names %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">{{ item }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="chart-{{ loop.index0 }}" class="plot-container mb-3" style="height: 250px;"></div>
+                                    <div class="form-group">
+                                        <label for="qty_{{ item }}" class="form-label">
+                                            Miktar ({{ units.get(item, '') }}):
+                                        </label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="qty_{{ item }}" 
+                                                   name="qty_{{ item }}" 
+                                                   min="0" 
+                                                   max="{% if item == 'Yumurta' %}300{% elif item == 'Ekmek' %}100{% elif item == 'Süt' %}100{% elif item == 'Meyve' %}70{% else %}50{% endif %}" 
+                                                   step="0.1" 
+                                                   value="{{ quantities.get(item, 0) }}"
+                                                   oninput="updateQuantityDisplay('{{ item }}', this.value)">
+                                            <span class="ms-2" id="qty_display_{{ item }}" style="min-width: 60px;">
+                                                {{ "%.1f"|format(quantities.get(item, 0)) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="resetToDefaults();">
+                    🔄 Varsayılana Geri Dön
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('quantitiesForm').submit();">
+                    Hesapla
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store default quantities
+    var defaultQuantities = {};
+    {% for item in item_names %}
+    {% if item in default_quantities %}
+    defaultQuantities['{{ item }}'] = {{ default_quantities[item] }};
+    {% endif %}
+    {% endfor %}
+    
+    // Store item charts data
+    var itemChartsData = {};
+    {% for item in item_names %}
+    {% if item in item_charts %}
+    itemChartsData['{{ item }}'] = {{ item_charts[item]|safe }};
+    {% endif %}
+    {% endfor %}
+    
+    // Render main chart
+    {% if main_graphJSON %}
+    document.addEventListener('DOMContentLoaded', function() {
+        var mainGraph = {{ main_graphJSON|safe }};
+        Plotly.newPlot('main-chart', mainGraph.data, mainGraph.layout, {responsive: true});
+    });
+    {% endif %}
+    
+    // Render item charts when modal is shown
+    var itemsModal = document.getElementById('itemsModal');
+    if (itemsModal) {
+        itemsModal.addEventListener('shown.bs.modal', function() {
+            {% for item in item_names %}
+            {% if item in item_charts %}
+            var chartId = 'chart-{{ loop.index0 }}';
+            var chartElement = document.getElementById(chartId);
+            if (chartElement && !chartElement.hasAttribute('data-rendered')) {
+                var itemGraph = itemChartsData['{{ item }}'];
+                if (itemGraph) {
+                    Plotly.newPlot(chartId, itemGraph.data, itemGraph.layout, {responsive: true});
+                    chartElement.setAttribute('data-rendered', 'true');
+                }
+            }
+            {% endif %}
+            {% endfor %}
+        });
+    }
+    
+    // Update quantity display
+    function updateQuantityDisplay(item, value) {
+        var displayEl = document.getElementById('qty_display_' + item);
+        if (displayEl) {
+            displayEl.textContent = parseFloat(value).toFixed(1);
+        }
+    }
+    
+    // Reset all quantities to default values
+    function resetToDefaults() {
+        for (var item in defaultQuantities) {
+            var slider = document.getElementById('qty_' + item);
+            var display = document.getElementById('qty_display_' + item);
+            if (slider && display) {
+                var defaultValue = defaultQuantities[item];
+                slider.value = defaultValue;
+                display.textContent = parseFloat(defaultValue).toFixed(1);
+            }
+        }
+    }
+</script>
+
+<style>
+    .plot-container {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .form-range {
+        flex: 1;
+    }
+    
+    #basket-items {
+        font-size: 0.9rem;
+    }
+    
+    .modal-body .card {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
