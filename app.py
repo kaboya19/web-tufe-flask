@@ -21,6 +21,7 @@ from pywebpush import webpush, WebPushException
 import sqlite3
 from cryptography.hazmat.primitives import serialization
 import base64
+import re
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
@@ -3932,20 +3933,51 @@ def bultenler():
     aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
     date_options = []
     file_map = {}
+    
+    # Get current year for Web TÜFE reports
+    current_year = datetime.now().year
+    
     for fname in pdf_files:
+        processed = False
+        # First, try to match files starting with Turkish month names
         for ay in aylar:
             if fname.startswith(ay):
                 y = fname.replace(ay, '').replace('.pdf', '').replace('_', ' ').strip()
                 label = f"{ay} {y}"
                 date_options.append(label)
                 file_map[label] = fname
+                processed = True
                 break
+        
+        # If not processed, try to match "Web TÜFE" files
+        if not processed and fname.startswith('Web TÜFE'):
+            # Extract month from filename like "Web TÜFE Kasım Öncü.pdf"
+            for ay in aylar:
+                if ay in fname:
+                    # Try to extract year from filename, default to current year
+                    y = str(current_year)
+                    # Look for year pattern in filename (e.g., "2025")
+                    year_match = re.search(r'20\d{2}', fname)
+                    if year_match:
+                        y = year_match.group()
+                    label = f"{ay} {y} (Enflasyon Görünümü)"
+                    date_options.append(label)
+                    file_map[label] = fname
+                    processed = True
+                    break
+    
     # Tarihleri yıl ve ay'a göre sıralayalım (en yeni en başta)
     def parse_turkish_date(label):
         try:
-            ay, yil = label.split()
-            ay_map = {a: i+1 for i, a in enumerate(aylar)}
-            return int(yil), ay_map.get(ay, 0)
+            # Handle labels with "(Enflasyon Görünümü)" suffix
+            label_clean = label.replace(' (Enflasyon Görünümü)', '')
+            parts = label_clean.split()
+            if len(parts) >= 2:
+                ay = parts[0]
+                yil = parts[1]
+                ay_map = {a: i+1 for i, a in enumerate(aylar)}
+                return int(yil), ay_map.get(ay, 0)
+            return (0, 0)
         except:
             return (0, 0)
     date_options.sort(key=parse_turkish_date, reverse=True)
