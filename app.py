@@ -5076,7 +5076,7 @@ def aclik_siniri():
             'Nohut': 'kg',
             'Yumurta': 'Adet',
             'Kuruyemiş (Fındık,Ceviz,Ayçekirdeği)': 'kg',
-            'Ekmek': 'Adet',
+            'Ekmek': 'kg',
             'Pirinç': 'kg',
             'Makarna': 'kg',
             'Bulgur': 'kg',
@@ -5175,12 +5175,15 @@ def aclik_siniri():
             paper_bgcolor='white',
             height=600,
             margin=dict(l=20, r=20, t=80, b=20),
-            hovermode='closest',
+            hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
                 font_size=12,
-                font_family='Inter, sans-serif'
-            )
+                font_family='Inter, sans-serif',
+                align='left',
+                namelength=-1
+            ),
+            hoverdistance=10
         )
         
         main_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
