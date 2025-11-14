@@ -5188,6 +5188,271 @@ def aclik_siniri():
         
         main_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
+        # Calculate monthly change (aylık değişim)
+        # 2024-12 tarihi ile başlayacak
+        # Normal aylar: Ayın 24'ünde hesaplanır (ilk 24 günün ortalaması vs önceki ay ilk 24 günün ortalaması)
+        # Son ay (eğer son gün < 24 ise): Son güne kadar olan ortalamayı önceki ayın aynı dönem ortalamasıyla kıyasla
+        monthly_change_data = []
+        monthly_change_dates = []
+        
+        df_monthly = df[df.index >= '2024-12-01'].copy()
+        if not df_monthly.empty:
+            # Son ayı bul
+            last_date = df_monthly.index.max()
+            last_year = last_date.year
+            last_month = last_date.month
+            last_day = last_date.day
+            
+            for (year, month), group in df_monthly.groupby([df_monthly.index.year, df_monthly.index.month]):
+                # Önceki ay bilgisi
+                if month == 1:
+                    prev_year = year - 1
+                    prev_month = 12
+                else:
+                    prev_year = year
+                    prev_month = month - 1
+                
+                # Son ay mı ve son gün 24'ten küçük mü?
+                is_last_month = (year == last_year and month == last_month)
+                is_before_24 = is_last_month and last_day < 24
+                
+                if is_before_24:
+                    # Son ay ve 24'ten önce: Son güne kadar olan ortalamayı hesapla
+                    # Bu ayın ilk last_day gününün ortalaması
+                    current_month_data = group[group.index.day <= last_day]
+                    if len(current_month_data) > 0:
+                        current_mean = current_month_data['Açlık Sınırı'].mean()
+                        
+                        # Önceki ayın ilk last_day gününün ortalaması
+                        prev_month_data = df[(df.index.year == prev_year) & 
+                                            (df.index.month == prev_month) & 
+                                            (df.index.day <= last_day)]
+                        if len(prev_month_data) > 0:
+                            prev_mean = prev_month_data['Açlık Sınırı'].mean()
+                            
+                            if prev_mean > 0:
+                                change = ((current_mean / prev_mean) - 1) * 100
+                                monthly_change_data.append(change)
+                                monthly_change_dates.append(last_date)
+                else:
+                    # Normal aylar veya son ay ama 24'ü geçmiş: Sadece 24'te hesapla
+                    # Ayın 24'ünü bul
+                    date_24 = pd.Timestamp(year, month, 24)
+                    if date_24 in group.index:
+                        # Bu ayın ilk 24 gününün ortalaması
+                        current_month_data = group[group.index.day <= 24]
+                        if len(current_month_data) > 0:
+                            current_mean = current_month_data['Açlık Sınırı'].mean()
+                            
+                            # Önceki ayın ilk 24 gününün ortalaması
+                            prev_month_data = df[(df.index.year == prev_year) & 
+                                                (df.index.month == prev_month) & 
+                                                (df.index.day <= 24)]
+                            if len(prev_month_data) > 0:
+                                prev_mean = prev_month_data['Açlık Sınırı'].mean()
+                                
+                                if prev_mean > 0:
+                                    change = ((current_mean / prev_mean) - 1) * 100
+                                    monthly_change_data.append(change)
+                                    monthly_change_dates.append(date_24)
+                    
+                    # Son ay ve 24'ü geçmişse, 24'ten sonraki günler için de 24'teki değeri göster
+                    if is_last_month and last_day >= 24:
+                        # 24'teki değeri al
+                        if date_24 in group.index:
+                            current_month_data = group[group.index.day <= 24]
+                            if len(current_month_data) > 0:
+                                current_mean = current_month_data['Açlık Sınırı'].mean()
+                                prev_month_data = df[(df.index.year == prev_year) & 
+                                                    (df.index.month == prev_month) & 
+                                                    (df.index.day <= 24)]
+                                if len(prev_month_data) > 0:
+                                    prev_mean = prev_month_data['Açlık Sınırı'].mean()
+                                    if prev_mean > 0:
+                                        change = ((current_mean / prev_mean) - 1) * 100
+                                        # 24'ten sonraki tüm günler için aynı değeri ekle
+                                        for date_after_24 in group[group.index.day > 24].index:
+                                            monthly_change_data.append(change)
+                                            monthly_change_dates.append(date_after_24)
+        
+        # Calculate yearly change (yıllık değişim)
+        def gunluk_yillik_enflasyon(df, col="Açlık Sınırı"):
+            df = df.copy()
+            df.index = pd.to_datetime(df.index)
+            df["Yıl"] = df.index.year
+            df["Ay"] = df.index.month
+            df["Gün"] = df.index.day
+
+            results = []
+
+            for current_date in df.index:
+                yıl, ay, gün = current_date.year, current_date.month, current_date.day
+
+                # (1) Bu ayın başından bugüne kadar olan ortalama (mevcut ortalama)
+                current_mask = (df["Yıl"] == yıl) & (df["Ay"] == ay) & (df["Gün"] <= gün)
+                current_mean = df.loc[current_mask, col].mean()
+
+                # Geçen yılın aynı dönemi
+                prev_mask = (df["Yıl"] == yıl - 1) & (df["Ay"] == ay) & (df["Gün"] <= gün)
+                prev_mean = df.loc[prev_mask, col].mean()
+
+                if np.isnan(prev_mean) or prev_mean == 0:
+                    results.append(np.nan)
+                    continue
+
+                # (1) Gerçekleşen ortalama ile yıllık değişim
+                real_change = (current_mean / prev_mean - 1) * 100
+
+                # (2) Eğer endeks bugünden 24'e kadar sabit kalsaydı tahmini yıllık değişim
+                if gün < 24:
+                    # 24'e kadar sabit kalırsa, o ayın 1-24 arası ortalamasını tahmin et
+                    future_days = 24 - gün
+                    sabit_endeks = df.loc[current_date, col]
+                    toplam_gün = gün + future_days
+                    tahmini_ort = (current_mean * gün + sabit_endeks * future_days) / toplam_gün
+
+                    prev_24_mask = (df["Yıl"] == yıl - 1) & (df["Ay"] == ay) & (df["Gün"] <= 24)
+                    prev_24_mean = df.loc[prev_24_mask, col].mean()
+
+                    if np.isnan(prev_24_mean) or prev_24_mean == 0:
+                        tahmini_change = np.nan
+                    else:
+                        tahmini_change = (tahmini_ort / prev_24_mean - 1) * 100
+
+                    # iki yöntemin ortalaması
+                    enflasyon = (real_change + tahmini_change) / 2
+                else:
+                    # 24'ü ve sonrası: sadece gerçek (nihai)
+                    enflasyon = real_change
+
+                results.append(enflasyon)
+
+            df["Yıllık Enflasyon"] = results
+
+            # (3) Ayın 24'ünden sonrası sabit kalır
+            sabit_df = []
+            for (yıl, ay), group in df.groupby(["Yıl", "Ay"]):
+                if 24 in group["Gün"].values:
+                    sabit_deger = group.loc[group["Gün"] == 24, "Yıllık Enflasyon"].values[0]
+                    group.loc[group["Gün"] > 24, "Yıllık Enflasyon"] = sabit_deger
+                sabit_df.append(group)
+
+            df_final = pd.concat(sabit_df).sort_index()
+            return df_final[["Yıllık Enflasyon"]]
+        
+        # Calculate yearly change
+        yearly_df = gunluk_yillik_enflasyon(df, "Açlık Sınırı").dropna()
+        yearly_df = yearly_df.sort_index()
+        
+        # Create monthly change chart
+        monthly_fig = go.Figure()
+        if monthly_change_data:
+            monthly_fig.add_trace(go.Scatter(
+                x=monthly_change_dates,
+                y=monthly_change_data,
+                mode='lines+markers',
+                name='Aylık Değişim',
+                line=dict(color='#06B6D4', width=2),
+                marker=dict(size=6),
+                hovertemplate='<b>%{customdata[0]}</b><br>Aylık Değişim: %{y:+.2f}%<extra></extra>',
+                customdata=[[f"{date.strftime('%Y-%m-%d')}"] for date in monthly_change_dates]
+            ))
+        
+        monthly_fig.update_layout(
+            title=dict(
+                text='Aylık Değişim (%)',
+                font=dict(size=20, family='Inter, sans-serif', color='#2B2D42')
+            ),
+            xaxis=dict(
+                title='Tarih',
+                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
+                tickformat='%Y-%m',
+                dtick='M1',
+                gridcolor='#E9ECEF',
+                zeroline=True,
+                zerolinecolor='#E9ECEF',
+                zerolinewidth=2
+            ),
+            yaxis=dict(
+                title='Değişim (%)',
+                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF',
+                zeroline=True,
+                zerolinecolor='#E9ECEF',
+                zerolinewidth=2
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=500,
+            margin=dict(l=50, r=20, t=50, b=50),
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=11,
+                font_family='Inter, sans-serif',
+                align='left',
+                namelength=-1
+            ),
+            hoverdistance=10
+        )
+        
+        monthly_graphJSON = json.dumps(monthly_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # Create yearly change chart
+        yearly_fig = go.Figure()
+        if not yearly_df.empty:
+            yearly_fig.add_trace(go.Scatter(
+                x=yearly_df.index,
+                y=yearly_df['Yıllık Enflasyon'],
+                mode='lines',
+                name='Yıllık Değişim',
+                line=dict(color='#F97316', width=2),
+                hovertemplate='<b>%{customdata[0]}</b><br>Yıllık Değişim: %{y:+.2f}%<extra></extra>',
+                customdata=[[f"{date.strftime('%Y-%m-%d')}"] for date in yearly_df.index]
+            ))
+        
+        yearly_fig.update_layout(
+            title=dict(
+                text='Yıllık Değişim (%)',
+                font=dict(size=20, family='Inter, sans-serif', color='#2B2D42')
+            ),
+            xaxis=dict(
+                title='Tarih',
+                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
+                tickformat='%Y-%m',
+                dtick='M1',
+                gridcolor='#E9ECEF',
+                zerolinecolor='#E9ECEF'
+            ),
+            yaxis=dict(
+                title='Değişim (%)',
+                title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF',
+                zeroline=True,
+                zerolinecolor='#E9ECEF',
+                zerolinewidth=2
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=500,
+            margin=dict(l=50, r=20, t=50, b=50),
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=11,
+                font_family='Inter, sans-serif',
+                align='left',
+                namelength=-1
+            ),
+            hoverdistance=10
+        )
+        
+        yearly_graphJSON = json.dumps(yearly_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
         # Prepare item data for popup charts
         item_names = [col for col in df.columns if col != 'Açlık Sınırı']
         item_charts = {}
@@ -5199,7 +5464,9 @@ def aclik_siniri():
                 y=df[item],
                 mode='lines',
                 name=item,
-                line=dict(color='#6366F1', width=2)
+                line=dict(color='#6366F1', width=2),
+                hovertemplate='<b>%{customdata[0]}</b><br>' + item + ': %{y:,.2f} TL<extra></extra>',
+                customdata=[[f"{date.strftime('%Y-%m-%d')}"] for date in df.index]
             ))
             item_fig.update_layout(
                 title=dict(text=item, font=dict(size=14, family='Inter, sans-serif')),
@@ -5208,13 +5475,29 @@ def aclik_siniri():
                     title_font=dict(size=10),
                     tickfont=dict(size=9),
                     tickformat='%Y-%m',
-                    dtick='M1'  # Her ay için bir tick
+                    dtick='M1',  # Her ay için bir tick
+                    gridcolor='#E9ECEF',
+                    zerolinecolor='#E9ECEF'
                 ),
-                yaxis=dict(title='Fiyat (TL)', title_font=dict(size=10)),
+                yaxis=dict(
+                    title='Fiyat (TL)', 
+                    title_font=dict(size=10),
+                    tickfont=dict(size=9),
+                    gridcolor='#E9ECEF'
+                ),
                 height=250,
                 margin=dict(l=40, r=20, t=40, b=40),
                 plot_bgcolor='white',
-                paper_bgcolor='white'
+                paper_bgcolor='white',
+                hovermode='x unified',
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=11,
+                    font_family='Inter, sans-serif',
+                    align='left',
+                    namelength=-1
+                ),
+                hoverdistance=10
             )
             item_charts[item] = json.dumps(item_fig, cls=plotly.utils.PlotlyJSONEncoder)
         
@@ -5229,6 +5512,8 @@ def aclik_siniri():
         
         return render_template('aclik_siniri.html',
                              main_graphJSON=main_graphJSON,
+                             monthly_graphJSON=monthly_graphJSON,
+                             yearly_graphJSON=yearly_graphJSON,
                              item_names=item_names,
                              item_charts=item_charts,
                              quantities=quantities,
@@ -5246,6 +5531,8 @@ def aclik_siniri():
         flash(f'Hata: {str(e)}', 'error')
         return render_template('aclik_siniri.html',
                              main_graphJSON=None,
+                             monthly_graphJSON=None,
+                             yearly_graphJSON=None,
                              item_names=[],
                              item_charts={},
                              quantities={},

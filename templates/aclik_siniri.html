@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-8">
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">
                 <h2 class="mb-0">Açlık Sınırı</h2>
             </div>
@@ -12,6 +12,32 @@
                 <div id="main-chart" class="plot-container"></div>
                 {% else %}
                 <div class="alert alert-danger">Grafik yüklenemedi.</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Aylık Değişim</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_graphJSON %}
+                <div id="monthly-chart" class="plot-container"></div>
+                {% else %}
+                <div class="alert alert-info">Aylık değişim verisi henüz mevcut değil.</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Yıllık Değişim</h5>
+            </div>
+            <div class="card-body">
+                {% if yearly_graphJSON %}
+                <div id="yearly-chart" class="plot-container"></div>
+                {% else %}
+                <div class="alert alert-info">Yıllık değişim verisi henüz mevcut değil.</div>
                 {% endif %}
             </div>
         </div>
@@ -147,6 +173,22 @@
     document.addEventListener('DOMContentLoaded', function() {
         var mainGraph = {{ main_graphJSON|safe }};
         Plotly.newPlot('main-chart', mainGraph.data, mainGraph.layout, {responsive: true});
+    });
+    {% endif %}
+    
+    // Render monthly change chart
+    {% if monthly_graphJSON %}
+    document.addEventListener('DOMContentLoaded', function() {
+        var monthlyGraph = {{ monthly_graphJSON|safe }};
+        Plotly.newPlot('monthly-chart', monthlyGraph.data, monthlyGraph.layout, {responsive: true});
+    });
+    {% endif %}
+    
+    // Render yearly change chart
+    {% if yearly_graphJSON %}
+    document.addEventListener('DOMContentLoaded', function() {
+        var yearlyGraph = {{ yearly_graphJSON|safe }};
+        Plotly.newPlot('yearly-chart', yearlyGraph.data, yearlyGraph.layout, {responsive: true});
     });
     {% endif %}
     
