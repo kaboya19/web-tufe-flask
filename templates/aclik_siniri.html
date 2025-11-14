@@ -186,11 +186,18 @@
     {% endif %}
     {% endfor %}
     
+    // Plotly config for consistent hover behavior
+    var plotlyConfig = {
+        responsive: true,
+        displayModeBar: false,
+        modeBarButtonsToRemove: []
+    };
+    
     // Render main chart
     {% if main_graphJSON %}
     document.addEventListener('DOMContentLoaded', function() {
         var mainGraph = {{ main_graphJSON|safe }};
-        Plotly.newPlot('main-chart', mainGraph.data, mainGraph.layout, {responsive: true});
+        Plotly.newPlot('main-chart', mainGraph.data, mainGraph.layout, plotlyConfig);
     });
     {% endif %}
     
@@ -198,7 +205,7 @@
     {% if monthly_graphJSON %}
     document.addEventListener('DOMContentLoaded', function() {
         var monthlyGraph = {{ monthly_graphJSON|safe }};
-        Plotly.newPlot('monthly-chart', monthlyGraph.data, monthlyGraph.layout, {responsive: true});
+        Plotly.newPlot('monthly-chart', monthlyGraph.data, monthlyGraph.layout, plotlyConfig);
     });
     {% endif %}
     
@@ -206,7 +213,7 @@
     {% if yearly_graphJSON %}
     document.addEventListener('DOMContentLoaded', function() {
         var yearlyGraph = {{ yearly_graphJSON|safe }};
-        Plotly.newPlot('yearly-chart', yearlyGraph.data, yearlyGraph.layout, {responsive: true});
+        Plotly.newPlot('yearly-chart', yearlyGraph.data, yearlyGraph.layout, plotlyConfig);
     });
     {% endif %}
     

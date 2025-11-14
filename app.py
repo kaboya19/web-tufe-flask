@@ -5429,11 +5429,11 @@ def aclik_siniri():
             plot_bgcolor='white',
             paper_bgcolor='white',
             height=500,
-            margin=dict(l=50, r=20, t=50, b=50),
+            margin=dict(l=20, r=20, t=50, b=20),
             hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
-                font_size=11,
+                font_size=12,
                 font_family='Inter, sans-serif',
                 align='left',
                 namelength=-1
@@ -5465,7 +5465,8 @@ def aclik_siniri():
                 title='Tarih',
                 title_font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 tickfont=dict(size=11, family='Inter, sans-serif', color='#2B2D42'),
-                tickformat='%Y-%m-%d',
+                tickformat='%Y-%m',
+                dtick='M1',
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF'
             ),
@@ -5481,11 +5482,11 @@ def aclik_siniri():
             plot_bgcolor='white',
             paper_bgcolor='white',
             height=500,
-            margin=dict(l=50, r=20, t=50, b=50),
+            margin=dict(l=20, r=20, t=50, b=20),
             hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
-                font_size=11,
+                font_size=12,
                 font_family='Inter, sans-serif',
                 align='left',
                 namelength=-1
