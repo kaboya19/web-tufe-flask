@@ -5197,7 +5197,8 @@ def aclik_siniri():
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
                 tickformat='%Y-%m',
-                dtick='M1'  # Her ay için bir tick
+                dtick='M1',  # Her ay için bir tick
+                tickangle=45
             ),
             yaxis=dict(
                 title='Tutar (TL)',
@@ -5420,7 +5421,8 @@ def aclik_siniri():
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
                 tickformat='%Y-%m',
-                dtick='M1'
+                dtick='M1',
+                tickangle=45
             ),
             yaxis=dict(
                 title='Değişim (%)',
@@ -5484,7 +5486,8 @@ def aclik_siniri():
                 tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
-                tickformat='%Y-%m-%d'
+                tickformat='%Y-%m-%d',
+                tickangle=45
             ),
             yaxis=dict(
                 title='Değişim (%)',
@@ -5540,7 +5543,8 @@ def aclik_siniri():
                     tickformat='%Y-%m',
                     dtick='M1',  # Her ay için bir tick
                     gridcolor='#E9ECEF',
-                    zerolinecolor='#E9ECEF'
+                    zerolinecolor='#E9ECEF',
+                    tickangle=45
                 ),
                 yaxis=dict(
                     title='Fiyat (TL)', 
