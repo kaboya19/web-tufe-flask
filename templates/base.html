@@ -66,6 +66,24 @@
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
         }
+        
+        header > div {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        header > div::-webkit-scrollbar {
+            display: none;
+        }
+        
+        header > div {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        header > div > div {
+            min-width: max-content;
+        }
 
         .nav-link-modern {
             color: var(--text-color) !important;
