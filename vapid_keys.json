@@ -1,0 +1,6 @@
+{
+  "public_key": "BH_mot5pW-zZGDh8t3d75NtzpqK2aLbKxe9-0fwjvgm0cv0YIBQqQwVMxvPc5wEZGsh9uizoU_pqvXyZBTUvWsU",
+  "private_key": "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZS-c0DoXGVXzsL6iep78-rL3lBwFvTPiGnE5Usaj-T-hRANCAAR_5qLeaVvs2Rg4fLd3e-Tbc6aitmi2ysXvftH8I74JtHL9GCAUKkMFTMbz3OcBGRrIfbos6FP6ar18mQU1L1rF",
+  "private_key_pem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZS+c0DoXGVXzsL6i\nep78+rL3lBwFvTPiGnE5Usaj+T+hRANCAAR/5qLeaVvs2Rg4fLd3e+Tbc6aitmi2\nysXvftH8I74JtHL9GCAUKkMFTMbz3OcBGRrIfbos6FP6ar18mQU1L1rF\n-----END PRIVATE KEY-----\n",
+  "email": "mailto:webtufe@example.com"
+}
