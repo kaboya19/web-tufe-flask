@@ -1,196 +1,23 @@
-<!DOCTYPE html>
-<html lang="tr">
+{% extends "base.html" %}
 
-<head>
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="a08a9892-f499-44e5-8677-79d5507c65c8"
-        type="text/javascript" async></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#6366F1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Web TÜFE">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icon-192x192.png">
-    <script defer data-domain="webtufe.com/ana-sayfa"
-        src="https://plausible.io/js/script.file-downloads.outbound-links.js"></script>
-    <script>window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+{% block title %}Anasayfa - Web TÜFE{% endblock %}
 
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7F6ESCSLNT"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-7F6ESCSLNT');
-    </script>
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5889238450559775"
-        crossorigin="anonymous"></script>
-
-    <title>Anasayfa - Web TÜFE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #6366F1;
-            --secondary-color: #06B6D4;
-            --accent-color: #F97316;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            background-attachment: fixed;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .card-modern {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .card-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-        }
-
-        .card-modern:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: translateY(-5px);
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, var(--primary-color), #4F46E5);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-gradient::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-gradient:hover::before {
-            left: 100%;
-        }
-
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .nav-link-modern {
-            color: var(--text-color) !important;
-            font-weight: 500;
-            padding: 0.6rem 1.2rem !important;
-            border-radius: 12px;
-            position: relative;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .nav-link-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            opacity: 0;
-            border-radius: 12px;
-            z-index: -1;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-link-modern:hover {
-            color: white !important;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        .nav-link-modern:hover::before {
-            opacity: 1;
-        }
-
-        .nav-link-modern.text-indigo-600 {
-            color: white !important;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .nav-link-modern.text-indigo-600::before {
-            opacity: 1;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            transform: translateY(-1px);
-        }
-    </style>
-</head>
-
-<body class="bg-gray-50">
-    <div class="min-h-screen flex flex-row">
+{% block content %}
+<div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-full max-w-xs bg-white border-r border-gray-200 shadow-lg flex flex-col justify-between py-8 px-6" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+    <aside class="w-full md:w-80 bg-white border-r border-gray-200 shadow-lg flex flex-col justify-between py-8 px-6 flex-shrink-0" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
             <div>
                 <h2 class="text-xl font-bold mb-4 gradient-text">Bülten Aboneliği</h2>
                 <form method="POST" action="/abone" class="space-y-4">
                     <div>
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">E-posta
-                            adresiniz</label>
-                        <input type="email" id="email" name="email" required
-                            class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base transition-all duration-300">
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">E-posta adresiniz</label>
+                    <input type="email" id="email" name="email" required class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base transition-all duration-300">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Ne yapmak istersiniz?</label>
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="action" value="Abone ol" checked
-                                    class="form-radio text-indigo-600 h-5 w-5">
+                            <input type="radio" name="action" value="Abone ol" checked class="form-radio text-indigo-600 h-5 w-5">
                                 <span class="ml-2 font-medium">Abone ol</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer">
@@ -199,52 +26,38 @@
                             </label>
                         </div>
                     </div>
-                    <button type="submit"
-                        class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg">Gönder</button>
+                <button type="submit" class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg">Gönder</button>
                 </form>
                 
                 <!-- Push Notification Section (Separate from Email Form) -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-lg font-bold mb-3 gradient-text">🔔 Tarayıcı Bildirimleri</h3>
-                    <p class="text-xs text-gray-600 mb-3">
-                        "İzin Ver" diyerek anında bildirim alın.
-                    </p>
+                <p class="text-xs text-gray-600 mb-3">"İzin Ver" diyerek anında bildirim alın.</p>
                     <div class="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p class="text-xs text-yellow-800 text-center">
-                            ⚠️ Bildirimleri kapatıp tekrar açmanız önerilir
-                        </p>
+                    <p class="text-xs text-yellow-800 text-center">⚠️ Bildirimleri kapatıp tekrar açmanız önerilir</p>
                     </div>
-                    <button id="push-notification-btn"
-                        class="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
+                <button id="push-notification-btn" class="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         Bildirimleri Aç
                     </button>
-                    <p class="text-xs text-gray-500 mt-2 text-center">
-                    </p>
+                <p class="text-xs text-gray-500 mt-2 text-center"></p>
                 </div>
                 
                 <!-- Excel Dataset Button -->
                 <div class="mt-6 space-y-2">
                         <div class="flex items-center justify-center">
-                            <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/edit?gid=523299671#gid=523299671"
-                                target="_blank" rel="noopener"
-                                class="flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition w-full">
-                                <!-- Excel SVG -->
+                    <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/edit?gid=523299671#gid=523299671" target="_blank" rel="noopener" class="flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition w-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 48 48">
                                     <rect width="48" height="48" rx="8" fill="#217346" />
-                                    <path fill="#fff"
-                                        d="M14 12h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2zm2.5 7.5 2.5 4 2.5-4h2l-3.5 5.5L23.5 32h-2l-2.5-4-2.5 4h-2l3.5-5.5L14.5 19.5h2z" />
+                            <path fill="#fff" d="M14 12h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2zm2.5 7.5 2.5 4 2.5-4h2l-3.5 5.5L23.5 32h-2l-2.5-4-2.5 4h-2l3.5-5.5L14.5 19.5h2z" />
                                 </svg>
                                 <span class="font-semibold text-lg">Web TÜFE Veriseti</span>
                             </a>
                         </div>
                         <div class="flex items-center justify-center">
-                            <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/export?format=xlsx"
-                                target="_blank" rel="noopener"
-                                class="flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition w-full">
-                                <!-- Download SVG -->
+                    <a href="https://docs.google.com/spreadsheets/d/14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE/export?format=xlsx" target="_blank" rel="noopener" class="flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition w-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
@@ -252,25 +65,19 @@
                             </a>
                         </div>
                     </div>
-                    <!-- Haftalık Fiyatlar Button -->
 
                     <!-- Bülten Button -->
                     <div class="flex items-center justify-center mt-3">
-                        <a href="/bultenler"
-                            class="flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition">
-                            <!-- PDF SVG -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 24 24"
-                                fill="none">
+                <a href="/bultenler" class="flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition w-full justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-3" viewBox="0 0 24 24" fill="none">
                                 <rect width="24" height="24" rx="4" fill="#fff" />
-                                <path
-                                    d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
-                                    fill="#E53E3E" /><text x="7" y="17" font-size="7" fill="#E53E3E"
-                                    font-family="Arial, Helvetica, sans-serif">PDF</text>
+                        <path d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#E53E3E" /><text x="7" y="17" font-size="7" fill="#E53E3E" font-family="Arial, Helvetica, sans-serif">PDF</text>
                             </svg>
                             <span class="font-semibold text-lg">Bülten</span>
                         </a>
                     </div>
 
+            <!-- Announcements -->
                     <!-- Yeni Kasım Enflasyon Görünümü Duyurusu -->
                     <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
                         <div class="flex items-center mb-2">
@@ -281,11 +88,8 @@
                                 Yayınlandı!
                             </span>
                         </div>
-                        <p class="text-sm text-gray-700 mb-3 font-medium">
-                            Web TÜFE Kasım 2025 Enflasyon Görünümü Raporu
-                        </p>
-                        <a href="/bultenler/pdf/Web TÜFE Kasım Öncü.pdf" 
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <p class="text-sm text-gray-700 mb-3 font-medium">Web TÜFE Kasım 2025 Enflasyon Görünümü Raporu</p>
+                <a href="/bultenler/pdf/Web TÜFE Kasım Öncü.pdf" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
                                 <rect width="24" height="24" rx="4" fill="#fff" />
                                 <path d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#2563EB" />
@@ -294,7 +98,6 @@
                             Raporu Oku
                         </a>
                     </div>
-
                     <!-- Yeni Kapsam Değişiklikleri Duyurusu -->
                     <div class="mt-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg shadow-sm">
                         <div class="flex items-center mb-2">
@@ -305,11 +108,8 @@
                                 Yeni!
                             </span>
                         </div>
-                        <p class="text-sm text-gray-700 mb-3 font-medium">
-                            Web TÜFE 2026 Kapsam Değişiklikleri
-                        </p>
-                        <a href="/bultenler/pdf/Duyuru 20251025.pdf" 
-                           class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <p class="text-sm text-gray-700 mb-3 font-medium">Web TÜFE 2026 Kapsam Değişiklikleri</p>
+                <a href="/bultenler/pdf/Duyuru 20251025.pdf" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
                                 <rect width="24" height="24" rx="4" fill="#fff" />
                                 <path d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#7C3AED" />
@@ -318,7 +118,6 @@
                             Duyuruyu Oku
                         </a>
                     </div>
-
                     <!-- Yeni Bülten Duyurusu -->
                     <div class="mt-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg shadow-sm">
                         <div class="flex items-center mb-2">
@@ -329,11 +128,8 @@
                                 Yeni!
                             </span>
                         </div>
-                        <p class="text-sm text-gray-700 mb-3 font-medium">
-                            Web TÜFE Ekim 2025 Bülteni
-                        </p>
-                        <a href="/bultenler/pdf/Ekim 2025.pdf" 
-                           class="inline-flex items-center px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <p class="text-sm text-gray-700 mb-3 font-medium">Web TÜFE Ekim 2025 Bülteni</p>
+                <a href="/bultenler/pdf/Ekim 2025.pdf" class="inline-flex items-center px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
                                 <rect width="24" height="24" rx="4" fill="#fff" />
                                 <path d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#DB2777" />
@@ -342,14 +138,10 @@
                             Bülteni Oku
                         </a>
                     </div>
-
                     <!-- Rapor Duyurusu -->
                     <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
-                        <p class="text-sm text-gray-700 mb-3 font-medium">
-                            Web TÜFE Ekim Enflasyon Görünümü Raporu (11.10.2025)
-                        </p>
-                        <a href="/bultenler/pdf/Web TÜFE Ekim Öncü.pdf" 
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <p class="text-sm text-gray-700 mb-3 font-medium">Web TÜFE Ekim Enflasyon Görünümü Raporu (11.10.2025)</p>
+                <a href="/bultenler/pdf/Web TÜFE Ekim Öncü.pdf" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
                                 <rect width="24" height="24" rx="4" fill="#fff" />
                                 <path d="M7 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.828a2 2 0 0 0-.586-1.414l-3.828-3.828A2 2 0 0 0 13.172 2H7zm5 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM7 4h5v4a4 4 0 0 0 4 4h4v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#2563EB" />
@@ -358,72 +150,11 @@
                             Raporu Oku
                         </a>
                     </div>
-                </form>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                <div class="mt-4 mb-4">
-                    {% for category, message in messages %}
-                    <div
-                        class="rounded px-4 py-2 mb-2 {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                {% endwith %}
             </div>
         </aside>
-        <!-- Main Content -->
-        <div class="flex-1">
-            <div class="min-h-screen">
-                <!-- Header -->
-                <header>
-                    <div class="w-full px-6 lg:px-8 py-5">
-                        <div class="flex items-center space-x-3">
-                            <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/tufe"
-                                class="nav-link-modern font-semibold {% if active_page == 'tufe' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">TÜFE</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/ana-gruplar"
-                                class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Ana
-                                Gruplar</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/harcama-gruplari"
-                                class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Harcama
-                                Grupları</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/maddeler"
-                                class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Maddeler</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/ozel-kapsamli-gostergeler"
-                                class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Özel
-                                Kapsamlı Göstergeler</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/mevsimsel-duzeltilmis-gostergeler"
-                                class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Mevsimsel
-                                Düzeltilmiş Göstergeler</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/aclik-siniri"
-                                class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Açlık Sınırı</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <a href="/bultenler" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Bültenler</a>
-                            <span class="text-gray-300 font-light">|</span>
-                            <span style="position: relative; display: inline-block;">
-                                <a href="/metodoloji" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Metodoloji</a>
-                                <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                            </span>
-                            <span class="text-gray-300 font-light">|</span>
-                            <span style="position: relative; display: inline-block;">
-                                <a href="/hakkinda" class="nav-link-modern font-semibold {% if active_page == 'hakkinda' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Hakkında</a>
-                                <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                            </span>
-                        </div>
-                    </div>
-                </header>
 
                 <!-- Main Content -->
-                <main class="w-full px-6 lg:px-8 py-8">
+    <main class="flex-1 w-full px-6 lg:px-8 py-8">
                     {% if last_update %}
                     <div class="card-modern p-6 mb-6 border-l-4 border-indigo-500">
                         <div class="flex items-start">
@@ -433,12 +164,8 @@
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-base font-semibold text-indigo-900">
-                                    Son Güncellenme Tarihi: {{ last_update }}
-                                </p>
-                                <p class="mt-1 text-sm text-indigo-700">
-                                    Nihai veriler her ayın 24.günü belli olmaktadır.
-                                </p>
+                    <p class="text-base font-semibold text-indigo-900">Son Güncellenme Tarihi: {{ last_update }}</p>
+                    <p class="mt-1 text-sm text-indigo-700">Nihai veriler her ayın 24.günü belli olmaktadır.</p>
                             </div>
                         </div>
                     </div>
@@ -490,7 +217,7 @@
                         </div>
                     </div>
 
-                    <div class="card-modern p-6">
+        <div class="card-modern p-6 mb-6">
                         <!-- Header row: Title left, controls right -->
                         <div class="relative flex items-center justify-end mb-2">
                             <h1 class="absolute left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-900">{{ chart_title }}</h1>
@@ -511,21 +238,209 @@
                         </div>
                         <div id="chart" class="w-full"></div>
                     </div>
-                </main>
 
-                <!-- Footer -->
-                <footer class="bg-white border-t mt-8">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <p class="text-center text-gray-500 text-sm">
-                            © 2024 Web TÜFE. Tüm hakları saklıdır.
-                        </p>
+        <!-- Top Movers Widgets -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Endeksler (Ürünler) -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-center mb-6 pb-2 border-b">
+                    <h2 class="text-xl font-bold text-gray-900">Madde Bazında Değişimler</h2>
+                    <div class="flex bg-gray-100 rounded-lg p-1">
+                        <button onclick="toggleMovers('daily', 'maddeler')" id="btn-daily-maddeler" class="px-3 py-1 rounded-md text-sm font-medium bg-white shadow-sm text-gray-900 transition-all">Günlük</button>
+                        <button onclick="toggleMovers('monthly', 'maddeler')" id="btn-monthly-maddeler" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Aylık</button>
                     </div>
-                </footer>
+                </div>
+                
+                <!-- Daily Content -->
+                <div id="content-daily-maddeler" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if top_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in top_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if top_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in top_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Monthly Content (Hidden by default) -->
+                <div id="content-monthly-maddeler" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if monthly_top_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in monthly_top_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if monthly_top_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in monthly_top_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Harcama Grupları -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-center mb-6 pb-2 border-b">
+                    <h2 class="text-xl font-bold text-gray-900">Harcama Grubu Bazında Değişimler</h2>
+                    <div class="flex bg-gray-100 rounded-lg p-1">
+                        <button onclick="toggleMovers('daily', 'harcama')" id="btn-daily-harcama" class="px-3 py-1 rounded-md text-sm font-medium bg-white shadow-sm text-gray-900 transition-all">Günlük</button>
+                        <button onclick="toggleMovers('monthly', 'harcama')" id="btn-monthly-harcama" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Aylık</button>
+                    </div>
+                </div>
+                
+                <!-- Daily Content -->
+                <div id="content-daily-harcama" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if top_harcama_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in top_harcama_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if top_harcama_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in top_harcama_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Monthly Content (Hidden by default) -->
+                <div id="content-monthly-harcama" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if monthly_top_harcama_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in monthly_top_harcama_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if monthly_top_harcama_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in monthly_top_harcama_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script src="/static/push-notifications.js"></script>
+    </main>
+    </div>
+{% endblock %}
+
+{% block scripts %}
     <script id="graphs-data" type="application/json">{{ graphJSON | safe }}</script>
     <script>
         var graphs = JSON.parse(document.getElementById('graphs-data').textContent);
@@ -571,7 +486,30 @@
                 setTimeout(restore, 400);
             });
         })();
-    </script>
-</body>
 
-</html>
+    function toggleMovers(type, category) {
+        const dailyBtn = document.getElementById(`btn-daily-${category}`);
+        const monthlyBtn = document.getElementById(`btn-monthly-${category}`);
+        const dailyContent = document.getElementById(`content-daily-${category}`);
+        const monthlyContent = document.getElementById(`content-monthly-${category}`);
+
+        if (type === 'daily') {
+            dailyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
+            dailyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+            monthlyBtn.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+            monthlyBtn.classList.add('text-gray-500', 'hover:text-gray-900');
+            
+            dailyContent.classList.remove('hidden');
+            monthlyContent.classList.add('hidden');
+        } else {
+            monthlyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
+            monthlyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+            dailyBtn.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+            dailyBtn.classList.add('text-gray-500', 'hover:text-gray-900');
+            
+            monthlyContent.classList.remove('hidden');
+            dailyContent.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

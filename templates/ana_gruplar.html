@@ -1,239 +1,10 @@
-<!DOCTYPE html>
-<html lang="tr">
+{% extends "base.html" %}
 
-<head>
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="a08a9892-f499-44e5-8677-79d5507c65c8"
-        type="text/javascript" async></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Ana Gruplar - Web TÜFE{% endblock %}
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7F6ESCSLNT"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-7F6ESCSLNT');
-    </script>
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5889238450559775"
-        crossorigin="anonymous"></script>
-
-    <title>Ana Gruplar - Web TÜFE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #6366F1;
-            --secondary-color: #06B6D4;
-            --accent-color: #F97316;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            background-attachment: fixed;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .card-modern {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .card-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-        }
-
-        .card-modern:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: translateY(-5px);
-        }
-
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .nav-link-modern {
-            color: var(--text-color) !important;
-            font-weight: 500;
-            padding: 0.6rem 1.2rem !important;
-            border-radius: 12px;
-            position: relative;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .nav-link-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            opacity: 0;
-            border-radius: 12px;
-            z-index: -1;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-link-modern:hover {
-            color: white !important;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        .nav-link-modern:hover::before {
-            opacity: 1;
-        }
-
-        .nav-link-modern.text-indigo-600 {
-            color: white !important;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .nav-link-modern.text-indigo-600::before {
-            opacity: 1;
-        }
-
-        .graph-container {
-            margin-top: 2rem;
-        }
-
-        .graph-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .tab-button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            background: linear-gradient(135deg, #f5f7fa, #e9ecef);
-            color: #2B2D42;
-            cursor: pointer;
-            border-radius: 12px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .tab-button:hover {
-            background: linear-gradient(135deg, #e9ecef, #dee2e6);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .tab-button.active {
-            background: linear-gradient(135deg, #EF476F, #dc3558);
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 71, 111, 0.4);
-        }
-
-        .tab-button svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .graph-content {
-            display: none;
-        }
-
-        .graph-content.active {
-            display: block;
-        }
-
-        .graph-content {
-            width: 100% !important;
-            /* Ensure full width */
-        }
-    </style>
-</head>
-
-<body class="bg-gray-50">
-    <div class="min-h-screen">
-        <!-- Header -->
-        <header>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-                <div class="flex items-center space-x-3">
-                    <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/tufe"
-                        class="nav-link-modern font-semibold {% if active_page == 'tufe' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">TÜFE</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/ana-gruplar"
-                        class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Ana
-                        Gruplar</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/harcama-gruplari"
-                        class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Harcama
-                        Grupları</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/maddeler"
-                        class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Maddeler</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/ozel-kapsamli-gostergeler"
-                        class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Özel
-                        Kapsamlı Göstergeler</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/mevsimsel-duzeltilmis-gostergeler"
-                        class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Mevsimsel
-                        Düzeltilmiş Göstergeler</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/aclik-siniri"
-                        class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Açlık Sınırı</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <a href="/bultenler" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Bültenler</a>
-                    <span class="text-gray-300 font-light">|</span>
-                    <span style="position: relative; display: inline-block;">
-                        <a href="/metodoloji" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Metodoloji</a>
-                        <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                    </span>
-                    <span class="text-gray-300 font-light">|</span>
-                    <span style="position: relative; display: inline-block;">
-                        <a href="/hakkinda" class="nav-link-modern font-semibold text-gray-600 hover:text-indigo-600">Hakkında</a>
-                        <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                    </span>
-                </div>
-            </div>
-        </header>
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="bg-white rounded-lg shadow-sm p-6">
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="card-modern p-6">
                 <form method="POST" class="mb-6 flex items-center space-x-4">
                     <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
                     <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
@@ -275,52 +46,54 @@
                     </div>
                 </div>
                 <div id="main-graph"></div>
-                <div class="graph-container">
-                    <div class="graph-tabs">
-                        <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
-                        <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
+        <div class="mt-8">
+            <div class="flex gap-4 mb-4">
+                <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">Bar Grafik</button>
+                <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm" onclick="showGraph('line', this)">Line Grafik</button>
+            </div>
+            <div id="bar-graph" class="w-full block"></div>
+            <div id="line-graph" class="w-full hidden"></div>
+        </div>
                     </div>
-                    <div id="bar-graph" class="graph-content active"></div>
-                    <div id="line-graph" class="graph-content"></div>
                 </div>
+{% endblock %}
+
+{% block scripts %}
                 <script>
                     var barGraph = {{ bar_graphJSON | safe }};
                     var lineGraph = {{ line_graphJSON | safe }};
+    var mainGraph = {{ graphJSON | safe }};
+    
+    Plotly.newPlot('main-graph', mainGraph.data, mainGraph.layout, { displayModeBar: false, responsive: true });
                     Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
                     Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
 
-                    function showGraph(type) {
-                        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                        document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-                        document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
-                        document.getElementById(`${type}-graph`).classList.add('active');
-                        setTimeout(function () {
-                            Plotly.Plots.resize(`${type}-graph`);
-                        }, 100);
+    function showGraph(type, btn) {
+        // Reset buttons
+        const buttons = btn.parentElement.querySelectorAll('button');
+        buttons.forEach(b => {
+            b.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+            b.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+        });
+        
+        // Set active button
+        btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+        btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+
+        // Toggle graphs
+        if (type === 'bar') {
+            document.getElementById('bar-graph').classList.remove('hidden');
+            document.getElementById('bar-graph').classList.add('block');
+            document.getElementById('line-graph').classList.remove('block');
+            document.getElementById('line-graph').classList.add('hidden');
+            Plotly.Plots.resize('bar-graph');
+        } else {
+            document.getElementById('line-graph').classList.remove('hidden');
+            document.getElementById('line-graph').classList.add('block');
+            document.getElementById('bar-graph').classList.remove('block');
+            document.getElementById('bar-graph').classList.add('hidden');
+            Plotly.Plots.resize('line-graph');
+        }
                     }
                 </script>
-                <script>
-                    var graphs = {{ graphJSON | safe }};
-                    Plotly.newPlot('main-graph', graphs.data, graphs.layout, { displayModeBar: false });
-                </script>
-            </div>
-        </main>
-        <!-- Footer -->
-        <footer class="bg-white border-t mt-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <p class="text-center text-gray-500 text-sm">
-                    © 2024 Web TÜFE. Tüm hakları saklıdır.
-                </p>
-            </div>
-        </footer>
-    </div>
-    <script>
-        var mainGraph = {{ graphJSON | safe }};
-        Plotly.newPlot('main-graph', mainGraph.data, mainGraph.layout, { displayModeBar: false, responsive: true });
-    </script>
-
-    <!-- Aylık Değişim Grafikleri -->
-    <!-- ALTTAKİ BÜYÜK SEKME GRAFİK BÖLÜMÜ TAMAMEN KALDIRILDI -->
-</body>
-
-</html>
+{% endblock %}

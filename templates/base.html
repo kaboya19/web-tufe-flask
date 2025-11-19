@@ -2,6 +2,7 @@
 <html lang="tr">
 
 <head>
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="a08a9892-f499-44e5-8677-79d5507c65c8" type="text/javascript" async></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#6366F1">
@@ -9,530 +10,71 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Web TÜFE">
     <meta name="mobile-web-app-capable" content="yes">
+    
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192x192.png">
-    <title>Web TÜFE</title>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5889238450559775"
-        crossorigin="anonymous"></script>
+    
+    <title>{% block title %}Web TÜFE{% endblock %}</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7F6ESCSLNT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-7F6ESCSLNT');
+    </script>
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5889238450559775" crossorigin="anonymous"></script>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #6366F1;
-            --primary-dark: #4F46E5;
-            --secondary-color: #06B6D4;
-            --accent-color: #F97316;
-            --success-color: #10B981;
-            --text-color: #1E293B;
-            --text-secondary: #64748B;
-            --bg-color: #F8FAFC;
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --border-color: #E2E8F0;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        * {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            background-attachment: fixed;
-            color: var(--text-color);
-            line-height: 1.7;
-            font-weight: 400;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-        }
-        
-        header > div {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        header > div::-webkit-scrollbar {
-            display: none;
-        }
-        
-        header > div {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        header > div > div {
-            min-width: max-content;
-        }
-
-        .nav-link-modern {
-            color: var(--text-color) !important;
-            font-weight: 500;
-            padding: 0.6rem 1.2rem !important;
-            border-radius: 12px;
-            position: relative;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .nav-link-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            opacity: 0;
-            border-radius: 12px;
-            z-index: -1;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-link-modern:hover {
-            color: white !important;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        .nav-link-modern:hover::before {
-            opacity: 1;
-        }
-
-        .nav-link-modern.text-indigo-600 {
-            color: white !important;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .nav-link-modern.text-indigo-600::before {
-            opacity: 1;
-        }
-
-
-        .container {
-            padding: 1.5rem;
-        }
-
-        .card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: var(--shadow-lg);
-            margin-bottom: 1.5rem;
-            background: white;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-xl);
-            transform: translateY(-5px);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            font-weight: 600;
-            font-family: 'Poppins', sans-serif;
-            padding: 1.25rem 1.5rem;
-            font-size: 1.1rem;
-        }
-
-        .form-control {
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            padding: 0.85rem 1rem;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            border: none;
-            border-radius: 12px;
-            padding: 0.85rem 2rem;
-            font-weight: 600;
-            font-family: 'Poppins', sans-serif;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-        }
-
-        .btn-primary:hover::before {
-            left: 100%;
-        }
-
-        .alert {
-            border-radius: 16px;
-            border: none;
-            padding: 1.25rem 1.5rem;
-            box-shadow: var(--shadow-md);
-            font-weight: 500;
-        }
-
-        /* Alert variations */
-        .alert-success {
-            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
-            color: #065F46;
-            border-left: 4px solid var(--success-color);
-        }
-
-        .alert-danger, .alert-error {
-            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
-            color: #991B1B;
-            border-left: 4px solid #DC2626;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
-            color: #1E40AF;
-            border-left: 4px solid #3B82F6;
-        }
-
-        .alert-warning {
-            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-            color: #92400E;
-            border-left: 4px solid #F59E0B;
-        }
-
-        /* Table styling */
-        .table {
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-        }
-
-        .table thead {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-
-        .table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        .table tbody tr:hover {
-            background-color: #F1F5F9;
-            transform: scale(1.01);
-        }
-
-        /* Loading animation */
-        @keyframes shimmer {
-            0% {
-                background-position: -1000px 0;
-            }
-            100% {
-                background-position: 1000px 0;
-            }
-        }
-
-        .loading {
-            animation: shimmer 2s infinite;
-            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
-            background-size: 1000px 100%;
-        }
-
-        /* Scroll bar styling */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #F1F5F9;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-        }
-
-        /* Mobil uyumluluk için medya sorguları */
-        @media (max-width: 768px) {
-            .container {
-                padding: 0.75rem;
-            }
-
-
-            .card {
-                margin-bottom: 1rem;
-                border-radius: 16px;
-            }
-
-            .card-header {
-                padding: 1rem;
-                font-size: 1rem;
-            }
-
-            .form-control {
-                font-size: 0.9rem;
-                padding: 0.75rem;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-
-            .btn-primary {
-                padding: 0.75rem 1.5rem;
-                font-size: 0.95rem;
-            }
-
-            /* Grafik container'ları için mobil düzenlemeler */
-            .plot-container {
-                width: 100% !important;
-                height: auto !important;
-                min-height: 300px;
-            }
-
-            /* Form grupları için mobil düzenlemeler */
-            .form-group {
-                margin-bottom: 0.75rem;
-            }
-
-            /* Tablo düzenlemeleri */
-            .table {
-                font-size: 0.85rem;
-            }
-
-            .table td,
-            .table th {
-                padding: 0.5rem;
-            }
-
-            /* Dropdown menüler için mobil düzenlemeler */
-            .dropdown-menu {
-                width: 100%;
-                font-size: 0.9rem;
-                border-radius: 12px;
-            }
-
-            /* Alert mesajları için mobil düzenlemeler */
-            .alert {
-                font-size: 0.9rem;
-                padding: 1rem;
-                margin-bottom: 0.75rem;
-            }
-
-            h1 {
-                font-size: 1.75rem;
-            }
-
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            h3 {
-                font-size: 1.25rem;
-            }
-        }
-
-        /* Çok küçük ekranlar için ek düzenlemeler */
-        @media (max-width: 480px) {
-            .container {
-                padding: 0.5rem;
-            }
-
-
-            .card-header {
-                font-size: 0.95rem;
-                padding: 0.85rem;
-            }
-
-            .form-control {
-                font-size: 0.85rem;
-                padding: 0.65rem;
-            }
-
-            .btn {
-                font-size: 0.85rem;
-                padding: 0.65rem 1.25rem;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            h2 {
-                font-size: 1.25rem;
-            }
-
-            h3 {
-                font-size: 1.1rem;
-            }
-        }
-        
-        /* Floating Açlık Sınırı Button */
-        .floating-aclik-siniri-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #EF476F, #F78C6B);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            text-decoration: none;
-            box-shadow: 0 8px 20px rgba(239, 71, 111, 0.4);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            font-family: 'Poppins', sans-serif;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-        }
-        
-        .floating-aclik-siniri-btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 12px 30px rgba(239, 71, 111, 0.6);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .floating-btn-icon {
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-        
-        .floating-btn-text {
-            font-size: 1rem;
-        }
-        
-        @media (max-width: 768px) {
-            .floating-aclik-siniri-btn {
-                bottom: 20px;
-                right: 20px;
-                padding: 12px 20px;
-            }
-            
-            .floating-btn-text {
-                font-size: 0.9rem;
-            }
-            
-            .floating-btn-icon {
-                font-size: 1.3rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .floating-aclik-siniri-btn {
-                bottom: 15px;
-                right: 15px;
-                padding: 10px 15px;
-            }
-            
-            .floating-btn-text {
-                display: none;
-            }
-            
-            .floating-btn-icon {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block head %}{% endblock %}
 </head>
 
 <body>
     <header>
         <div class="w-full px-6 lg:px-8 py-5">
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
                 <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/tufe"
-                    class="nav-link-modern font-semibold {% if active_page == 'tufe' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">TÜFE</a>
+                <a href="/tufe" class="nav-link-modern font-semibold {% if active_page == 'tufe' %}active{% endif %}">TÜFE</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/ana-gruplar"
-                    class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Ana
-                    Gruplar</a>
+                <a href="/ana-gruplar" class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}active{% endif %}">Ana Gruplar</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/harcama-gruplari"
-                    class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Harcama
-                    Grupları</a>
+                <a href="/harcama-gruplari" class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}active{% endif %}">Harcama Grupları</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/maddeler"
-                    class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Maddeler</a>
+                <a href="/maddeler" class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}active{% endif %}">Maddeler</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/ozel-kapsamli-gostergeler"
-                    class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Özel
-                    Kapsamlı Göstergeler</a>
+                <a href="/ozel-kapsamli-gostergeler" class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}">Özel Kapsamlı Göstergeler</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/mevsimsel-duzeltilmis-gostergeler"
-                    class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Mevsimsel
-                    Düzeltilmiş Göstergeler</a>
+                <a href="/mevsimsel-duzeltilmis-gostergeler" class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}active{% endif %}">Mevsimsel Düzeltilmiş Göstergeler</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/aclik-siniri"
-                    class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Açlık Sınırı</a>
+                <a href="/aclik-siniri" class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}active{% endif %}">Açlık Sınırı</a>
                 <span class="text-gray-300 font-light">|</span>
-                <a href="/bultenler" class="nav-link-modern font-semibold {% if active_page == 'bultenler' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Bültenler</a>
+                <a href="/bultenler" class="nav-link-modern font-semibold {% if active_page == 'bultenler' %}active{% endif %}">Bültenler</a>
                 <span class="text-gray-300 font-light">|</span>
                 <span style="position: relative; display: inline-block;">
-                    <a href="/metodoloji" class="nav-link-modern font-semibold {% if active_page == 'metodoloji' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Metodoloji</a>
+                    <a href="/metodoloji" class="nav-link-modern font-semibold {% if active_page == 'metodoloji' %}active{% endif %}">Metodoloji</a>
                     <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
                 </span>
                 <span class="text-gray-300 font-light">|</span>
                 <span style="position: relative; display: inline-block;">
-                    <a href="/hakkinda" class="nav-link-modern font-semibold {% if active_page == 'hakkinda' %}text-indigo-600{% else %}text-gray-600 hover:text-indigo-600{% endif %}">Hakkında</a>
+                    <a href="/hakkinda" class="nav-link-modern font-semibold {% if active_page == 'hakkinda' %}active{% endif %}">Hakkında</a>
                     <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
                 </span>
             </div>
@@ -545,23 +87,51 @@
         <span class="floating-btn-icon">🍞</span>
     </a>
 
+    <!-- Back to Top Button -->
+    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
     <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
         {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
+    </div>
         {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-center text-gray-500 text-sm">
+                © 2024 Web TÜFE. Tüm hakları saklıdır.
+                <a href="https://www.webtufe.com" class="text-gray-500 hover:text-gray-700 ml-2">www.webtufe.com</a>
+            </p>
     </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/static/push-notifications.js"></script>
+    <script>
+        // Back to Top Button Logic
+        const backToTopButton = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 

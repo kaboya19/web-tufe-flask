@@ -755,8 +755,83 @@ def get_available_dates():
         print(f"Error in get_available_dates: {e}")
         return []
 
+def get_top_movers():
+    # Daily Data
+    top_risers = []
+    top_fallers = []
+    try:
+        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        # Calculate pct change
+        pct_changes = endeksler_df.pct_change().iloc[-1] * 100
+        pct_changes = pct_changes.dropna()
+        pct_changes_sorted = pct_changes.sort_values()
+        
+        top_fallers = [(index, value) for index, value in pct_changes_sorted.head(20).items()]
+        top_risers = [(index, value) for index, value in pct_changes_sorted.tail(20).iloc[::-1].items()]
+        
+    except Exception as e:
+        print(f"Error in get_top_movers (daily endeksler): {e}")
+
+    top_harcama_risers = []
+    top_harcama_fallers = []
+    try:
+        harcama_df = pd.read_csv('harcama_grupları.csv', index_col=0)
+        # Calculate pct change
+        harcama_pct_changes = harcama_df.pct_change().iloc[-1] * 100
+        harcama_pct_changes = harcama_pct_changes.dropna()
+        harcama_pct_changes_sorted = harcama_pct_changes.sort_values()
+        
+        top_harcama_fallers = [(index, value) for index, value in harcama_pct_changes_sorted.head(20).items()]
+        top_harcama_risers = [(index, value) for index, value in harcama_pct_changes_sorted.tail(20).iloc[::-1].items()]
+        
+    except Exception as e:
+        print(f"Error in get_top_movers (daily harcama): {e}")
+        
+    # Monthly Data
+    monthly_top_risers = []
+    monthly_top_fallers = []
+    try:
+        maddeler_monthly = pd.read_csv('maddeleraylık.csv')
+        if 'Madde' in maddeler_monthly.columns:
+            maddeler_monthly = maddeler_monthly.set_index('Madde')
+            # Select the last column (assuming it is the latest date)
+            # The first column in CSV is often index (Unnamed: 0), we set Madde as index, 
+            # so we should check columns carefully. 
+            # The columns will be: Unnamed: 0, Date1, Date2...
+            # We want the last column.
+            monthly_changes = maddeler_monthly.iloc[:, -1]
+            monthly_changes = monthly_changes.dropna()
+            monthly_changes_sorted = monthly_changes.sort_values()
+            
+            monthly_top_fallers = [(index, value) for index, value in monthly_changes_sorted.head(20).items()]
+            monthly_top_risers = [(index, value) for index, value in monthly_changes_sorted.tail(20).iloc[::-1].items()]
+    except Exception as e:
+        print(f"Error in get_top_movers (monthly maddeler): {e}")
+
+    monthly_top_harcama_risers = []
+    monthly_top_harcama_fallers = []
+    try:
+        harcama_monthly = pd.read_csv('harcama_gruplarıaylık.csv')
+        if 'Grup' in harcama_monthly.columns:
+            harcama_monthly = harcama_monthly.set_index('Grup')
+            monthly_harcama_changes = harcama_monthly.iloc[:, -1]
+            monthly_harcama_changes = monthly_harcama_changes.dropna()
+            monthly_harcama_changes_sorted = monthly_harcama_changes.sort_values()
+            
+            monthly_top_harcama_fallers = [(index, value) for index, value in monthly_harcama_changes_sorted.head(20).items()]
+            monthly_top_harcama_risers = [(index, value) for index, value in monthly_harcama_changes_sorted.tail(20).iloc[::-1].items()]
+    except Exception as e:
+        print(f"Error in get_top_movers (monthly harcama): {e}")
+
+    return (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
+            monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers)
+
 @app.route('/ana-sayfa', methods=['GET', 'POST'])
 def ana_sayfa():
+    # Get Top Movers
+    (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
+     monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers) = get_top_movers()
+    
     try:
         # Get available dates for the dropdown
         available_dates = get_available_dates()
@@ -873,7 +948,11 @@ def ana_sayfa():
                                  selected_date=selected_date,
                                  sorted_group_data=data_pairs_sorted,
                                  show_contrib=show_contrib,
-                                 chart_title=chart_title)
+                                 chart_title=chart_title,
+                                 top_risers=top_risers,
+                                 top_fallers=top_fallers,
+                                 top_harcama_risers=top_harcama_risers,
+                                 top_harcama_fallers=top_harcama_fallers)
 
         # Build contribution series from katkıpayları.csv (right side)
         contribGraphJSON = None
@@ -988,7 +1067,15 @@ def ana_sayfa():
                              selected_date=selected_date,
                              sorted_group_data=data_pairs_sorted,
                              show_contrib=show_contrib,
-                             chart_title=chart_title)
+                                 chart_title=chart_title,
+                                 top_risers=top_risers,
+                                 top_fallers=top_fallers,
+                                 top_harcama_risers=top_harcama_risers,
+                                 top_harcama_fallers=top_harcama_fallers,
+                                 monthly_top_risers=monthly_top_risers,
+                                 monthly_top_fallers=monthly_top_fallers,
+                                 monthly_top_harcama_risers=monthly_top_harcama_risers,
+                                 monthly_top_harcama_fallers=monthly_top_harcama_fallers)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         available_dates = get_available_dates()
@@ -996,7 +1083,15 @@ def ana_sayfa():
                              available_dates=available_dates,
                              selected_date=None,
                              sorted_group_data=[],
-                             show_contrib=True)
+                             show_contrib=True,
+                             top_risers=top_risers,
+                             top_fallers=top_fallers,
+                             top_harcama_risers=top_harcama_risers,
+                             top_harcama_fallers=top_harcama_fallers,
+                             monthly_top_risers=monthly_top_risers,
+                             monthly_top_fallers=monthly_top_fallers,
+                             monthly_top_harcama_risers=monthly_top_harcama_risers,
+                             monthly_top_harcama_fallers=monthly_top_harcama_fallers)
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():
@@ -3983,7 +4078,7 @@ def bultenler():
     date_options.sort(key=parse_turkish_date, reverse=True)
     selected_date = request.form.get('bulten_tarihi') if request.method == 'POST' else (date_options[0] if date_options else None)
     selected_file = file_map[selected_date] if selected_date in file_map else None
-    return render_template('bultenler.html', date_options=date_options, selected_date=selected_date, selected_file=selected_file)
+    return render_template('bultenler.html', date_options=date_options, selected_date=selected_date, selected_file=selected_file, active_page='bultenler')
 
 @app.route('/bultenler/pdf/<filename>')
 def serve_bulten_pdf(filename):
@@ -4016,7 +4111,7 @@ def serve_metodoloji_pdf():
 
 @app.route('/metodoloji')
 def metodoloji():
-    return render_template('metodoloji.html')
+    return render_template('metodoloji.html', active_page='metodoloji')
 
 @app.route('/abone', methods=['POST'])
 def abone():
