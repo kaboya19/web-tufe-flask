@@ -15,8 +15,20 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-* {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Removed global transition to prevent tooltip flickering issues */
+/* Individual elements now have their own transitions defined */
+
+/* Tooltip styles */
+.group:hover .group-hover\:opacity-100 {
+    opacity: 1 !important;
+}
+
+.group:hover .group-hover\:visible {
+    visibility: visible !important;
+}
+
+.group:hover .group-hover\:pointer-events-auto {
+    pointer-events: auto !important;
 }
 
 body {
