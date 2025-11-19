@@ -553,7 +553,7 @@ def create_monthly_graph(tufe_data):
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            hovermode='x unified',
+            hovermode='closest', # Changed back to closest for line graphs
             height=600,
             margin=dict(l=20, r=20, t=80, b=20)
         )
@@ -936,7 +936,7 @@ def ana_sayfa():
                            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                            tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42')),
                 showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=640,
-                margin=dict(l=40, r=80, t=30, b=50), hovermode='y unified',
+                margin=dict(l=40, r=80, t=30, b=50), hovermode='closest',
                 hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
             )
             graphJSON = json.dumps(single_fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -1052,7 +1052,7 @@ def ana_sayfa():
             showlegend=False,
             legend=dict(orientation='h', yanchor='bottom', y=0.02, xanchor='center', x=0.5),
             plot_bgcolor='white', paper_bgcolor='white', height=640,
-            margin=dict(l=40, r=40, t=30, b=50), hovermode='y unified',
+            margin=dict(l=40, r=40, t=30, b=50), hovermode='closest',
             hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
         )
 
@@ -1235,7 +1235,7 @@ def tufe():
             paper_bgcolor='white',
             height=600,
             margin=dict(l=20, r=20, t=80, b=20),
-            hovermode='closest',
+            hovermode='closest', # Changed back to closest for better line chart hover
             hoverlabel=dict(
                 bgcolor='white',
                 font_size=12,
@@ -1358,7 +1358,7 @@ def tufe():
             paper_bgcolor='white',
             height=max(min(len(bar_months) * 40, 800), 400),
             margin=dict(l=10, r=10, t=40, b=20),
-            hovermode='x',
+            hovermode='closest',
             legend=dict(
                 orientation='h',
                 yanchor='bottom',
