@@ -553,7 +553,13 @@ def create_monthly_graph(tufe_data):
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            hovermode='closest', # Changed back to closest for line graphs
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=12,
+                font_family='Inter, sans-serif',
+                namelength=-1
+            ),
             height=600,
             margin=dict(l=20, r=20, t=80, b=20)
         )
@@ -1235,7 +1241,7 @@ def tufe():
             paper_bgcolor='white',
             height=600,
             margin=dict(l=20, r=20, t=80, b=20),
-            hovermode='closest', # Changed back to closest for better line chart hover
+            hovermode='x unified',
             hoverlabel=dict(
                 bgcolor='white',
                 font_size=12,
@@ -1358,7 +1364,13 @@ def tufe():
             paper_bgcolor='white',
             height=max(min(len(bar_months) * 40, 800), 400),
             margin=dict(l=10, r=10, t=40, b=20),
-            hovermode='closest',
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=12,
+                font_family='Inter, sans-serif',
+                namelength=-1
+            ),
             legend=dict(
                 orientation='h',
                 yanchor='bottom',
@@ -1504,7 +1516,7 @@ def tufe():
                 paper_bgcolor='white',
                 height=600,
                 margin=dict(l=20, r=20, t=80, b=20),
-                hovermode='closest',
+                hovermode='x unified',
                 hoverlabel=dict(
                     bgcolor='white',
                     font_size=12,
@@ -1745,7 +1757,13 @@ def tufe():
                 paper_bgcolor='white',
                 height=450,  # Yüksekliği artırdık
                 margin=dict(l=10, r=40, t=60, b=20),  # Sağ marjı artırdık (10 -> 40)
-                hovermode='x'
+                hovermode='x unified',
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=12,
+                    font_family='Inter, sans-serif',
+                    namelength=-1
+                )
             )
             line_graphJSON = line_fig.to_json()
             
@@ -1852,7 +1870,7 @@ def ana_gruplar():
         x=tarih,
         y=values,
         mode='lines',
-        name=f'Web TÜFE - {selected_group}',
+        name='Web TÜFE',
         line=dict(color='#EF476F', width=3),
         customdata=customdata,
         hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_group}: ' + '%{y:.2f}<extra></extra>'
@@ -1870,7 +1888,7 @@ def ana_gruplar():
                 x=tuik_filtered.index,
                 y=tuik_filtered[tuik_column_name],
                 mode='lines',
-                name=f'TÜİK - {selected_group}',
+                name='TÜİK',
                 line=dict(
                     color='#118AB2',
                     width=3,
@@ -2152,7 +2170,13 @@ def ana_gruplar():
         plot_bgcolor='white',
         paper_bgcolor='white',
         margin=dict(l=20, r=20, t=80, b=20),
-        hovermode='x'
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter, sans-serif',
+            namelength=-1
+        )
     )
     line_graphJSON = line_fig.to_json()
 
@@ -2621,7 +2645,7 @@ def harcama_gruplari():
                     x=dates,
                     y=values,
                     mode='lines',
-                    name=f'Web TÜFE - {selected_harcama_grubu.title()}',
+                    name='Web TÜFE',
                     line=dict(color='#EF476F', width=3),
                     marker=dict(size=8, color='#EF476F'),
                     hovertemplate='%{x|%d.%m.%Y}<br>Web TÜFE: %{y:.2f}<extra></extra>'
@@ -2638,7 +2662,7 @@ def harcama_gruplari():
                             x=tuik_filtered.index,
                             y=tuik_filtered[selected_harcama_grubu],
                             mode='lines',
-                            name=f'TÜİK - {selected_harcama_grubu.title()}',
+                            name='TÜİK',
                             line=dict(
                                 color='#118AB2',
                                 width=3,
@@ -2909,7 +2933,13 @@ def harcama_gruplari():
                                 plot_bgcolor='white',
                                 paper_bgcolor='white',
                                 margin=dict(l=20, r=20, t=80, b=20),
-                                hovermode='x'
+                                hovermode='x unified',
+                                hoverlabel=dict(
+                                    bgcolor='white',
+                                    font_size=12,
+                                    font_family='Inter, sans-serif',
+                                    namelength=-1
+                                )
                             )
                             monthly_line_graphJSON = json.dumps(line_fig, cls=plotly.utils.PlotlyJSONEncoder)
                         else:
@@ -3277,7 +3307,7 @@ def ozel_kapsamli_gostergeler():
             x=dates,
             y=values,
             mode='lines',
-            name=f'Web TÜFE - {selected_indicator}',
+            name='Web TÜFE',
             line=dict(color='#EF476F', width=3),
             customdata=turkish_dates,
             hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_indicator}: ' + '%{y:.2f}<extra></extra>'
@@ -3295,7 +3325,7 @@ def ozel_kapsamli_gostergeler():
                     x=tuik_filtered.index,
                     y=tuik_filtered[selected_indicator],
                     mode='lines',
-                    name=f'TÜİK - {selected_indicator}',
+                    name='TÜİK',
                     line=dict(
                         color='#118AB2',
                         width=3,
@@ -3582,7 +3612,13 @@ def ozel_kapsamli_gostergeler():
         paper_bgcolor='white',
         height=400,
         margin=dict(l=10, r=10, t=40, b=20),
-        hovermode='x',
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter, sans-serif',
+            namelength=-1
+        ),
         autosize=True
     )
 
