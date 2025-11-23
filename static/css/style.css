@@ -47,10 +47,58 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color), var(--primary-color));
+    background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: gradient-shine 3s ease infinite;
+    font-size: 1.75rem !important;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    display: inline-block;
+    line-height: 1.2;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.gradient-text::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: shine-sweep 4s ease-in-out infinite;
+}
+
+@keyframes gradient-shine {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes shine-sweep {
+    0%, 100% {
+        left: -100%;
+    }
+    50% {
+        left: 100%;
+    }
+}
+
+.gradient-text:hover {
+    transition: filter 0.3s ease;
+    animation: gradient-shine 1.5s ease infinite;
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
 }
 
 /* Card Styles */
@@ -129,20 +177,58 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Navigation Styles */
 header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+header > div > div {
+    align-items: center;
+    min-height: 48px;
+}
+
+header > div > div > div {
+    align-items: center;
+}
+
+header .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+}
+
+header .overflow-x-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Prevent buttons from becoming too wide on large screens */
+@media (min-width: 1400px) {
+    header > div > div > div {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
 }
 
 .nav-link-modern {
     color: var(--text-color) !important;
-    font-weight: 500;
-    padding: 0.6rem 1.2rem !important;
+    font-weight: 600;
+    padding: 0.65rem 1.1rem !important;
     border-radius: 12px;
     position: relative;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    text-decoration: none;
+    white-space: nowrap;
+    min-width: fit-content;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .nav-link-modern::before {
@@ -154,15 +240,16 @@ header {
     bottom: 0;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     opacity: 0;
-    border-radius: 12px;
+    border-radius: 10px;
     z-index: -1;
-    transition: opacity 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link-modern:hover {
     color: white !important;
-    transform: translateY(-2px);
     text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.2);
 }
 
 .nav-link-modern:hover::before {
@@ -173,12 +260,34 @@ header {
 .nav-link-modern.text-indigo-600 {
     color: white !important;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 3px rgba(99, 102, 241, 0.2);
+    border-color: transparent;
 }
 
 .nav-link-modern.active::before,
 .nav-link-modern.text-indigo-600::before {
     opacity: 1;
+}
+
+.nav-link-modern:active {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.new-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 0.65rem;
+    padding: 3px 7px;
+    border-radius: 9999px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+    z-index: 10;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1;
 }
 
 /* Form Styles */
@@ -347,6 +456,27 @@ header {
     background-size: 1000px 100%;
 }
 
+/* Tablet and Medium Screens */
+@media (max-width: 1200px) {
+    .nav-link-modern {
+        padding: 0.6rem 0.8rem !important;
+        font-size: 0.8rem;
+    }
+    
+    header .gradient-text,
+    .gradient-text {
+        font-size: 1.5rem !important;
+        margin-right: 0.5rem !important;
+    }
+    
+    .new-badge {
+        font-size: 0.55rem;
+        padding: 2px 5px;
+        top: -5px;
+        right: -5px;
+    }
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .container { padding: 0.75rem; }
@@ -358,5 +488,35 @@ header {
     .floating-aclik-siniri-btn { bottom: 90px; right: 20px; padding: 12px 20px; } /* Moved up to avoid overlap with back-to-top or bottom bars */
     .floating-btn-text { display: none; }
     #back-to-top { bottom: 20px; left: 20px; width: 40px; height: 40px; }
+    
+    .nav-link-modern {
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.75rem;
+        flex: 0 0 auto !important;
+    }
+    
+    header .gradient-text,
+    .gradient-text {
+        font-size: 1.25rem !important;
+        margin-right: 0.4rem !important;
+    }
+    
+    header > div > div {
+        justify-content: flex-start !important;
+        align-items: center !important;
+    }
+    
+    header > div > div > div {
+        flex: 0 !important;
+        gap: 0.5rem !important;
+        align-items: center !important;
+    }
+    
+    .new-badge {
+        font-size: 0.5rem;
+        padding: 2px 4px;
+        top: -4px;
+        right: -4px;
+    }
 }
 

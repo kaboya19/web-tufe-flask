@@ -48,35 +48,21 @@
 
 <body>
     <header>
-        <div class="w-full px-6 lg:px-8 py-5">
-            <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
-                <a href="/" class="text-2xl font-bold gradient-text nav-link-modern" style="font-family: 'Poppins', sans-serif;">Web TÜFE</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/tufe" class="nav-link-modern font-semibold {% if active_page == 'tufe' %}active{% endif %}">TÜFE</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/ana-gruplar" class="nav-link-modern font-semibold {% if active_page == 'ana_gruplar' %}active{% endif %}">Ana Gruplar</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/harcama-gruplari" class="nav-link-modern font-semibold {% if active_page == 'harcama_gruplari' %}active{% endif %}">Harcama Grupları</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/maddeler" class="nav-link-modern font-semibold {% if active_page == 'maddeler' %}active{% endif %}">Maddeler</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/ozel-kapsamli-gostergeler" class="nav-link-modern font-semibold {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}">Özel Kapsamlı Göstergeler</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/mevsimsel-duzeltilmis-gostergeler" class="nav-link-modern font-semibold {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}active{% endif %}">Mevsimsel Düzeltilmiş Göstergeler</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/aclik-siniri" class="nav-link-modern font-semibold {% if active_page == 'aclik_siniri' %}active{% endif %}">Açlık Sınırı</a>
-                <span class="text-gray-300 font-light">|</span>
-                <a href="/bultenler" class="nav-link-modern font-semibold {% if active_page == 'bultenler' %}active{% endif %}">Bültenler</a>
-                <span class="text-gray-300 font-light">|</span>
-                <span style="position: relative; display: inline-block;">
-                    <a href="/metodoloji" class="nav-link-modern font-semibold {% if active_page == 'metodoloji' %}active{% endif %}">Metodoloji</a>
-                    <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                </span>
-                <span class="text-gray-300 font-light">|</span>
-                <span style="position: relative; display: inline-block;">
-                    <a href="/hakkinda" class="nav-link-modern font-semibold {% if active_page == 'hakkinda' %}active{% endif %}">Hakkında</a>
-                    <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 9999px; font-weight: bold; white-space: nowrap;">Yeni!</span>
-                </span>
+        <div class="w-full px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between gap-2 overflow-x-auto" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                <a href="/" class="gradient-text" style="font-family: 'Poppins', sans-serif; text-decoration: none; white-space: nowrap; margin-right: 0.75rem; display: inline-block;">Web TÜFE</a>
+                <div class="flex items-center gap-2 flex-1 justify-between">
+                    <a href="/tufe" class="nav-link-modern flex-1 text-center {% if active_page == 'tufe' %}active{% endif %}">TÜFE</a>
+                    <a href="/ana-gruplar" class="nav-link-modern flex-1 text-center {% if active_page == 'ana_gruplar' %}active{% endif %}">Ana Gruplar</a>
+                    <a href="/harcama-gruplari" class="nav-link-modern flex-1 text-center {% if active_page == 'harcama_gruplari' %}active{% endif %}">Harcama Grupları</a>
+                    <a href="/maddeler" class="nav-link-modern flex-1 text-center {% if active_page == 'maddeler' %}active{% endif %}">Maddeler</a>
+                    <a href="/ozel-kapsamli-gostergeler" class="nav-link-modern flex-1 text-center {% if active_page == 'ozel_kapsamli_gostergeler' %}active{% endif %}">Özel Kapsamlı Göstergeler</a>
+                    <a href="/mevsimsel-duzeltilmis-gostergeler" class="nav-link-modern flex-1 text-center {% if active_page == 'mevsimsel_duzeltilmis_gostergeler' %}active{% endif %}">Mevsimsel Düzeltilmiş Göstergeler</a>
+                    <a href="/aclik-siniri" class="nav-link-modern flex-1 text-center {% if active_page == 'aclik_siniri' %}active{% endif %}">Açlık Sınırı</a>
+                    <a href="/bultenler" class="nav-link-modern flex-1 text-center {% if active_page == 'bultenler' %}active{% endif %}">Bültenler</a>
+                    <a href="/metodoloji" class="nav-link-modern flex-1 text-center {% if active_page == 'metodoloji' %}active{% endif %}">Metodoloji</a>
+                    <a href="/hakkinda" class="nav-link-modern flex-1 text-center {% if active_page == 'hakkinda' %}active{% endif %}">Hakkında</a>
+                </div>
             </div>
         </div>
     </header>
