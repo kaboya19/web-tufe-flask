@@ -4091,9 +4091,7 @@ def bultenler():
                     year_match = re.search(r'20\d{2}', fname)
                     if year_match:
                         y = year_match.group()
-                    label = f"{ay} {y} (Enflasyon Görünümü)"
-                    date_options.append(label)
-                    file_map[label] = fname
+                    # Enflasyon görünümü raporları sadece direkt link ile açılmalı, listede gösterme
                     processed = True
                     break
     
