@@ -40,6 +40,18 @@ body {
     font-weight: 400;
 }
 
+/* Announcement list tweaks */
+.announcement-scroll {
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    margin-right: -0.5rem;
+}
+
+.announcement-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
