@@ -10,6 +10,7 @@ from datetime import datetime
 import csv
 from dateutil.parser import parse
 import os
+import io
 from gspread.exceptions import APIError, SpreadsheetNotFound
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
@@ -942,10 +943,40 @@ def ana_sayfa():
                            title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                            tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42')),
                 showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=640,
-                margin=dict(l=40, r=80, t=30, b=50), hovermode='closest',
-                hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
+                margin=dict(l=40, r=20, t=30, b=50), hovermode='closest',
+                hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42'),
+                autosize=True
             )
             graphJSON = json.dumps(single_fig, cls=plotly.utils.PlotlyJSONEncoder)
+            # Get monthly change data for data view (from gruplaraylık.csv)
+            try:
+                monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+                # Transpose: groups become columns, dates become rows
+                group_names = monthly_df.iloc[:, 0].tolist()
+                date_columns = monthly_df.columns[1:].tolist()
+                
+                # Create transposed dataframe
+                transposed_data = []
+                for date_col in date_columns:
+                    row_data = {'Tarih': date_col}
+                    for idx, group_name in enumerate(group_names):
+                        value = monthly_df.iloc[idx][date_col]
+                        try:
+                            value = float(str(value).replace(',', '.'))
+                        except:
+                            value = None
+                        row_data[group_name] = value
+                    transposed_data.append(row_data)
+                
+                time_series_df = pd.DataFrame(transposed_data)
+                time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
+                time_series_data = time_series_df.to_dict('records')
+                time_series_columns = time_series_df.columns.tolist()
+            except Exception as e:
+                print(f"Error loading monthly data: {e}")
+                time_series_data = []
+                time_series_columns = []
+            
             return render_template('index.html', 
                                  graphJSON=graphJSON, 
                                  active_page='ana_sayfa', 
@@ -958,7 +989,9 @@ def ana_sayfa():
                                  top_risers=top_risers,
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
-                                 top_harcama_fallers=top_harcama_fallers)
+                                 top_harcama_fallers=top_harcama_fallers,
+                                 time_series_data=time_series_data,
+                                 time_series_columns=time_series_columns)
 
         # Build contribution series from katkıpayları.csv (right side)
         contribGraphJSON = None
@@ -1058,12 +1091,43 @@ def ana_sayfa():
             showlegend=False,
             legend=dict(orientation='h', yanchor='bottom', y=0.02, xanchor='center', x=0.5),
             plot_bgcolor='white', paper_bgcolor='white', height=640,
-            margin=dict(l=40, r=40, t=30, b=50), hovermode='closest',
-            hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
+            margin=dict(l=40, r=20, t=30, b=50), hovermode='closest',
+            hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42'),
+            autosize=True
         )
 
         # Export combined
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        # Get monthly change data for data view (from gruplaraylık.csv)
+        try:
+            monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+            # Transpose: groups become columns, dates become rows
+            # First column is group names, rest are dates
+            group_names = monthly_df.iloc[:, 0].tolist()
+            date_columns = monthly_df.columns[1:].tolist()
+            
+            # Create transposed dataframe
+            transposed_data = []
+            for date_col in date_columns:
+                row_data = {'Tarih': date_col}
+                for idx, group_name in enumerate(group_names):
+                    value = monthly_df.iloc[idx][date_col]
+                    try:
+                        value = float(str(value).replace(',', '.'))
+                    except:
+                        value = None
+                    row_data[group_name] = value
+                transposed_data.append(row_data)
+            
+            time_series_df = pd.DataFrame(transposed_data)
+            time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
+            time_series_data = time_series_df.to_dict('records')
+            time_series_columns = time_series_df.columns.tolist()
+        except Exception as e:
+            print(f"Error loading monthly data: {e}")
+            time_series_data = []
+            time_series_columns = []
         
         return render_template('index.html', 
                              graphJSON=graphJSON, 
@@ -1081,10 +1145,40 @@ def ana_sayfa():
                                  monthly_top_risers=monthly_top_risers,
                                  monthly_top_fallers=monthly_top_fallers,
                                  monthly_top_harcama_risers=monthly_top_harcama_risers,
-                                 monthly_top_harcama_fallers=monthly_top_harcama_fallers)
+                                 monthly_top_harcama_fallers=monthly_top_harcama_fallers,
+                                 time_series_data=time_series_data,
+                                 time_series_columns=time_series_columns)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         available_dates = get_available_dates()
+        # Get monthly change data for data view even on error
+        try:
+            monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+            # Transpose: groups become columns, dates become rows
+            group_names = monthly_df.iloc[:, 0].tolist()
+            date_columns = monthly_df.columns[1:].tolist()
+            
+            # Create transposed dataframe
+            transposed_data = []
+            for date_col in date_columns:
+                row_data = {'Tarih': date_col}
+                for idx, group_name in enumerate(group_names):
+                    value = monthly_df.iloc[idx][date_col]
+                    try:
+                        value = float(str(value).replace(',', '.'))
+                    except:
+                        value = None
+                    row_data[group_name] = value
+                transposed_data.append(row_data)
+            
+            time_series_df = pd.DataFrame(transposed_data)
+            time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
+            time_series_data = time_series_df.to_dict('records')
+            time_series_columns = time_series_df.columns.tolist()
+        except Exception as e:
+            print(f"Error loading monthly data: {e}")
+            time_series_data = []
+            time_series_columns = []
         return render_template('index.html', 
                              available_dates=available_dates,
                              selected_date=None,
@@ -1097,7 +1191,9 @@ def ana_sayfa():
                              monthly_top_risers=monthly_top_risers,
                              monthly_top_fallers=monthly_top_fallers,
                              monthly_top_harcama_risers=monthly_top_harcama_risers,
-                             monthly_top_harcama_fallers=monthly_top_harcama_fallers)
+                             monthly_top_harcama_fallers=monthly_top_harcama_fallers,
+                             time_series_data=time_series_data,
+                             time_series_columns=time_series_columns)
 
 @app.route('/tufe', methods=['GET', 'POST'])
 def tufe():
@@ -1401,6 +1497,63 @@ def tufe():
             turkish_month = get_turkish_month(selected_date_obj.strftime('%Y-%m-%d'))
         except Exception:
             turkish_month = last_col_date
+        # Get endeksler.csv data for data view
+        try:
+            endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+            endeksler_df.index = pd.to_datetime(endeksler_df.index)
+            endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
+            # Reset index to make Tarih a column
+            endeksler_df = endeksler_df.reset_index()
+            endeksler_df.rename(columns={endeksler_df.columns[0]: 'Tarih'}, inplace=True)
+            # Format Tarih column as YYYY-MM-DD string
+            endeksler_df['Tarih'] = endeksler_df['Tarih'].dt.strftime('%Y-%m-%d')
+            # Convert to dict for template
+            endeks_data = endeksler_df.to_dict('records')
+            endeks_columns = endeksler_df.columns.tolist()
+        except Exception as e:
+            print(f"Error loading endeksler data: {e}")
+            endeks_data = []
+            endeks_columns = []
+        
+        # Get maddeleraylık.csv data for monthly change data view
+        try:
+            # Read CSV: first column is index (0,1,2...), second column is 'Madde', rest are dates
+            maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+            # After index_col=0, first column (index) is removed, so columns are: ['Madde', '2025-02-28', ...]
+            # Get 'Madde' column values
+            madde_names_list = maddeler_monthly_df['Madde'].tolist()
+            # Get date columns (all columns except 'Madde')
+            date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
+            
+            # Create transposed dataframe: dates as rows, maddeler as columns
+            transposed_monthly_data = []
+            for date_col in date_columns_monthly:
+                row_data = {'Tarih': date_col}
+                for idx, madde_name in enumerate(madde_names_list):
+                    value = maddeler_monthly_df.iloc[idx][date_col]
+                    try:
+                        value = float(str(value).replace(',', '.'))
+                    except:
+                        value = None
+                    row_data[madde_name] = value
+                transposed_monthly_data.append(row_data)
+            
+            maddeler_monthly_transposed_df = pd.DataFrame(transposed_monthly_data)
+            # Format Tarih column as YYYY-MM-DD string
+            try:
+                maddeler_monthly_transposed_df['Tarih'] = pd.to_datetime(maddeler_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
+            except:
+                pass
+            maddeler_monthly_transposed_df = maddeler_monthly_transposed_df.sort_values('Tarih', ascending=False)  # Most recent first
+            maddeler_monthly_data = maddeler_monthly_transposed_df.to_dict('records')
+            maddeler_monthly_columns = maddeler_monthly_transposed_df.columns.tolist()
+        except Exception as e:
+            print(f"Error loading maddeleraylık data: {e}")
+            import traceback
+            traceback.print_exc()
+            maddeler_monthly_data = []
+            maddeler_monthly_columns = []
+        
         return render_template('tufe.html', graphJSON=graphJSON,
             last_date=last_date,
             change_rate=change_rate,
@@ -1410,7 +1563,11 @@ def tufe():
             line_graphJSON=line_graphJSON,
             active_page='tufe',
             madde_names=madde_names,
-            selected_madde=selected_madde
+            selected_madde=selected_madde,
+            endeks_data=endeks_data,
+            endeks_columns=endeks_columns,
+            maddeler_monthly_data=maddeler_monthly_data,
+            maddeler_monthly_columns=maddeler_monthly_columns
         )
     else:
         bar_labels=[]
@@ -1779,6 +1936,60 @@ def tufe():
                 except:
                     last_month_from_csv = None
             
+            # Get endeksler.csv data for data view
+            try:
+                endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+                endeksler_df.index = pd.to_datetime(endeksler_df.index)
+                endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
+                # Reset index to make Tarih a column
+                endeksler_df = endeksler_df.reset_index()
+                endeksler_df.rename(columns={endeksler_df.columns[0]: 'Tarih'}, inplace=True)
+                # Format Tarih column as YYYY-MM-DD string
+                endeksler_df['Tarih'] = endeksler_df['Tarih'].dt.strftime('%Y-%m-%d')
+                # Convert to dict for template
+                endeks_data = endeksler_df.to_dict('records')
+                endeks_columns = endeksler_df.columns.tolist()
+            except Exception as e:
+                print(f"Error loading endeksler data: {e}")
+                endeks_data = []
+                endeks_columns = []
+            
+            # Get maddeleraylık.csv data for monthly change data view
+            try:
+                maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+                # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
+                # Get 'Madde' column values
+                madde_names_list = maddeler_monthly_df['Madde'].tolist()
+                # Get date columns (all columns except 'Madde')
+                date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
+                
+                # Create transposed dataframe
+                transposed_monthly_data = []
+                for date_col in date_columns_monthly:
+                    row_data = {'Tarih': date_col}
+                    for idx, madde_name in enumerate(madde_names_list):
+                        value = maddeler_monthly_df.iloc[idx][date_col]
+                        try:
+                            value = float(str(value).replace(',', '.'))
+                        except:
+                            value = None
+                        row_data[madde_name] = value
+                    transposed_monthly_data.append(row_data)
+                
+                maddeler_monthly_transposed_df = pd.DataFrame(transposed_monthly_data)
+                # Format Tarih column as YYYY-MM-DD string
+                try:
+                    maddeler_monthly_transposed_df['Tarih'] = pd.to_datetime(maddeler_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
+                except:
+                    pass
+                maddeler_monthly_transposed_df = maddeler_monthly_transposed_df.sort_values('Tarih', ascending=False)  # Most recent first
+                maddeler_monthly_data = maddeler_monthly_transposed_df.to_dict('records')
+                maddeler_monthly_columns = maddeler_monthly_transposed_df.columns.tolist()
+            except Exception as e:
+                print(f"Error loading maddeleraylık data: {e}")
+                maddeler_monthly_data = []
+                maddeler_monthly_columns = []
+            
             return render_template('tufe.html',
                 graphJSON=graphJSON,
                 last_date=endeks_dates[-1] if not endeks_dates.empty else None,
@@ -1790,20 +2001,84 @@ def tufe():
                 active_page='tufe',
                 madde_names=madde_names,
                 selected_madde=selected_madde,
-                no_data=False
+                no_data=False,
+                endeks_data=endeks_data,
+                endeks_columns=endeks_columns,
+                maddeler_monthly_data=maddeler_monthly_data,
+                maddeler_monthly_columns=maddeler_monthly_columns
             )
         else:
+            # Get endeksler.csv data for data view
+            try:
+                endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+                endeksler_df.index = pd.to_datetime(endeksler_df.index)
+                endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
+                # Reset index to make Tarih a column
+                endeksler_df = endeksler_df.reset_index()
+                endeksler_df.rename(columns={endeksler_df.columns[0]: 'Tarih'}, inplace=True)
+                # Format Tarih column as YYYY-MM-DD string
+                endeksler_df['Tarih'] = endeksler_df['Tarih'].dt.strftime('%Y-%m-%d')
+                # Convert to dict for template
+                endeks_data = endeksler_df.to_dict('records')
+                endeks_columns = endeksler_df.columns.tolist()
+            except Exception as e:
+                print(f"Error loading endeksler data: {e}")
+                endeks_data = []
+                endeks_columns = []
+            
+            # Get maddeleraylık.csv data for monthly change data view even on error
+            try:
+                maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+                # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
+                # Get 'Madde' column values
+                madde_names_list = maddeler_monthly_df['Madde'].tolist()
+                # Get date columns (all columns except 'Madde')
+                date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
+                
+                # Create transposed dataframe
+                transposed_monthly_data = []
+                for date_col in date_columns_monthly:
+                    row_data = {'Tarih': date_col}
+                    for idx, madde_name in enumerate(madde_names_list):
+                        value = maddeler_monthly_df.iloc[idx][date_col]
+                        try:
+                            value = float(str(value).replace(',', '.'))
+                        except:
+                            value = None
+                        row_data[madde_name] = value
+                    transposed_monthly_data.append(row_data)
+                
+                maddeler_monthly_transposed_df = pd.DataFrame(transposed_monthly_data)
+                # Format Tarih column as YYYY-MM-DD string
+                try:
+                    maddeler_monthly_transposed_df['Tarih'] = pd.to_datetime(maddeler_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
+                except:
+                    pass
+                maddeler_monthly_transposed_df = maddeler_monthly_transposed_df.sort_values('Tarih', ascending=False)  # Most recent first
+                maddeler_monthly_data = maddeler_monthly_transposed_df.to_dict('records')
+                maddeler_monthly_columns = maddeler_monthly_transposed_df.columns.tolist()
+            except Exception as e:
+                print(f"Error loading maddeleraylık data: {e}")
+                maddeler_monthly_data = []
+                maddeler_monthly_columns = []
+            
             return render_template('tufe.html',
                 graphJSON=None,
                 last_date=None,
                 change_rate=None,
                 month_name=None,
                 monthly_change=None,
+                bar_graphJSON=None,
+                line_graphJSON=None,
                 active_page='tufe',
                 madde_names=madde_names,
                 selected_madde=selected_madde,
                 aylik_degisim_graphJSON=None,
-                no_data=True
+                no_data=True,
+                endeks_data=endeks_data,
+                endeks_columns=endeks_columns,
+                maddeler_monthly_data=maddeler_monthly_data,
+                maddeler_monthly_columns=maddeler_monthly_columns
             )
 
 @app.route('/ana-gruplar', methods=['GET', 'POST'])
@@ -2180,6 +2455,68 @@ def ana_gruplar():
     )
     line_graphJSON = line_fig.to_json()
 
+    # Get gruplar_int.csv data for index data view
+    gruplar_data = []
+    gruplar_columns = []
+    try:
+        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df.index = pd.to_datetime(gruplar_df.index)
+        gruplar_df = gruplar_df.sort_index(ascending=False)
+        gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
+        gruplar_data = gruplar_df.reset_index().to_dict('records')
+        gruplar_columns = ['Tarih'] + [col for col in gruplar_df.columns]
+        # Rename index column to Tarih in records
+        for row in gruplar_data:
+            if 'index' in row:
+                row['Tarih'] = row.pop('index')
+    except Exception as e:
+        print(f"Error loading gruplar_int.csv data: {e}")
+        import traceback
+        traceback.print_exc()
+        gruplar_data = []
+        gruplar_columns = []
+
+    # Get gruplaraylık.csv data for monthly change data view
+    gruplar_monthly_data = []
+    gruplar_monthly_columns = []
+    try:
+        # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
+        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+        # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
+        # Get 'Grup' column values
+        grup_names_list = gruplar_monthly_df['Grup'].tolist()
+        # Get date columns (all columns except 'Grup')
+        date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
+        
+        # Create transposed dataframe: dates as rows, gruplar as columns
+        transposed_monthly_data = []
+        for date_col in date_columns_monthly:
+            row_data = {'Tarih': date_col}
+            for idx, grup_name in enumerate(grup_names_list):
+                value = gruplar_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[grup_name] = value
+            transposed_monthly_data.append(row_data)
+        
+        gruplar_monthly_transposed_df = pd.DataFrame(transposed_monthly_data)
+        # Format Tarih column as YYYY-MM-DD string
+        try:
+            gruplar_monthly_transposed_df['Tarih'] = pd.to_datetime(gruplar_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
+        except:
+            pass
+        gruplar_monthly_transposed_df = gruplar_monthly_transposed_df.sort_values('Tarih', ascending=False)
+        gruplar_monthly_data = gruplar_monthly_transposed_df.to_dict('records')
+        gruplar_monthly_columns = gruplar_monthly_transposed_df.columns.tolist()
+    except Exception as e:
+        print(f"Error loading gruplaraylık.csv data: {e}")
+        import traceback
+        traceback.print_exc()
+        gruplar_monthly_data = []
+        gruplar_monthly_columns = []
+
     return render_template('ana_gruplar.html',
         graphJSON=fig.to_json(),
         grup_adlari=grup_adlari,
@@ -2191,7 +2528,11 @@ def ana_gruplar():
         last_date=tarih.iloc[-1].strftime('%d.%m.%Y') if not tarih.empty else '',
         active_page='ana_gruplar',
         bar_graphJSON=bar_graphJSON,
-        line_graphJSON=line_graphJSON
+        line_graphJSON=line_graphJSON,
+        gruplar_data=gruplar_data,
+        gruplar_columns=gruplar_columns,
+        gruplar_monthly_data=gruplar_monthly_data,
+        gruplar_monthly_columns=gruplar_monthly_columns
     )
 
 @app.route('/harcama-gruplari', methods=['GET', 'POST'])
@@ -2957,6 +3298,65 @@ def harcama_gruplari():
         except Exception as e:
             print('Harcama grubu endeks grafiği oluşturulamadı:', e)
 
+    # Get harcama_grupları.csv data for index data view (only if harcama grubu selected)
+    harcama_endeks_data = []
+    harcama_endeks_columns = []
+    if selected_harcama_grubu:
+        try:
+            harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
+            harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
+            harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
+            harcama_endeks_data = harcama_endeks_df.to_dict('records')
+            harcama_endeks_columns = harcama_endeks_df.columns.tolist()
+        except Exception as e:
+            print(f"Error loading harcama_grupları.csv data: {e}")
+            import traceback
+            traceback.print_exc()
+            harcama_endeks_data = []
+            harcama_endeks_columns = []
+
+    # Get harcama_gruplarıaylık.csv data for monthly change data view (always prepare, not just when harcama grubu selected)
+    harcama_monthly_data = []
+    harcama_monthly_columns = []
+    try:
+        # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
+        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
+        # Get 'Grup' column values
+        harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
+        # Get date columns (all columns except 'Grup')
+        date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
+        
+        # Create transposed dataframe: dates as rows, harcama grupları as columns
+        transposed_harcama_data = []
+        for date_col in date_columns_harcama:
+            row_data = {'Tarih': date_col}
+            for idx, harcama_grup_name in enumerate(harcama_grup_names_list):
+                value = harcama_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[harcama_grup_name] = value
+            transposed_harcama_data.append(row_data)
+        
+        harcama_monthly_transposed_df = pd.DataFrame(transposed_harcama_data)
+        # Format Tarih column as YYYY-MM-DD string
+        try:
+            harcama_monthly_transposed_df['Tarih'] = pd.to_datetime(harcama_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
+        except:
+            pass
+        harcama_monthly_transposed_df = harcama_monthly_transposed_df.sort_values('Tarih', ascending=False)
+        harcama_monthly_data = harcama_monthly_transposed_df.to_dict('records')
+        harcama_monthly_columns = harcama_monthly_transposed_df.columns.tolist()
+    except Exception as e:
+        print(f"Error loading harcama_gruplarıaylık.csv data: {e}")
+        import traceback
+        traceback.print_exc()
+        harcama_monthly_data = []
+        harcama_monthly_columns = []
+
     return render_template('harcama_gruplari.html',
         grup_adlari=grup_adlari,
         selected_group=selected_group,
@@ -2978,7 +3378,11 @@ def harcama_gruplari():
         show_contrib=show_contrib,
         contrib_type=contrib_type,
         contrib_graphJSON=contrib_graphJSON,
-        combined_graphJSON=combined_graphJSON
+        combined_graphJSON=combined_graphJSON,
+        harcama_endeks_data=harcama_endeks_data,
+        harcama_endeks_columns=harcama_endeks_columns,
+        harcama_monthly_data=harcama_monthly_data,
+        harcama_monthly_columns=harcama_monthly_columns
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
@@ -3392,9 +3796,10 @@ def ozel_kapsamli_gostergeler():
             ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=600,
-            margin=dict(l=5, r=5, t=20, b=10),
+            height=500,
+            margin=dict(l=20, r=20, t=80, b=20),
             hovermode='x unified',
+            autosize=True,
             hoverlabel=dict(
                 bgcolor='white',
                 font_size=12,
@@ -3543,7 +3948,7 @@ def ozel_kapsamli_gostergeler():
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=400,
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=20, r=20, t=80, b=20),
         hovermode='x',
         autosize=True
     )
@@ -3591,7 +3996,8 @@ def ozel_kapsamli_gostergeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            tickangle=0
+            tickangle=0,
+            gridcolor='#E9ECEF'
         ),
         yaxis=dict(
             title='Değişim (%)',
@@ -3611,7 +4017,7 @@ def ozel_kapsamli_gostergeler():
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=400,
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=20, r=20, t=80, b=20),
         hovermode='x unified',
         hoverlabel=dict(
             bgcolor='white',
@@ -3755,6 +4161,44 @@ def ozel_kapsamli_gostergeler():
         selected_current_col_for_template = None
         selected_previous_col_for_template = None
     
+    # Prepare endeks data for data view (from özelgöstergeler.csv)
+    ozel_endeks_data = None
+    ozel_endeks_columns = None
+    if not df.empty:
+        try:
+            # Sort by date descending
+            ozel_endeks_df = df.copy()
+            ozel_endeks_df = ozel_endeks_df.sort_values('Tarih', ascending=False)
+            # Format dates
+            ozel_endeks_df['Tarih'] = ozel_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
+            ozel_endeks_columns = ['Tarih'] + [col for col in ozel_endeks_df.columns if col != 'Tarih']
+            ozel_endeks_data = ozel_endeks_df.to_dict('records')
+        except Exception as e:
+            print(f"Özel göstergeler endeks veri hazırlama hatası: {e}")
+            ozel_endeks_data = None
+            ozel_endeks_columns = None
+    
+    # Prepare monthly data for monthly change graph data view (from özelgöstergeleraylık.csv)
+    ozel_monthly_data = None
+    ozel_monthly_columns = None
+    if not df_monthly_raw.empty:
+        try:
+            # Transpose: dates as rows, indicators as columns
+            ozel_monthly_df = df_monthly_raw.set_index(df_monthly_raw.columns[0]).T
+            ozel_monthly_df.index.name = 'Tarih'
+            ozel_monthly_df = ozel_monthly_df.reset_index()
+            # Sort by date descending
+            ozel_monthly_df['Tarih'] = pd.to_datetime(ozel_monthly_df['Tarih'])
+            ozel_monthly_df = ozel_monthly_df.sort_values('Tarih', ascending=False)
+            # Format dates
+            ozel_monthly_df['Tarih'] = ozel_monthly_df['Tarih'].dt.strftime('%Y-%m-%d')
+            ozel_monthly_columns = ['Tarih'] + list(ozel_monthly_df.columns[1:])
+            ozel_monthly_data = ozel_monthly_df.to_dict('records')
+        except Exception as e:
+            print(f"Özel göstergeler aylık veri hazırlama hatası: {e}")
+            ozel_monthly_data = None
+            ozel_monthly_columns = None
+    
     return render_template('ozel_kapsamli_gostergeler.html',
     graphJSON=graphJSON,
     indicator_names=indicator_names,
@@ -3772,8 +4216,118 @@ def ozel_kapsamli_gostergeler():
     selected_current_month=selected_current_col_for_template,
     month_options=month_options,
     bar_graphJSON=bar_graphJSON,
-    line_graphJSON=line_graphJSON
+    line_graphJSON=line_graphJSON,
+    ozel_endeks_data=ozel_endeks_data,
+    ozel_endeks_columns=ozel_endeks_columns,
+    ozel_monthly_data=ozel_monthly_data,
+    ozel_monthly_columns=ozel_monthly_columns
 )
+
+@app.route('/download/ozel-kapsamli/csv')
+def download_ozel_kapsamli_csv():
+    try:
+        # Endeks verileri (özelgöstergeler.csv)
+        df = pd.read_csv("özelgöstergeler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+        df['Tarih'] = pd.to_datetime(df['Tarih'])
+        df = df.sort_values('Tarih', ascending=False)
+        df['Tarih'] = df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.StringIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='ozel_kapsamli_gostergeler_endeks.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ozel_kapsamli_gostergeler'))
+
+@app.route('/download/ozel-kapsamli/xlsx')
+def download_ozel_kapsamli_xlsx():
+    try:
+        # Endeks verileri (özelgöstergeler.csv)
+        df = pd.read_csv("özelgöstergeler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+        df['Tarih'] = pd.to_datetime(df['Tarih'])
+        df = df.sort_values('Tarih', ascending=False)
+        df['Tarih'] = df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Özel Kapsamlı Göstergeler Endeks')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='ozel_kapsamli_gostergeler_endeks.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ozel_kapsamli_gostergeler'))
+
+@app.route('/download/ozel-kapsamli-aylik/csv')
+def download_ozel_kapsamli_aylik_csv():
+    try:
+        df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+        
+        # Transpose: dates as rows, indicators as columns
+        ozel_monthly_df = df_monthly_raw.set_index(df_monthly_raw.columns[0]).T
+        ozel_monthly_df.index.name = 'Tarih'
+        ozel_monthly_df = ozel_monthly_df.reset_index()
+        # Sort by date descending
+        ozel_monthly_df['Tarih'] = pd.to_datetime(ozel_monthly_df['Tarih'])
+        ozel_monthly_df = ozel_monthly_df.sort_values('Tarih', ascending=False)
+        # Format dates
+        ozel_monthly_df['Tarih'] = ozel_monthly_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.StringIO()
+        ozel_monthly_df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='ozel_kapsamli_gostergeler_aylik.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ozel_kapsamli_gostergeler'))
+
+@app.route('/download/ozel-kapsamli-aylik/xlsx')
+def download_ozel_kapsamli_aylik_xlsx():
+    try:
+        df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+        
+        # Transpose: dates as rows, indicators as columns
+        ozel_monthly_df = df_monthly_raw.set_index(df_monthly_raw.columns[0]).T
+        ozel_monthly_df.index.name = 'Tarih'
+        ozel_monthly_df = ozel_monthly_df.reset_index()
+        # Sort by date descending
+        ozel_monthly_df['Tarih'] = pd.to_datetime(ozel_monthly_df['Tarih'])
+        ozel_monthly_df = ozel_monthly_df.sort_values('Tarih', ascending=False)
+        # Format dates
+        ozel_monthly_df['Tarih'] = ozel_monthly_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            ozel_monthly_df.to_excel(writer, index=False, sheet_name='Özel Kapsamlı Göstergeler Aylık')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='ozel_kapsamli_gostergeler_aylik.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ozel_kapsamli_gostergeler'))
 
 @app.route('/mevsimsel-duzeltilmis-gostergeler', methods=['GET', 'POST'])
 def mevsimsel_duzeltilmis_gostergeler():
@@ -3933,14 +4487,15 @@ def mevsimsel_duzeltilmis_gostergeler():
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=500,
-        margin=dict(l=5, r=5, t=20, b=10),
+        margin=dict(l=20, r=20, t=80, b=20),
         hovermode='x unified',
         hoverlabel=dict(
             bgcolor='white',
             font_size=12,
             font_family='Inter, sans-serif',
             namelength=-1
-        )
+        ),
+        autosize=True
     )
 
 
@@ -3959,6 +4514,32 @@ def mevsimsel_duzeltilmis_gostergeler():
             except:
                 last_month_from_csv = None
     
+    # Prepare data for data view (from ma.xlsx)
+    ma_data = None
+    ma_columns = None
+    if not df.empty:
+        try:
+            # Drop 'Unnamed: 0' column if it exists (index column)
+            if 'Unnamed: 0' in df.columns:
+                df = df.drop(columns=['Unnamed: 0'])
+            # Transpose: dates as rows, indicators as columns
+            ma_df = df.set_index('Gösterge').T
+            ma_df.index.name = 'Tarih'
+            ma_df = ma_df.reset_index()
+            # Sort by date descending
+            ma_df['Tarih'] = pd.to_datetime(ma_df['Tarih'], format='%Y-%m', errors='coerce')
+            ma_df = ma_df.sort_values('Tarih', ascending=False)
+            # Format dates as YYYY-MM
+            ma_df['Tarih'] = ma_df['Tarih'].dt.strftime('%Y-%m')
+            # Replace NaN with None for JSON serialization
+            ma_df = ma_df.fillna('')
+            ma_columns = ['Tarih'] + [col for col in ma_df.columns if col != 'Tarih']
+            ma_data = ma_df.to_dict('records')
+        except Exception as e:
+            print(f"Mevsimsel düzeltilmiş göstergeler veri hazırlama hatası: {e}")
+            ma_data = None
+            ma_columns = None
+    
     return render_template('mevsimsel_duzeltilmis_gostergeler.html',
         graphJSON=graphJSON,
         indicator_names=indicator_names,
@@ -3967,8 +4548,77 @@ def mevsimsel_duzeltilmis_gostergeler():
         monthly_change=monthly_change,
         active_page='mevsimsel_duzeltilmis_gostergeler',
         last_date=last_date,
-        month_name=last_month_from_csv
+        month_name=last_month_from_csv,
+        ma_data=ma_data,
+        ma_columns=ma_columns
     )
+
+@app.route('/download/mevsimsel/csv')
+def download_mevsimsel_csv():
+    try:
+        df = pd.read_excel("ma.xlsx")
+        
+        # Drop 'Unnamed: 0' column if it exists (index column)
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
+        
+        # Transpose: dates as rows, indicators as columns
+        ma_df = df.set_index('Gösterge').T
+        ma_df.index.name = 'Tarih'
+        ma_df = ma_df.reset_index()
+        # Sort by date descending
+        ma_df['Tarih'] = pd.to_datetime(ma_df['Tarih'], format='%Y-%m', errors='coerce')
+        ma_df = ma_df.sort_values('Tarih', ascending=False)
+        # Format dates as YYYY-MM
+        ma_df['Tarih'] = ma_df['Tarih'].dt.strftime('%Y-%m')
+        
+        output = io.StringIO()
+        ma_df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='mevsimsel_duzeltilmis_gostergeler.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('mevsimsel_duzeltilmis_gostergeler'))
+
+@app.route('/download/mevsimsel/xlsx')
+def download_mevsimsel_xlsx():
+    try:
+        df = pd.read_excel("ma.xlsx")
+        
+        # Drop 'Unnamed: 0' column if it exists (index column)
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
+        
+        # Transpose: dates as rows, indicators as columns
+        ma_df = df.set_index('Gösterge').T
+        ma_df.index.name = 'Tarih'
+        ma_df = ma_df.reset_index()
+        # Sort by date descending
+        ma_df['Tarih'] = pd.to_datetime(ma_df['Tarih'], format='%Y-%m', errors='coerce')
+        ma_df = ma_df.sort_values('Tarih', ascending=False)
+        # Format dates as YYYY-MM
+        ma_df['Tarih'] = ma_df['Tarih'].dt.strftime('%Y-%m')
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            ma_df.to_excel(writer, index=False, sheet_name='Mevsimsel Düzeltilmiş Göstergeler')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='mevsimsel_duzeltilmis_gostergeler.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('mevsimsel_duzeltilmis_gostergeler'))
 
 @app.route('/hakkinda')
 def hakkinda():
@@ -4146,6 +4796,456 @@ def serve_metodoloji_pdf():
 @app.route('/metodoloji')
 def metodoloji():
     return render_template('metodoloji.html', active_page='metodoloji')
+
+@app.route('/download/ana-gruplar/csv')
+def download_ana_gruplar_csv():
+    try:
+        # Get monthly change data (from gruplaraylık.csv)
+        monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        # Transpose: groups become columns, dates become rows
+        group_names = monthly_df.iloc[:, 0].tolist()
+        date_columns = monthly_df.columns[1:].tolist()
+        
+        # Create transposed dataframe
+        transposed_data = []
+        for date_col in date_columns:
+            row_data = {'Tarih': date_col}
+            for idx, group_name in enumerate(group_names):
+                value = monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[group_name] = value
+            transposed_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_data)
+        df = df.sort_values('Tarih', ascending=False)  # Most recent first
+        
+        # Create a temporary CSV file
+        from io import BytesIO
+        output = BytesIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='ana_gruplar_aylik_degisim.csv')
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_sayfa'))
+
+@app.route('/download/ana-gruplar/xlsx')
+def download_ana_gruplar_xlsx():
+    try:
+        # Get monthly change data (from gruplaraylık.csv)
+        monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        # Transpose: groups become columns, dates become rows
+        group_names = monthly_df.iloc[:, 0].tolist()
+        date_columns = monthly_df.columns[1:].tolist()
+        
+        # Create transposed dataframe
+        transposed_data = []
+        for date_col in date_columns:
+            row_data = {'Tarih': date_col}
+            for idx, group_name in enumerate(group_names):
+                value = monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[group_name] = value
+            transposed_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_data)
+        df = df.sort_values('Tarih', ascending=False)  # Most recent first
+        
+        # Create a temporary Excel file
+        from io import BytesIO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Aylık Değişimler')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        as_attachment=True, download_name='ana_gruplar_aylik_degisim.xlsx')
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_sayfa'))
+
+@app.route('/download/gruplar-endeksler/csv')
+def download_gruplar_endeksler_csv():
+    try:
+        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df.index = pd.to_datetime(gruplar_df.index)
+        gruplar_df = gruplar_df.sort_index(ascending=False)
+        gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
+        gruplar_df = gruplar_df.reset_index()
+        gruplar_df.rename(columns={'index': 'Tarih'}, inplace=True)
+        
+        output = io.StringIO()
+        gruplar_df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='gruplar_endeksler.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_gruplar'))
+
+@app.route('/download/gruplar-endeksler/xlsx')
+def download_gruplar_endeksler_xlsx():
+    try:
+        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df.index = pd.to_datetime(gruplar_df.index)
+        gruplar_df = gruplar_df.sort_index(ascending=False)
+        gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
+        gruplar_df = gruplar_df.reset_index()
+        gruplar_df.rename(columns={'index': 'Tarih'}, inplace=True)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            gruplar_df.to_excel(writer, index=False, sheet_name='Gruplar Endeksler')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='gruplar_endeksler.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_gruplar'))
+
+@app.route('/download/gruplar-aylik/csv')
+def download_gruplar_aylik_csv():
+    try:
+        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+        grup_names_list = gruplar_monthly_df['Grup'].tolist()
+        date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
+        
+        transposed_monthly_data = []
+        for date_col in date_columns_monthly:
+            row_data = {'Tarih': date_col}
+            for idx, grup_name in enumerate(grup_names_list):
+                value = gruplar_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[grup_name] = value
+            transposed_monthly_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_monthly_data)
+        df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        df = df.sort_values('Tarih', ascending=False)
+        
+        output = io.StringIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='gruplar_aylik_degisim.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_gruplar'))
+
+@app.route('/download/harcama-endeksler/csv')
+def download_harcama_endeksler_csv():
+    try:
+        harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+        harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
+        harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
+        harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.StringIO()
+        harcama_endeks_df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='harcama_endeksler.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('harcama_gruplari'))
+
+@app.route('/download/harcama-endeksler/xlsx')
+def download_harcama_endeksler_xlsx():
+    try:
+        harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+        harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
+        harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
+        harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            harcama_endeks_df.to_excel(writer, index=False, sheet_name='Harcama Grupları Endeksler')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='harcama_endeksler.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('harcama_gruplari'))
+
+@app.route('/download/harcama-aylik/csv')
+def download_harcama_aylik_csv():
+    try:
+        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
+        date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
+        
+        transposed_harcama_data = []
+        for date_col in date_columns_harcama:
+            row_data = {'Tarih': date_col}
+            for idx, harcama_grup_name in enumerate(harcama_grup_names_list):
+                value = harcama_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[harcama_grup_name] = value
+            transposed_harcama_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_harcama_data)
+        df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        df = df.sort_values('Tarih', ascending=False)
+        
+        output = io.StringIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='harcama_aylik_degisim.csv'
+        )
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('harcama_gruplari'))
+
+@app.route('/download/harcama-aylik/xlsx')
+def download_harcama_aylik_xlsx():
+    try:
+        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
+        date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
+        
+        transposed_harcama_data = []
+        for date_col in date_columns_harcama:
+            row_data = {'Tarih': date_col}
+            for idx, harcama_grup_name in enumerate(harcama_grup_names_list):
+                value = harcama_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[harcama_grup_name] = value
+            transposed_harcama_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_harcama_data)
+        df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        df = df.sort_values('Tarih', ascending=False)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Harcama Grupları Aylık Değişim')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='harcama_aylik_degisim.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('harcama_gruplari'))
+
+@app.route('/download/gruplar-aylik/xlsx')
+def download_gruplar_aylik_xlsx():
+    try:
+        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+        grup_names_list = gruplar_monthly_df['Grup'].tolist()
+        date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
+        
+        transposed_monthly_data = []
+        for date_col in date_columns_monthly:
+            row_data = {'Tarih': date_col}
+            for idx, grup_name in enumerate(grup_names_list):
+                value = gruplar_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[grup_name] = value
+            transposed_monthly_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_monthly_data)
+        df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        df = df.sort_values('Tarih', ascending=False)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Gruplar Aylık Değişim')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='gruplar_aylik_degisim.xlsx'
+        )
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('ana_gruplar'))
+
+@app.route('/download/tufe-endeksler/csv')
+def download_tufe_endeksler_csv():
+    try:
+        # Get endeksler.csv data
+        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        endeksler_df.index = pd.to_datetime(endeksler_df.index)
+        endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
+        # Reset index to make Tarih a column
+        endeksler_df = endeksler_df.reset_index()
+        endeksler_df.rename(columns={endeksler_df.columns[0]: 'Tarih'}, inplace=True)
+        # Format Tarih column as YYYY-MM-DD string
+        endeksler_df['Tarih'] = endeksler_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        # Create a temporary CSV file
+        from io import BytesIO
+        output = BytesIO()
+        endeksler_df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='tufe_endeksler.csv')
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('tufe'))
+
+@app.route('/download/tufe-endeksler/xlsx')
+def download_tufe_endeksler_xlsx():
+    try:
+        # Get endeksler.csv data
+        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        endeksler_df.index = pd.to_datetime(endeksler_df.index)
+        endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
+        # Reset index to make Tarih a column
+        endeksler_df = endeksler_df.reset_index()
+        endeksler_df.rename(columns={endeksler_df.columns[0]: 'Tarih'}, inplace=True)
+        # Format Tarih column as YYYY-MM-DD string
+        endeksler_df['Tarih'] = endeksler_df['Tarih'].dt.strftime('%Y-%m-%d')
+        
+        # Create a temporary Excel file
+        from io import BytesIO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            endeksler_df.to_excel(writer, index=False, sheet_name='Endeksler')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        as_attachment=True, download_name='tufe_endeksler.xlsx')
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('tufe'))
+
+@app.route('/download/maddeler-aylik/csv')
+def download_maddeler_aylik_csv():
+    try:
+        # Get maddeleraylık.csv data
+        maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+        # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
+        # Get 'Madde' column values
+        madde_names_list = maddeler_monthly_df['Madde'].tolist()
+        # Get date columns (all columns except 'Madde')
+        date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
+        
+        # Create transposed dataframe
+        transposed_monthly_data = []
+        for date_col in date_columns_monthly:
+            row_data = {'Tarih': date_col}
+            for idx, madde_name in enumerate(madde_names_list):
+                value = maddeler_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[madde_name] = value
+            transposed_monthly_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_monthly_data)
+        # Format Tarih column as YYYY-MM-DD string
+        try:
+            df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        except:
+            pass
+        df = df.sort_values('Tarih', ascending=False)  # Most recent first
+        
+        # Create a temporary CSV file
+        from io import BytesIO
+        output = BytesIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='maddeler_aylik_degisim.csv')
+    except Exception as e:
+        flash(f'CSV indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('tufe'))
+
+@app.route('/download/maddeler-aylik/xlsx')
+def download_maddeler_aylik_xlsx():
+    try:
+        # Get maddeleraylık.csv data
+        maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+        # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
+        # Get 'Madde' column values
+        madde_names_list = maddeler_monthly_df['Madde'].tolist()
+        # Get date columns (all columns except 'Madde')
+        date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
+        
+        # Create transposed dataframe
+        transposed_monthly_data = []
+        for date_col in date_columns_monthly:
+            row_data = {'Tarih': date_col}
+            for idx, madde_name in enumerate(madde_names_list):
+                value = maddeler_monthly_df.iloc[idx][date_col]
+                try:
+                    value = float(str(value).replace(',', '.'))
+                except:
+                    value = None
+                row_data[madde_name] = value
+            transposed_monthly_data.append(row_data)
+        
+        df = pd.DataFrame(transposed_monthly_data)
+        # Format Tarih column as YYYY-MM-DD string
+        try:
+            df['Tarih'] = pd.to_datetime(df['Tarih']).dt.strftime('%Y-%m-%d')
+        except:
+            pass
+        df = df.sort_values('Tarih', ascending=False)  # Most recent first
+        
+        # Create a temporary Excel file
+        from io import BytesIO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Aylık Değişimler')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        as_attachment=True, download_name='maddeler_aylik_degisim.xlsx')
+    except Exception as e:
+        flash(f'Excel indirme hatası: {str(e)}', 'error')
+        return redirect(url_for('tufe'))
 
 @app.route('/abone', methods=['POST'])
 def abone():

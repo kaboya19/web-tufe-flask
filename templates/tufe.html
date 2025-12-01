@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="card-modern p-6">
+            <div class="card-modern p-6 relative overflow-hidden">
                 <form method="post" class="mb-6">
                     <label for="madde" class="block text-sm font-medium text-gray-700 mb-1">Madde Seçin:</label>
                     <div class="relative w-full">
@@ -67,62 +67,251 @@
                         <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                     </div>
                 </div>
-                <div id="tufe-chart" class="w-full"></div>
+                <!-- View toggle buttons (above chart) -->
+                <div class="mb-4 flex gap-2">
+                    <button id="btn-grafik-tufe" onclick="toggleViewTufe('grafik')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active whitespace-nowrap">
+                        Grafik
+                    </button>
+                    <button id="btn-veri-tufe" onclick="toggleViewTufe('veri')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm whitespace-nowrap">
+                        Veri
+                    </button>
+                </div>
+                <!-- Chart view -->
+                <div id="chart-view-tufe" class="w-full overflow-x-auto">
+                    <div id="tufe-chart" class="w-full" style="min-width: 0;"></div>
+                </div>
+                <!-- Data view -->
+                <div id="data-view-tufe" class="w-full hidden">
+                    <div class="mb-4 flex justify-end gap-2">
+                        <a href="/download/tufe-endeksler/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            CSV İndir
+                        </a>
+                        <a href="/download/tufe-endeksler/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Excel İndir
+                        </a>
+                    </div>
+                    <div class="w-full border border-gray-200 rounded-lg overflow-hidden">
+                        {% if endeks_data and endeks_columns %}
+                        <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
+                        <table class="min-w-full divide-y divide-gray-200 bg-white" style="min-width: max-content;">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    {% for col in endeks_columns %}
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ col }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for row in endeks_data %}
+                                <tr class="hover:bg-gray-50">
+                                    {% for col in endeks_columns %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {% if col == 'Tarih' %}
+                                            {{ row[col] if row[col] else '-' }}
+                                        {% else %}
+                                            {{ "%.2f"|format(row[col]) if row[col] is not none else '-' }}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-500">
+                            <p>Veri bulunamadı.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
                 {% if selected_madde != 'TÜFE' %}
                 <div class="mt-12 w-full">
-            <div class="btn-group flex gap-3 justify-end mb-6">
-                <button id="madde-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Aylık
+                    <!-- View toggle buttons (above monthly chart) -->
+                    <div class="mb-4 flex gap-2 z-10" style="position: relative;">
+                        <button id="btn-grafik-monthly" onclick="toggleViewMonthly('grafik')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active whitespace-nowrap" style="display: inline-block;">
+                            Grafik
                         </button>
-                <button id="madde-cumulative-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                            Kümülatif
+                        <button id="btn-veri-monthly" onclick="toggleViewMonthly('veri')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm whitespace-nowrap" style="display: inline-block;">
+                            Veri
                         </button>
                     </div>
-                    <div id="monthly-change-line-chart" class="w-full" style="width: 100% !important;">
+                    <!-- Monthly chart view -->
+                    <div id="monthly-chart-view" class="w-full">
+                        <div class="btn-group flex gap-3 justify-end mb-6">
+                            <button id="madde-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        Aylık
+                                    </button>
+                            <button id="madde-cumulative-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                        Kümülatif
+                                    </button>
+                        </div>
+                        <div id="monthly-change-line-chart" class="w-full" style="width: 100% !important;">
+                        </div>
+                    </div>
+                    <!-- Monthly data view -->
+                    <div id="monthly-data-view" class="w-full hidden">
+                        <div class="mb-4 flex justify-end gap-2">
+                            <a href="/download/maddeler-aylik/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                CSV İndir
+                            </a>
+                            <a href="/download/maddeler-aylik/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Excel İndir
+                            </a>
+                        </div>
+                        <div class="w-full border border-gray-200 rounded-lg overflow-hidden">
+                            {% if maddeler_monthly_data and maddeler_monthly_columns %}
+                            <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
+                            <table class="min-w-full divide-y divide-gray-200 bg-white" style="min-width: max-content;">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        {% for col in maddeler_monthly_columns %}
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for row in maddeler_monthly_data %}
+                                    <tr class="hover:bg-gray-50">
+                                        {% for col in maddeler_monthly_columns %}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {% if col == 'Tarih' %}
+                                                {{ row[col] if row[col] else '-' }}
+                                            {% else %}
+                                                {{ "%.2f"|format(row[col]) if row[col] is not none else '-' }}
+                                            {% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                            {% else %}
+                            <div class="p-8 text-center text-gray-500">
+                                <p>Veri bulunamadı.</p>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endif %}
                 {% if selected_madde == 'TÜFE' %}
                 <div class="mt-12">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-3">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="cumulative-checkbox" class="mr-2 w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
-                                <span class="text-sm font-semibold text-gray-700">Kümülatif Göster</span>
-                            </label>
+                    <!-- View toggle buttons (above comparison chart) -->
+                    <div class="mb-4 flex gap-2 z-10" style="position: relative;">
+                        <button id="btn-grafik-tufe-compare" onclick="toggleViewTufeCompare('grafik')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active whitespace-nowrap" style="display: inline-block;">
+                            Grafik
+                        </button>
+                        <button id="btn-veri-tufe-compare" onclick="toggleViewTufeCompare('veri')" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm whitespace-nowrap" style="display: inline-block;">
+                            Veri
+                        </button>
+                    </div>
+                    <!-- Comparison chart view -->
+                    <div id="tufe-compare-chart-view" class="w-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="cumulative-checkbox" class="mr-2 w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                                    <span class="text-sm font-semibold text-gray-700">Kümülatif Göster</span>
+                                </label>
+                            </div>
+                    <div class="btn-group flex gap-3 justify-end">
+                        <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="12" width="4" height="8" />
+                                        <rect x="9" y="8" width="4" height="12" />
+                                        <rect x="15" y="4" width="4" height="16" />
+                                    </svg>
+                                    Bar Grafik
+                                </button>
+                        <button id="line-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M4 16l4-4 4 4 8-8" />
+                                    </svg>
+                                    Line Grafik
+                                </button>
+                            </div>
                         </div>
-                <div class="btn-group flex gap-3 justify-end">
-                    <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="12" width="4" height="8" />
-                                    <rect x="9" y="8" width="4" height="12" />
-                                    <rect x="15" y="4" width="4" height="16" />
+                        <div id="bar-compare-chart" class="w-full"></div>
+                        <div id="line-compare-chart" class="w-full hidden"></div>
+                    </div>
+                    <!-- Comparison data view -->
+                    <div id="tufe-compare-data-view" class="w-full hidden">
+                        <div class="mb-4 flex justify-end gap-2">
+                            <a href="/download/maddeler-aylik/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Bar Grafik
-                            </button>
-                    <button id="line-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M4 16l4-4 4 4 8-8" />
+                                CSV İndir
+                            </a>
+                            <a href="/download/maddeler-aylik/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Line Grafik
-                            </button>
+                                Excel İndir
+                            </a>
+                        </div>
+                        <div class="w-full border border-gray-200 rounded-lg overflow-hidden">
+                            {% if maddeler_monthly_data and maddeler_monthly_columns %}
+                            <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
+                            <table class="min-w-full divide-y divide-gray-200 bg-white" style="min-width: max-content;">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        {% for col in maddeler_monthly_columns %}
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for row in maddeler_monthly_data %}
+                                    <tr class="hover:bg-gray-50">
+                                        {% for col in maddeler_monthly_columns %}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {% if col == 'Tarih' %}
+                                                {{ row[col] if row[col] else '-' }}
+                                            {% else %}
+                                                {{ "%.2f"|format(row[col]) if row[col] is not none else '-' }}
+                                            {% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                            {% else %}
+                            <div class="p-8 text-center text-gray-500">
+                                <p>Veri bulunamadı.</p>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                    <div id="bar-compare-chart" class="w-full"></div>
-                    <div id="line-compare-chart" class="w-full hidden"></div>
                 </div>
                 {% endif %}
                 {% else %}
@@ -135,7 +324,23 @@
 {% block scripts %}
     <script>
         var graphs = {{ graphJSON | safe }};
-        Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { displayModeBar: false });
+        // Update layout to ensure chart fits within container
+        if (graphs.layout) {
+            graphs.layout.autosize = true;
+            graphs.layout.width = null; // Let Plotly calculate width
+            if (graphs.layout.margin) {
+                graphs.layout.margin.l = Math.min(graphs.layout.margin.l || 20, 40);
+                graphs.layout.margin.r = Math.min(graphs.layout.margin.r || 20, 40);
+            }
+        }
+        Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { 
+            displayModeBar: false, 
+            responsive: true,
+            autosize: true
+        });
+        window.addEventListener('resize', function () {
+            Plotly.Plots.resize('tufe-chart');
+        });
     </script>
     {% if selected_madde != 'TÜFE' %}
     <script>
@@ -248,6 +453,13 @@
                 Plotly.Plots.resize('monthly-change-line-chart');
             }, 100);
         });
+
+        // Initialize monthly view toggle - ensure buttons are visible
+        setTimeout(function() {
+            if (document.getElementById('btn-grafik-monthly') && typeof toggleViewMonthly === 'function') {
+                toggleViewMonthly('grafik');
+            }
+        }, 100);
     </script>
     {% endif %}
     {% if selected_madde == 'TÜFE' %}
@@ -427,4 +639,98 @@
         });
     </script>
     {% endif %}
+    <script>
+    function toggleViewTufe(viewType) {
+        const grafikBtn = document.getElementById('btn-grafik-tufe');
+        const veriBtn = document.getElementById('btn-veri-tufe');
+        const chartView = document.getElementById('chart-view-tufe');
+        const dataView = document.getElementById('data-view-tufe');
+
+        if (viewType === 'grafik') {
+            grafikBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            grafikBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            chartView.classList.remove('hidden');
+            dataView.classList.add('hidden');
+        } else {
+            veriBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            veriBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            dataView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+        }
+    }
+
+    function toggleViewMonthly(viewType) {
+        const grafikBtn = document.getElementById('btn-grafik-monthly');
+        const veriBtn = document.getElementById('btn-veri-monthly');
+        const chartView = document.getElementById('monthly-chart-view');
+        const dataView = document.getElementById('monthly-data-view');
+
+        if (!grafikBtn || !veriBtn || !chartView || !dataView) {
+            return; // Elements not found, exit early
+        }
+
+        if (viewType === 'grafik') {
+            grafikBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            grafikBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            chartView.classList.remove('hidden');
+            dataView.classList.add('hidden');
+        } else {
+            veriBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            veriBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            dataView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+        }
+    }
+
+    function toggleViewTufeCompare(viewType) {
+        const grafikBtn = document.getElementById('btn-grafik-tufe-compare');
+        const veriBtn = document.getElementById('btn-veri-tufe-compare');
+        const chartView = document.getElementById('tufe-compare-chart-view');
+        const dataView = document.getElementById('tufe-compare-data-view');
+
+        if (!grafikBtn || !veriBtn || !chartView || !dataView) {
+            return; // Elements not found, exit early
+        }
+
+        if (viewType === 'grafik') {
+            grafikBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            grafikBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            veriBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            chartView.classList.remove('hidden');
+            dataView.classList.add('hidden');
+        } else {
+            veriBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            veriBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            grafikBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            dataView.classList.remove('hidden');
+            chartView.classList.add('hidden');
+        }
+    }
+
+    // Initialize monthly view toggle on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('btn-grafik-monthly')) {
+            toggleViewMonthly('grafik');
+        }
+        if (document.getElementById('btn-grafik-tufe-compare')) {
+            toggleViewTufeCompare('grafik');
+        }
+    });
+    </script>
 {% endblock %}
