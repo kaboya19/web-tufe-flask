@@ -250,6 +250,7 @@
         <main class="w-full px-6 lg:px-8 py-8">
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <form method="POST" class="mb-6 flex items-center space-x-4">
+                    <input type="hidden" name="breakdown_level" value="{{ breakdown_level if breakdown_level else '5' }}">
                     <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
                     <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
                         onchange="this.form.submit()">
@@ -280,11 +281,37 @@
                     </div>
                 </form>
 
+                <!-- Kırılım Seviyesi Butonları -->
+                <form method="POST" class="mb-6 flex items-center space-x-4">
+                    <input type="hidden" name="group" value="{{ selected_group }}">
+                    <input type="hidden" name="date" value="{{ selected_date }}">
+                    <input type="hidden" name="harcama_grubu" value="">
+                    <label class="font-bold text-black text-lg">Kırılım Seviyesi:</label>
+                    <button type="submit" name="breakdown_level" value="5" 
+                        class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 {% if breakdown_level == '5' %}bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm{% endif %}">
+                        5: Harcama Grubu
+                    </button>
+                    <button type="submit" name="breakdown_level" value="4" 
+                        class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 {% if breakdown_level == '4' %}bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm{% endif %}">
+                        4: Dörtlü Endeksler
+                    </button>
+                    <button type="submit" name="breakdown_level" value="3" 
+                        class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 {% if breakdown_level == '3' %}bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm{% endif %}">
+                        3: Üçlü Endeksler
+                    </button>
+                </form>
+
                 {% if harcama_grubu_adlari %}
                 <form method="POST" class="mb-6 flex items-center space-x-4">
                     <input type="hidden" name="group" value="{{ selected_group }}">
                     <input type="hidden" name="date" value="{{ selected_date }}">
-                    <label for="harcama_grubu" class="font-bold text-black text-lg">Harcama Grubu Seçin:</label>
+                    <input type="hidden" name="breakdown_level" value="{{ breakdown_level }}">
+                    <label for="harcama_grubu" class="font-bold text-black text-lg">
+                        {% if breakdown_level == '5' %}Harcama Grubu Seçin:
+                        {% elif breakdown_level == '4' %}Dörtlü Endeks Seçin:
+                        {% elif breakdown_level == '3' %}Üçlü Endeks Seçin:
+                        {% else %}Harcama Grubu Seçin:{% endif %}
+                    </label>
                     <select name="harcama_grubu" id="harcama_grubu"
                         class="border border-gray-300 rounded px-3 py-2 text-lg" onchange="this.form.submit()">
                         <option value="" {% if not selected_harcama_grubu %}selected{% endif %}>Seçiniz</option>

@@ -2549,8 +2549,11 @@ def harcama_gruplari():
     # Contribution controls (defaults: show=True, type='ana')
     show_contrib = False if request.method != 'POST' else ('show_contrib' in request.form)
     contrib_type = request.form.get('contrib_type', 'ana')
+    # Kırılım seviyesi (5: Harcama grubu, 4: Dörtlü, 3: Üçlü)
+    breakdown_level = request.form.get('breakdown_level', '5') if request.method == 'POST' else '5'
     print("Seçilen grup:", selected_group)
     print("Seçilen tarih:", selected_date)
+    print("Kırılım seviyesi:", breakdown_level)
     
     # Ortak: harcama grupları ve tarih seçenekleri için worksheet ve dataframe
     """creds = get_google_credentials_2()
@@ -2600,6 +2603,33 @@ def harcama_gruplari():
     except Exception as e:
         print("ürünler.csv okuma hatası:", e)
         harcama_gruplari = []
+    
+    # Kırılım seviyesine göre verileri filtrele
+    try:
+        urunler_detay = pd.read_csv('harcamaürünleri1.csv')
+        urunler_detay['Ana Grup'] = urunler_detay['Ana Grup'].str.strip().str.lower()
+        urunler_detay['Grup'] = urunler_detay['Grup'].str.strip().str.lower()
+        urunler_detay['Üçlü'] = urunler_detay['Üçlü'].str.strip().str.lower()
+        urunler_detay['Dörtlü'] = urunler_detay['Dörtlü'].str.strip().str.lower()
+        
+        # Seçilen ana gruba göre filtrele
+        filtered_urunler = urunler_detay[urunler_detay["Ana Grup"] == selected_group_norm]
+        
+        # Kırılım seviyesine göre liste oluştur
+        if breakdown_level == '5':
+            # Harcama grupları (mevcut mantık)
+            breakdown_items = filtered_urunler["Grup"].unique().tolist()
+        elif breakdown_level == '4':
+            # Dörtlü endeksler
+            breakdown_items = filtered_urunler["Dörtlü"].unique().tolist()
+        elif breakdown_level == '3':
+            # Üçlü endeksler
+            breakdown_items = filtered_urunler["Üçlü"].unique().tolist()
+        else:
+            breakdown_items = harcama_gruplari
+    except Exception as e:
+        print("harcamaürünleri1.csv okuma hatası:", e)
+        breakdown_items = harcama_gruplari if breakdown_level == '5' else []
 
     # Seçili tarihi orijinal formata çevir
     sheet_date = date_mapping[selected_date]
@@ -2616,22 +2646,42 @@ def harcama_gruplari():
             ana_grup_value = float(str(ana_grup_row[sheet_date].values[0]).replace(',', '.'))
         except Exception as e:
             print('Ana grup değeri alınırken hata:', e)
-    # Harcama gruplarının değerlerini al
-    df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
+    # Kırılım seviyesine göre veri kaynağını seç
+    if breakdown_level == '5':
+        # Harcama grupları (mevcut mantık)
+        df_data = df_harcama
+        df_data[df_data.columns[0]] = df_data[df_data.columns[0]].str.strip().str.lower()
+        data_items = breakdown_items
+    elif breakdown_level == '4':
+        # Dörtlü endeksler
+        df_data = pd.read_csv("dörtlüleraylık.csv", index_col=0)
+        df_data[df_data.columns[0]] = df_data[df_data.columns[0]].str.strip().str.lower()
+        data_items = breakdown_items
+    elif breakdown_level == '3':
+        # Üçlü endeksler
+        df_data = pd.read_csv("üçlüleraylık.csv", index_col=0)
+        df_data[df_data.columns[0]] = df_data[df_data.columns[0]].str.strip().str.lower()
+        data_items = breakdown_items
+    else:
+        df_data = df_harcama
+        df_data[df_data.columns[0]] = df_data[df_data.columns[0]].str.strip().str.lower()
+        data_items = harcama_gruplari
+    
+    # Seçilen kırılım seviyesine göre değerleri al
     bar_labels = []
     bar_values = []
     bar_colors = []
-    for grup in harcama_gruplari:
-        grup_norm = grup.strip().lower()
-        row = df_harcama[df_harcama.iloc[:,0] == grup_norm]
+    for item in data_items:
+        item_norm = item.strip().lower()
+        row = df_data[df_data.iloc[:,0] == item_norm]
         if not row.empty:
             try:
                 value = float(str(row[sheet_date].values[0]).replace(',', '.'))
-                bar_labels.append(grup.title())
+                bar_labels.append(item.title())
                 bar_values.append(value)
-                bar_colors.append('#EF476F' if grup_norm == selected_group_norm else '#118AB2')
+                bar_colors.append('#EF476F' if item_norm == selected_group_norm else '#118AB2')
             except Exception as e:
-                print(f'Grup {grup} için değer alınırken hata:', e)
+                print(f'Item {item} için değer alınırken hata:', e)
     # Ana grup da listede yoksa ekle
     if selected_group_norm not in [g.strip().lower() for g in bar_labels] and ana_grup_value is not None:
         bar_labels.append(selected_group.title())
@@ -2912,7 +2962,15 @@ def harcama_gruplari():
             print('Katkı grafiği oluşturulamadı:', e)
 
     selected_harcama_grubu = request.form.get('harcama_grubu') if request.method == 'POST' else None
-    harcama_grubu_adlari = harcama_gruplari if harcama_gruplari else []
+    # Kırılım seviyesine göre seçilebilir öğeleri belirle
+    if breakdown_level == '5':
+        harcama_grubu_adlari = harcama_gruplari if harcama_gruplari else []
+    elif breakdown_level == '4':
+        harcama_grubu_adlari = breakdown_items if breakdown_items else []
+    elif breakdown_level == '3':
+        harcama_grubu_adlari = breakdown_items if breakdown_items else []
+    else:
+        harcama_grubu_adlari = harcama_gruplari if harcama_gruplari else []
     harcama_grubu_endeks_graphJSON = None
     harcama_grubu_total_change = None
     harcama_grubu_monthly_change = None
@@ -2922,10 +2980,15 @@ def harcama_gruplari():
         toplam_baslik=""
         son_ay=""
         try:
-            """worksheet_endeks = spreadsheet.get_worksheet_by_id(2103865002)
-            data_endeks = worksheet_endeks.get_all_values()
-            df_endeks = pd.DataFrame(data_endeks[1:], columns=data_endeks[0])"""
-            df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            # Kırılım seviyesine göre endeks veri kaynağını seç
+            if breakdown_level == '5':
+                df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            elif breakdown_level == '4':
+                df_endeks=pd.read_csv("dörtlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            elif breakdown_level == '3':
+                df_endeks=pd.read_csv("üçlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            else:
+                df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
             df_endeks['Tarih'] = pd.to_datetime(df_endeks['Tarih'])
             print('Seçilen harcama grubu:', selected_harcama_grubu)
             print('Endeks tablosu sütunları:', list(df_endeks.columns))
@@ -2946,17 +3009,22 @@ def harcama_gruplari():
                 toplam_baslik = f"{first_date.strftime('%d.%m.%Y')} - {last_date.strftime('%d.%m.%Y')}"
                 harcama_grubu_total_change = values.iloc[-1] - values.iloc[0]
                 
-                # --- Fix: Son ay değişimi ve ay ismi harcama_gruplarıaylık.csv'den alınacak ---
-                """worksheet_harcama = spreadsheet.get_worksheet_by_id(1927818004)
-                data_harcama = worksheet_harcama.get_all_values()
-                df_harcama = pd.DataFrame(data_harcama[1:], columns=data_harcama[0])"""
-                df_harcama=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
-                df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
-                row = df_harcama[df_harcama.iloc[:,0] == selected_norm]
+                # --- Fix: Son ay değişimi ve ay ismi kırılım seviyesine göre alınacak ---
+                # Kırılım seviyesine göre aylık değişim veri kaynağını seç
+                if breakdown_level == '5':
+                    df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
+                elif breakdown_level == '4':
+                    df_harcama_aylik=pd.read_csv("dörtlüleraylık.csv",index_col=0)
+                elif breakdown_level == '3':
+                    df_harcama_aylik=pd.read_csv("üçlüleraylık.csv",index_col=0)
+                else:
+                    df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
+                df_harcama_aylik[df_harcama_aylik.columns[0]] = df_harcama_aylik[df_harcama_aylik.columns[0]].str.strip().str.lower()
+                row = df_harcama_aylik[df_harcama_aylik.iloc[:,0] == selected_norm]
                 harcama_grubu_monthly_change = None
                 son_ay = None
                 if not row.empty:
-                    last_col = df_harcama.columns[-1]
+                    last_col = df_harcama_aylik.columns[-1]
                     try:
                         harcama_grubu_monthly_change = float(str(row[last_col].values[0]).replace(',', '.'))
                         # Get the month name from the last column of the monthly change CSV
@@ -3061,16 +3129,23 @@ def harcama_gruplari():
 
                 # Monthly change graphs
                 try:
-                    # Get monthly changes from harcama_gruplarıaylık.csv
-                    df_harcama = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
-                    df_harcama[df_harcama.columns[0]] = df_harcama[df_harcama.columns[0]].str.strip().str.lower()
-                    row = df_harcama[df_harcama.iloc[:,0] == selected_norm]
+                    # Kırılım seviyesine göre aylık değişim veri kaynağını seç
+                    if breakdown_level == '5':
+                        df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+                    elif breakdown_level == '4':
+                        df_harcama_monthly = pd.read_csv("dörtlüleraylık.csv", index_col=0)
+                    elif breakdown_level == '3':
+                        df_harcama_monthly = pd.read_csv("üçlüleraylık.csv", index_col=0)
+                    else:
+                        df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+                    df_harcama_monthly[df_harcama_monthly.columns[0]] = df_harcama_monthly[df_harcama_monthly.columns[0]].str.strip().str.lower()
+                    row = df_harcama_monthly[df_harcama_monthly.iloc[:,0] == selected_norm]
                     
                     if not row.empty:
                         # Get all monthly changes
                         monthly_changes = []
                         monthly_dates = []
-                        for col in df_harcama.columns[1:]:
+                        for col in df_harcama_monthly.columns[1:]:
                             try:
                                 value = float(str(row[col].values[0]).replace(',', '.'))
                                 monthly_changes.append(value)
@@ -3298,12 +3373,20 @@ def harcama_gruplari():
         except Exception as e:
             print('Harcama grubu endeks grafiği oluşturulamadı:', e)
 
-    # Get harcama_grupları.csv data for index data view (only if harcama grubu selected)
+    # Get endeks data for index data view (only if harcama grubu selected)
     harcama_endeks_data = []
     harcama_endeks_columns = []
     if selected_harcama_grubu:
         try:
-            harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            # Kırılım seviyesine göre endeks veri kaynağını seç
+            if breakdown_level == '5':
+                harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            elif breakdown_level == '4':
+                harcama_endeks_df = pd.read_csv('dörtlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            elif breakdown_level == '3':
+                harcama_endeks_df = pd.read_csv('üçlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            else:
+                harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
             harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
             harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
             harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
@@ -3382,7 +3465,8 @@ def harcama_gruplari():
         harcama_endeks_data=harcama_endeks_data,
         harcama_endeks_columns=harcama_endeks_columns,
         harcama_monthly_data=harcama_monthly_data,
-        harcama_monthly_columns=harcama_monthly_columns
+        harcama_monthly_columns=harcama_monthly_columns,
+        breakdown_level=breakdown_level
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
