@@ -5821,11 +5821,6 @@ def admin_email_panel():
         <tr>
             <td style="padding: 20px; background-color: #ffffff; border: 1px solid #e0e0e0; border-top: none;">
                 <div style="white-space: pre-wrap; color: #333333; font-size: 15px; line-height: 1.6; font-family: Arial, sans-serif;">{body}</div>
-            </td>
-        </tr>
-        <!-- Signature -->
-        <tr>
-            <td style="padding: 20px; background-color: #ffffff;">
                 {signature_html}
             </td>
         </tr>
