@@ -26,6 +26,29 @@ pip install -r requirements.txt
 
 #### 2. Environment Variables Ayarlama
 
+**Production (Render, Heroku, vb.):**
+
+Environment variable'lar hosting platformunuzda ayarlanmalıdır. Uygulama önce sistem environment variable'larını kontrol eder.
+
+**Local Development (Opsiyonel - .env dosyası):**
+
+Local'de test etmek için proje klasörünüzde `.env` dosyası oluşturabilirsiniz:
+
+1. Proje klasörünüzde `.env` adında bir dosya oluşturun
+2. Aşağıdaki içeriği ekleyin:
+
+```env
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=borakaya8@gmail.com
+SMTP_PASSWORD=your_app_password_here
+ADMIN_API_KEY=your_admin_api_key_here
+```
+
+**Not:** `.env` dosyası sadece local development içindir. Production'da (Render'da) environment variable'lar otomatik olarak kullanılır ve `.env` dosyası göz ardı edilir.
+
+**Alternatif: Manuel Environment Variables (Geçici)**
+
 **Windows (PowerShell):**
 ```powershell
 $env:SMTP_SERVER="smtp.gmail.com"
