@@ -18,6 +18,7 @@ import gspread
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
 from pywebpush import webpush, WebPushException
 import sqlite3
 from cryptography.hazmat.primitives import serialization
@@ -5742,80 +5743,103 @@ def admin_email_panel():
             return redirect(url_for('admin_email_panel'))
         
         try:
-            # Load logo and convert to base64 for email embedding
-            logo_base64 = None
-            try:
-                logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
-                if os.path.exists(logo_path):
-                    with open(logo_path, 'rb') as logo_file:
-                        logo_data = logo_file.read()
-                        logo_base64 = base64.b64encode(logo_data).decode('utf-8')
-            except Exception as e:
-                print(f"Logo yüklenemedi: {str(e)}")
-            
-            # Create email message
-            msg = MIMEMultipart('alternative')
+            # Create email message - use 'related' instead of 'alternative' for inline images
+            msg = MIMEMultipart('related')
             msg['Subject'] = subject
             msg['From'] = os.environ.get('SMTP_USERNAME', 'webtufe@gmail.com')
             msg['To'] = to_email
             msg['Bcc'] = BCC_EMAIL  # BCC olarak bora.587@hotmail.com ekleniyor
             
-            # Create signature HTML
-            signature_html = ""
-            if logo_base64:
+            # Load logo and attach as inline image with CID
+            logo_cid = None
+            try:
+                logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as logo_file:
+                        logo_data = logo_file.read()
+                        logo_img = MIMEImage(logo_data)
+                        logo_cid = 'logo_signature'
+                        logo_img.add_header('Content-ID', f'<{logo_cid}>')
+                        logo_img.add_header('Content-Disposition', 'inline', filename='logo.png')
+                        msg.attach(logo_img)
+            except Exception as e:
+                print(f"Logo yüklenemedi: {str(e)}")
+            
+            # Create signature HTML - Gmail compatible
+            if logo_cid:
                 signature_html = f"""
-                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
-                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
-                        <tr>
-                            <td style="vertical-align: top; padding-right: 20px;">
-                                <img src="data:image/png;base64,{logo_base64}" alt="Web-TÜFE Logo" style="max-width: 120px; height: auto; display: block;">
-                            </td>
-                            <td style="vertical-align: top;">
-                                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #800020; line-height: 1.4;">
-                                        Bora Kaya
-                                    </p>
-                                    <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4;">
-                                        Web Tüketici Fiyat Endeksi Kurucusu
-                                    </p>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                """
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+    <tr>
+        <td width="120" valign="top" style="padding-right: 15px;">
+            <img src="cid:{logo_cid}" alt="Web-TÜFE Logo" width="120" style="display: block; border: 0;">
+        </td>
+        <td valign="top">
+            <p style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold; color: #800020; line-height: 1.4; font-family: Arial, sans-serif;">
+                Bora Kaya
+            </p>
+            <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4; font-family: Arial, sans-serif;">
+                Web Tüketici Fiyat Endeksi Kurucusu
+            </p>
+        </td>
+    </tr>
+</table>
+"""
             else:
                 signature_html = """
-                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
-                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                        <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #800020; line-height: 1.4;">
-                            Bora Kaya
-                        </p>
-                        <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4;">
-                            Web Tüketici Fiyat Endeksi Kurucusu
-                        </p>
-                    </div>
-                </div>
-                """
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+    <tr>
+        <td>
+            <p style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold; color: #800020; line-height: 1.4; font-family: Arial, sans-serif;">
+                Bora Kaya
+            </p>
+            <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4; font-family: Arial, sans-serif;">
+                Web Tüketici Fiyat Endeksi Kurucusu
+            </p>
+        </td>
+    </tr>
+</table>
+"""
             
-            # Create HTML content
+            # Create HTML content - Gmail compatible structure
+            # Use table-based layout and inline styles for better Gmail support
             html_content = f"""
-            <html>
-                <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                        <h2 style="color: #4F46E5; margin-top: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">{subject}</h2>
-                    </div>
-                    <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0;">
-                        <div style="white-space: pre-wrap; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; font-size: 15px;">{body}</div>
-                    </div>
-                    {signature_html}
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                        <p style="margin: 5px 0;">Bu e-posta Web TÜFE admin panelinden gönderilmiştir.</p>
-                        <p style="margin: 5px 0;">Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
-                    </div>
-                </body>
-            </html>
-            """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #ffffff;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="padding: 20px; background-color: #f8f9fa; border-radius: 10px 10px 0 0;">
+                <h2 style="margin: 0; color: #4F46E5; font-family: Arial, sans-serif; font-size: 24px;">{subject}</h2>
+            </td>
+        </tr>
+        <!-- Body Content -->
+        <tr>
+            <td style="padding: 20px; background-color: #ffffff; border: 1px solid #e0e0e0; border-top: none;">
+                <div style="white-space: pre-wrap; color: #333333; font-size: 15px; line-height: 1.6; font-family: Arial, sans-serif;">{body}</div>
+            </td>
+        </tr>
+        <!-- Signature -->
+        <tr>
+            <td style="padding: 20px; background-color: #ffffff;">
+                {signature_html}
+            </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 15px 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999999; font-family: Arial, sans-serif;">
+                <p style="margin: 3px 0;">Bu e-posta Web TÜFE admin panelinden gönderilmiştir.</p>
+                <p style="margin: 3px 0;">Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
             
             # Add HTML content
             html_part = MIMEText(html_content, 'html', 'utf-8')
