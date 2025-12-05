@@ -5742,6 +5742,17 @@ def admin_email_panel():
             return redirect(url_for('admin_email_panel'))
         
         try:
+            # Load logo and convert to base64 for email embedding
+            logo_base64 = None
+            try:
+                logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as logo_file:
+                        logo_data = logo_file.read()
+                        logo_base64 = base64.b64encode(logo_data).decode('utf-8')
+            except Exception as e:
+                print(f"Logo yüklenemedi: {str(e)}")
+            
             # Create email message
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
@@ -5749,19 +5760,58 @@ def admin_email_panel():
             msg['To'] = to_email
             msg['Bcc'] = BCC_EMAIL  # BCC olarak bora.587@hotmail.com ekleniyor
             
+            # Create signature HTML
+            signature_html = ""
+            if logo_base64:
+                signature_html = f"""
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                        <tr>
+                            <td style="vertical-align: top; padding-right: 20px;">
+                                <img src="data:image/png;base64,{logo_base64}" alt="Web-TÜFE Logo" style="max-width: 120px; height: auto; display: block;">
+                            </td>
+                            <td style="vertical-align: top;">
+                                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #800020; line-height: 1.4;">
+                                        Bora Kaya
+                                    </p>
+                                    <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4;">
+                                        Web Tüketici Fiyat Endeksi Kurucusu
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                """
+            else:
+                signature_html = """
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                        <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #800020; line-height: 1.4;">
+                            Bora Kaya
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #4F46E5; line-height: 1.4;">
+                            Web Tüketici Fiyat Endeksi Kurucusu
+                        </p>
+                    </div>
+                </div>
+                """
+            
             # Create HTML content
             html_content = f"""
             <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                        <h2 style="color: #4F46E5; margin-top: 0;">{subject}</h2>
+                        <h2 style="color: #4F46E5; margin-top: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">{subject}</h2>
                     </div>
                     <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0;">
-                        <div style="white-space: pre-wrap; margin-bottom: 20px;">{body}</div>
+                        <div style="white-space: pre-wrap; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; font-size: 15px;">{body}</div>
                     </div>
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
-                        <p>Bu e-posta Web TÜFE admin panelinden gönderilmiştir.</p>
-                        <p>Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+                    {signature_html}
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                        <p style="margin: 5px 0;">Bu e-posta Web TÜFE admin panelinden gönderilmiştir.</p>
+                        <p style="margin: 5px 0;">Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
                     </div>
                 </body>
             </html>
