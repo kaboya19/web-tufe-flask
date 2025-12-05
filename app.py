@@ -23,6 +23,11 @@ import sqlite3
 from cryptography.hazmat.primitives import serialization
 import base64
 import re
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (only if not already set)
+# This allows Render/production environment variables to take priority
+load_dotenv(override=False)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
@@ -5703,6 +5708,122 @@ def unsubscribe_push():
     except Exception as e:
         print(f"Unsubscribe error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# Admin panel for sending emails with BCC
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_email_panel():
+    # Simple API key authentication
+    admin_api_key = os.environ.get('ADMIN_API_KEY', '')
+    BCC_EMAIL = 'bora.587@hotmail.com'  # BCC email address
+    
+    if request.method == 'GET':
+        return render_template('admin.html', active_page='admin', has_api_key=bool(admin_api_key))
+    
+    if request.method == 'POST':
+        # Check API key if set
+        if admin_api_key:
+            provided_key = request.form.get('api_key', '')
+            if provided_key != admin_api_key:
+                flash('❌ Geçersiz API key!', 'error')
+                return redirect(url_for('admin_email_panel'))
+        
+        # Get email data from form
+        to_email = request.form.get('to_email', '').strip()
+        subject = request.form.get('subject', '').strip()
+        body = request.form.get('body', '').strip()
+        
+        if not to_email or not subject or not body:
+            flash('❌ Alıcı, konu ve mesaj gereklidir!', 'error')
+            return redirect(url_for('admin_email_panel'))
+        
+        # Email validation
+        if '@' not in to_email or '.' not in to_email:
+            flash('❌ Geçerli bir e-posta adresi giriniz!', 'error')
+            return redirect(url_for('admin_email_panel'))
+        
+        try:
+            # Create email message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = os.environ.get('SMTP_USERNAME', 'webtufe@gmail.com')
+            msg['To'] = to_email
+            msg['Bcc'] = BCC_EMAIL  # BCC olarak bora.587@hotmail.com ekleniyor
+            
+            # Create HTML content
+            html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #4F46E5; margin-top: 0;">{subject}</h2>
+                    </div>
+                    <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0;">
+                        <div style="white-space: pre-wrap; margin-bottom: 20px;">{body}</div>
+                    </div>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                        <p>Bu e-posta Web TÜFE admin panelinden gönderilmiştir.</p>
+                        <p>Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+                    </div>
+                </body>
+            </html>
+            """
+            
+            # Add HTML content
+            html_part = MIMEText(html_content, 'html', 'utf-8')
+            msg.attach(html_part)
+            
+            # SMTP configuration
+            smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+            smtp_username = os.environ.get('SMTP_USERNAME', 'borakaya8@gmail.com')
+            smtp_password = os.environ.get('SMTP_PASSWORD', '')
+            
+            # Check if SMTP password is configured
+            if not smtp_password:
+                error_msg = '❌ SMTP şifresi ayarlanmamış! Lütfen SMTP_PASSWORD environment variable\'ını ayarlayın.'
+                print(error_msg)
+                flash(error_msg, 'error')
+                return redirect(url_for('admin_email_panel'))
+            
+            if not smtp_username:
+                error_msg = '❌ SMTP kullanıcı adı ayarlanmamış! Lütfen SMTP_USERNAME environment variable\'ını ayarlayın.'
+                print(error_msg)
+                flash(error_msg, 'error')
+                return redirect(url_for('admin_email_panel'))
+            
+            # Send email via SMTP
+            print(f"SMTP bağlantısı kuruluyor: {smtp_server}:{smtp_port}")
+            print(f"Kullanıcı: {smtp_username}")
+            print(f"Alıcı: {to_email}")
+            print(f"BCC: {BCC_EMAIL}")
+            
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=30) as server:
+                server.starttls()
+                server.login(smtp_username, smtp_password)
+                server.send_message(msg)
+            
+            print(f"✅ E-posta başarıyla gönderildi: {to_email} (BCC: {BCC_EMAIL})")
+            flash(f'✅ E-posta başarıyla gönderildi! (BCC: {BCC_EMAIL})', 'success')
+            
+        except smtplib.SMTPAuthenticationError as e:
+            error_msg = f'❌ SMTP kimlik doğrulama hatası! Kullanıcı adı veya şifre hatalı olabilir. Gmail kullanıyorsanız "Uygulama Şifresi" kullanmayı deneyin. Hata: {str(e)}'
+            print(f"SMTP Kimlik Doğrulama Hatası: {str(e)}")
+            flash(error_msg, 'error')
+        except smtplib.SMTPConnectError as e:
+            error_msg = f'❌ SMTP sunucusuna bağlanılamadı! Sunucu adresini ve portu kontrol edin. Hata: {str(e)}'
+            print(f"SMTP Bağlantı Hatası: {str(e)}")
+            flash(error_msg, 'error')
+        except smtplib.SMTPException as e:
+            error_msg = f'❌ E-posta gönderilirken SMTP hatası oluştu: {str(e)}'
+            print(f"SMTP Hatası: {str(e)}")
+            flash(error_msg, 'error')
+        except Exception as e:
+            error_msg = f'❌ Beklenmeyen bir hata oluştu: {str(e)}'
+            print(f"Genel Hata: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            flash(error_msg, 'error')
+        
+        return redirect(url_for('admin_email_panel'))
 
 # Admin panel for sending push notifications (simple HTML form)
 @app.route('/admin/push', methods=['GET', 'POST'])
