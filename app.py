@@ -2757,14 +2757,31 @@ def harcama_gruplari():
     
     for i, value in enumerate(bar_values):
         # Determine text position based on value sign and magnitude
-        if value >= 0:
-            # For positive values, place text to the right of the bar
-            text_x = value + text_offset
-            align_anchor = 'left'
+        # For values near zero, place text on opposite side to avoid overlap with group names
+        if abs(value) <= 0.001:
+            # Near zero: place inside bar
+            text_x = value
+            align_anchor = 'center'
+        elif abs(value) < 0.1:  # Threshold for overlap detection - place on opposite side
+            # For values near zero, place on opposite side
+            if value >= 0:
+                # Positive but small: place on left (opposite)
+                text_x = value - text_offset
+                align_anchor = 'right'
+            else:
+                # Negative but small: place on right (opposite)
+                text_x = value + text_offset
+                align_anchor = 'left'
         else:
-            # For negative values, place text to the left of the bar
-            text_x = value - text_offset
-            align_anchor = 'right'
+            # Normal values: place on normal side
+            if value >= 0:
+                # For positive values, place text to the right of the bar
+                text_x = value + text_offset
+                align_anchor = 'left'
+            else:
+                # For negative values, place text to the left of the bar
+                text_x = value - text_offset
+                align_anchor = 'right'
         
         fig.add_annotation(
             x=text_x,
@@ -2924,29 +2941,7 @@ def harcama_gruplari():
                 if name.strip().lower() == selected_group_norm:
                     left_colors[i] = '#EF476F'
 
-            comb.add_trace(go.Bar(
-                y=left_categories, x=left_values, orientation='h',
-                marker=dict(color=left_colors, line=dict(width=0)),
-                name='Aylık değişim',
-                text=[f"<b>{v:+.2f}%</b>" for v in left_values],
-                textposition='outside', textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
-                cliponaxis=False,
-                hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
-            ), row=1, col=1)
-
-            # Build text labels safely; leave empty when value is None (ana grup satırı)
-            right_text = [f"<b>{v:+.2f}</b>" if v is not None else '' for v in right_values]
-            comb.add_trace(go.Bar(
-                y=left_categories, x=right_values, orientation='h',
-                marker=dict(color='#118AB2', line=dict(width=0)),
-                name='Katkı',
-                text=right_text,
-                textposition='outside', textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
-                cliponaxis=False,
-                hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
-            ), row=1, col=2)
-
-            # Ranges
+            # Ranges function - define before use
             def compute_range_left(vals):
                 if not vals:
                     return [0, 1]
@@ -2959,6 +2954,135 @@ def harcama_gruplari():
                 if vmax <= 0:
                     xmax = min(0, vmax + m)
                 return [xmin, xmax]
+            
+            # Build text labels for left chart - use annotations to place text on opposite side when near zero to avoid overlap
+            left_range = compute_range_left(left_values)
+            left_range_span = left_range[1] - left_range[0]
+            left_text_offset = left_range_span * 0.01
+            
+            # Prepare text and textposition lists
+            left_text = []
+            left_textposition = []
+            left_annotations_to_add = []
+            
+            for i, (cat, val) in enumerate(zip(left_categories, left_values)):
+                if abs(val) <= 0.001:
+                    # Near zero: place inside
+                    left_text.append(f"<b>{val:+.2f}%</b>")
+                    left_textposition.append('inside')
+                elif abs(val) < 0.1:  # Threshold for overlap detection - place on opposite side
+                    # For values near zero, place on opposite side using annotation
+                    if val >= 0:
+                        # Positive but small: place on left (opposite)
+                        text_x = val - left_text_offset
+                        xanchor = 'right'
+                    else:
+                        # Negative but small: place on right (opposite)
+                        text_x = val + left_text_offset
+                        xanchor = 'left'
+                    left_annotations_to_add.append({
+                        'x': text_x, 'y': cat,
+                        'text': f"<b>{val:+.2f}%</b>",
+                        'xanchor': xanchor, 'yanchor': 'middle'
+                    })
+                    # Don't show text on bar for these values
+                    left_text.append('')
+                    left_textposition.append('outside')
+                else:
+                    # Normal values: show text outside
+                    left_text.append(f"<b>{val:+.2f}%</b>")
+                    left_textposition.append('outside')
+            
+            comb.add_trace(go.Bar(
+                y=left_categories, x=left_values, orientation='h',
+                marker=dict(color=left_colors, line=dict(width=0)),
+                name='Aylık değişim',
+                text=left_text,
+                textposition=left_textposition, textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+            ), row=1, col=1)
+            
+            # Add annotations for left chart - place text on opposite side for values near zero
+            for ann in left_annotations_to_add:
+                comb.add_annotation(
+                    x=ann['x'], y=ann['y'],
+                    text=ann['text'],
+                    showarrow=False,
+                    font=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                    xanchor=ann['xanchor'], yanchor=ann['yanchor'],
+                    row=1, col=1
+                )
+
+            # Build text labels safely; place zero values inside bar, leave empty when value is None (ana grup satırı)
+            right_range_vals = [v for v in right_values if v is not None]
+            if right_range_vals:
+                right_range_min = min(right_range_vals)
+                right_range_max = max(right_range_vals)
+                right_range_span = right_range_max - right_range_min if right_range_max != right_range_min else abs(right_range_max) * 0.1
+                right_text_offset = right_range_span * 0.01
+            else:
+                right_range_span = 1
+                right_text_offset = 0.01
+            
+            # Prepare text and textposition lists for right chart
+            right_text = []
+            right_textposition = []
+            right_annotations_to_add = []
+            
+            for i, (cat, val) in enumerate(zip(left_categories, right_values)):
+                if val is None:
+                    # Ana grup satırı: no text
+                    right_text.append('')
+                    right_textposition.append('inside')
+                elif abs(val) <= 0.001:
+                    # Near zero: place inside
+                    right_text.append(f"<b>{val:+.2f}</b>")
+                    right_textposition.append('inside')
+                elif abs(val) < 0.01:  # Threshold for overlap detection - place on opposite side
+                    # For values near zero, place on opposite side using annotation
+                    if val >= 0:
+                        # Positive but small: place on left (opposite)
+                        text_x = val - right_text_offset
+                        xanchor = 'right'
+                    else:
+                        # Negative but small: place on right (opposite)
+                        text_x = val + right_text_offset
+                        xanchor = 'left'
+                    right_annotations_to_add.append({
+                        'x': text_x, 'y': cat,
+                        'text': f"<b>{val:+.2f}</b>",
+                        'xanchor': xanchor, 'yanchor': 'middle'
+                    })
+                    # Don't show text on bar for these values
+                    right_text.append('')
+                    right_textposition.append('outside')
+                else:
+                    # Normal values: show text outside
+                    right_text.append(f"<b>{val:+.2f}</b>")
+                    right_textposition.append('outside')
+            
+            comb.add_trace(go.Bar(
+                y=left_categories, x=right_values, orientation='h',
+                marker=dict(color='#118AB2', line=dict(width=0)),
+                name='Katkı',
+                text=right_text,
+                textposition=right_textposition, textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                cliponaxis=False,
+                hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
+            ), row=1, col=2)
+            
+            # Add annotations for right chart - place text on opposite side for values near zero
+            for ann in right_annotations_to_add:
+                comb.add_annotation(
+                    x=ann['x'], y=ann['y'],
+                    text=ann['text'],
+                    showarrow=False,
+                    font=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
+                    xanchor=ann['xanchor'], yanchor=ann['yanchor'],
+                    row=1, col=2
+                )
+
             comb.update_yaxes(title_text='Harcama Grubu', autorange='reversed', side='right',
                                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                                tickfont=dict(size=14, family='Arial Black, sans-serif', color='#2B2D42'),
