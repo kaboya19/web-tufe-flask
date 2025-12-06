@@ -2832,8 +2832,16 @@ def harcama_gruplari():
     # Build contribution chart for selected ana grup's harcama grupları
     if show_contrib:
         try:
-            # Select correct CSV by contribution type
-            file_path = 'harcamagrupları_manşetkatkı.csv' if contrib_type == 'ana' else 'harcamagrupları_katkı.csv'
+            # Select correct CSV by contribution type and breakdown level
+            if breakdown_level == '3':
+                # Üçlü endeksler
+                file_path = 'üçlümanşetkatkılar.csv' if contrib_type == 'ana' else 'üçlükatkılar.csv'
+            elif breakdown_level == '4':
+                # Dörtlü endeksler
+                file_path = 'dörtlümanşetkatkılar.csv' if contrib_type == 'ana' else 'dörtlükatkılar.csv'
+            else:
+                # Harcama grupları (breakdown_level == '5')
+                file_path = 'harcamagrupları_manşetkatkı.csv' if contrib_type == 'ana' else 'harcamagrupları_katkı.csv'
             df_katki = pd.read_csv(file_path, index_col=0)
             # choose date row
             target_date = sheet_date if sheet_date in df_katki.index else (sheet_date[:7] if sheet_date[:7] in df_katki.index else df_katki.index[-1])
@@ -2842,7 +2850,9 @@ def harcama_gruplari():
             row.index = [str(c).strip().lower() for c in row.index]
             labels = []
             values = []
-            for g in harcama_gruplari:
+            # Kırılım seviyesine göre doğru öğe listesini kullan
+            items_to_check = breakdown_items if breakdown_level in ['3', '4'] else harcama_gruplari
+            for g in items_to_check:
                 key = str(g).strip().lower()
                 if key in row.index:
                     try:
