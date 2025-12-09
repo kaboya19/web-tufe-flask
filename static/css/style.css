@@ -566,6 +566,85 @@ main {
     }
 }
 
+/* Donation Button Styles */
+.donation-button {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    text-decoration: none;
+}
+
+.donation-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.donation-button:hover::before {
+    left: 100%;
+}
+
+.donation-button svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.donation-button-header {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    text-decoration: none;
+}
+
+.donation-button-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.donation-button-header:hover::before {
+    left: 100%;
+}
+
+.donation-button-header svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.donation-button-footer {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    text-decoration: none;
+}
+
+.donation-button-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.donation-button-footer:hover::before {
+    left: 100%;
+}
+
+.donation-button-footer svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .container { padding: 0.75rem; }
@@ -606,6 +685,36 @@ main {
         padding: 2px 4px;
         top: -4px;
         right: -4px;
+    }
+    
+    .donation-button {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .donation-button svg {
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+    }
+    
+    .donation-button span {
+        font-size: 0.875rem !important;
+    }
+    
+    .donation-button-header {
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .donation-button-header svg {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+    
+    .donation-button-header span {
+        font-size: 0.7rem !important;
+    }
+    
+    header > div > div > div:first-child {
+        gap: 0.25rem !important;
     }
 }
 
