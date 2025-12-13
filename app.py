@@ -2564,7 +2564,7 @@ def ana_gruplar():
     gruplar_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
+        gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
@@ -3621,7 +3621,7 @@ def harcama_gruplari():
     harcama_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
@@ -5222,7 +5222,7 @@ def download_gruplar_endeksler_xlsx():
 @app.route('/download/gruplar-aylik/csv')
 def download_gruplar_aylik_csv():
     try:
-            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
+        gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
         date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
         
@@ -5304,7 +5304,7 @@ def download_harcama_endeksler_xlsx():
 @app.route('/download/harcama-aylik/csv')
 def download_harcama_aylik_csv():
     try:
-            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
         date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
         
@@ -5341,7 +5341,7 @@ def download_harcama_aylik_csv():
 @app.route('/download/harcama-aylik/xlsx')
 def download_harcama_aylik_xlsx():
     try:
-            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
         date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
         
@@ -5379,7 +5379,7 @@ def download_harcama_aylik_xlsx():
 @app.route('/download/gruplar-aylik/xlsx')
 def download_gruplar_aylik_xlsx():
     try:
-            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
+        gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
         date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
         
