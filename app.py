@@ -69,13 +69,13 @@ def service_unavailable(error):
 # Cache configuration - Memory cache for better performance
 cache_config = {
     'CACHE_TYPE': 'SimpleCache',  # In-memory cache (works well for single-instance deployments)
-    'CACHE_DEFAULT_TIMEOUT': 300,  # 5 minutes default cache timeout
-    'CACHE_THRESHOLD': 1000  # Maximum number of items in cache
+    'CACHE_DEFAULT_TIMEOUT': 600,  # 10 minutes default cache timeout (increased for better performance)
+    'CACHE_THRESHOLD': 2000  # Maximum number of items in cache (increased)
 }
 cache = Cache(app, config=cache_config)
 
 # Helper function to cache CSV reads
-@cache.memoize(timeout=300)
+@cache.memoize(timeout=600)  # 10 minutes cache timeout
 def cached_read_csv(filepath, **kwargs):
     """Cached version of pd.read_csv to avoid repeated file I/O"""
     return pd.read_csv(filepath, **kwargs)
@@ -286,7 +286,7 @@ def get_google_credentials_2():
     except Exception as e:
         raise ValueError(f"Failed to decode credentials: {str(e)}")
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_google_sheets_data():
     # Google Sheets API setup
     creds = get_google_credentials()
@@ -304,7 +304,7 @@ def get_google_sheets_data():
     # Convert to DataFrame
     df = pd.DataFrame(data[1:], columns=data[0])
 
-    df=pd.read_csv("gruplaraylık.csv",index_col=0)
+    df=cached_read_csv("gruplaraylık.csv",index_col=0)
     
     # Get the last column
     last_col = df.columns[-1]
@@ -336,7 +336,7 @@ def get_google_sheets_data():
     
     return pairs, month_name
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_tufe_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -348,7 +348,7 @@ def get_tufe_data():
     
     data = worksheet.get_all_values()"""
 
-    df=pd.read_csv('tüfe.csv').rename(columns={"Unnamed: 0":"Tarih"})
+    df=cached_read_csv('tüfe.csv').rename(columns={"Unnamed: 0":"Tarih"})
     
     # Convert to DataFrame
     #df = pd.DataFrame(data[1:], columns=data[0])
@@ -363,7 +363,7 @@ def get_tufe_data():
     
     return df
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_monthly_change():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -373,7 +373,7 @@ def get_monthly_change():
     data = worksheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])"""
 
-    df=pd.read_csv("gruplaraylık.csv",index_col=0)
+    df=cached_read_csv("gruplaraylık.csv",index_col=0)
    
     last_col = df.columns[-1]
     tufe_row = df[df.iloc[:,0].str.strip().str.lower() == 'web tüfe']
@@ -387,7 +387,7 @@ def get_monthly_change():
         value = 0
     return value, last_col
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_tufe_vs_tuik_bar_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -413,7 +413,7 @@ def get_tufe_vs_tuik_bar_data():
         tufe_values.append(val)
         tufe_months.append(col)
     # Read TUİK values from CSV
-    tuik_df = pd.read_csv('tüik.csv', index_col=0)
+    tuik_df = cached_read_csv('tüik.csv', index_col=0)
     tuik_df.index = pd.to_datetime(tuik_df.index)
     # Her ayın son günündeki değeri al
     tuik_monthly_last = tuik_df.resample('M').last()
@@ -462,7 +462,7 @@ def safe_get_turkish_month(m):
     else:
         return m
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_gruplar_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -472,12 +472,12 @@ def get_ana_gruplar_data():
     data = worksheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])"""
 
-    df=pd.read_csv("gruplar_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
+    df=cached_read_csv("gruplar_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
     df['Tarih'] = pd.to_datetime(df['Tarih'])
     df = df.sort_values('Tarih')
     return df
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_grup_monthly_change(grup_adi):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -499,7 +499,7 @@ def get_ana_grup_monthly_change(grup_adi):
         value = 0
     return value, last_col
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_grup_all_monthly_changes(grup_adi):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -803,11 +803,11 @@ def redirect_page():
         # Masaüstü cihaz - ana sayfaya yönlendir
         return redirect('/ana-sayfa')
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_monthly_group_data_for_date(date_str):
     """Get monthly group data for a specific date"""
     try:
-        df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        df = cached_read_csv("gruplaraylık.csv", index_col=0)
         
         # Check if the date exists in columns
         if date_str not in df.columns:
@@ -831,7 +831,7 @@ def get_monthly_group_data_for_date(date_str):
         print(f"Error in get_monthly_group_data_for_date: {e}")
         return None, None
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_available_dates():
     """Get list of available dates from monthly data"""
     try:
@@ -844,13 +844,13 @@ def get_available_dates():
         print(f"Error in get_available_dates: {e}")
         return []
 
-@cache.memoize(timeout=300)  # Cache for 5 minutes
+@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_top_movers():
     # Daily Data
     top_risers = []
     top_fallers = []
     try:
-        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
         # Calculate pct change
         pct_changes = endeksler_df.pct_change().iloc[-1] * 100
         pct_changes = pct_changes.dropna()
@@ -865,7 +865,7 @@ def get_top_movers():
     top_harcama_risers = []
     top_harcama_fallers = []
     try:
-        harcama_df = pd.read_csv('harcama_grupları.csv', index_col=0)
+        harcama_df = cached_read_csv('harcama_grupları.csv', index_col=0)
         # Calculate pct change
         harcama_pct_changes = harcama_df.pct_change().iloc[-1] * 100
         harcama_pct_changes = harcama_pct_changes.dropna()
@@ -881,7 +881,7 @@ def get_top_movers():
     monthly_top_risers = []
     monthly_top_fallers = []
     try:
-        maddeler_monthly = pd.read_csv('maddeleraylık.csv')
+        maddeler_monthly = cached_read_csv('maddeleraylık.csv')
         if 'Madde' in maddeler_monthly.columns:
             maddeler_monthly = maddeler_monthly.set_index('Madde')
             # Select the last column (assuming it is the latest date)
@@ -901,7 +901,7 @@ def get_top_movers():
     monthly_top_harcama_risers = []
     monthly_top_harcama_fallers = []
     try:
-        harcama_monthly = pd.read_csv('harcama_gruplarıaylık.csv')
+        harcama_monthly = cached_read_csv('harcama_gruplarıaylık.csv')
         if 'Grup' in harcama_monthly.columns:
             harcama_monthly = harcama_monthly.set_index('Grup')
             monthly_harcama_changes = harcama_monthly.iloc[:, -1]
@@ -1184,7 +1184,7 @@ def ana_sayfa():
         
         # Get monthly change data for data view (from gruplaraylık.csv)
         try:
-            monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+            monthly_df = cached_read_csv("gruplaraylık.csv", index_col=0)
             # Transpose: groups become columns, dates become rows
             # First column is group names, rest are dates
             group_names = monthly_df.iloc[:, 0].tolist()
@@ -1582,7 +1582,7 @@ def tufe():
             turkish_month = last_col_date
         # Get endeksler.csv data for data view
         try:
-            endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+            endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
             endeksler_df.index = pd.to_datetime(endeksler_df.index)
             endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
             # Reset index to make Tarih a column
@@ -1601,7 +1601,7 @@ def tufe():
         # Get maddeleraylık.csv data for monthly change data view
         try:
             # Read CSV: first column is index (0,1,2...), second column is 'Madde', rest are dates
-            maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+            maddeler_monthly_df = cached_read_csv('maddeleraylık.csv', index_col=0)
             # After index_col=0, first column (index) is removed, so columns are: ['Madde', '2025-02-28', ...]
             # Get 'Madde' column values
             madde_names_list = maddeler_monthly_df['Madde'].tolist()
@@ -1682,7 +1682,7 @@ def tufe():
             """monthly_change_worksheet = spreadsheet.get_worksheet_by_id(1103913248)
             monthly_change_data = monthly_change_worksheet.get_all_values()
             df_monthly = pd.DataFrame(monthly_change_data[1:], columns=monthly_change_data[0])"""
-            df_monthly=pd.read_csv("maddeleraylık.csv",index_col=0)
+            df_monthly=cached_read_csv("maddeleraylık.csv",index_col=0)
             df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
             monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_madde_norm]
             monthly_change = None
@@ -2021,7 +2021,7 @@ def tufe():
             
             # Get endeksler.csv data for data view
             try:
-                endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+                endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
                 endeksler_df.index = pd.to_datetime(endeksler_df.index)
                 endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
                 # Reset index to make Tarih a column
@@ -2039,7 +2039,7 @@ def tufe():
             
             # Get maddeleraylık.csv data for monthly change data view
             try:
-                maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+                maddeler_monthly_df = cached_read_csv('maddeleraylık.csv', index_col=0)
                 # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
                 # Get 'Madde' column values
                 madde_names_list = maddeler_monthly_df['Madde'].tolist()
@@ -2093,7 +2093,7 @@ def tufe():
         else:
             # Get endeksler.csv data for data view
             try:
-                endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+                endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
                 endeksler_df.index = pd.to_datetime(endeksler_df.index)
                 endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
                 # Reset index to make Tarih a column
@@ -2111,7 +2111,7 @@ def tufe():
             
             # Get maddeleraylık.csv data for monthly change data view even on error
             try:
-                maddeler_monthly_df = pd.read_csv('maddeleraylık.csv', index_col=0)
+                maddeler_monthly_df = cached_read_csv('maddeleraylık.csv', index_col=0)
                 # After index_col=0, columns are: ['Madde', '2025-02-28', ...]
                 # Get 'Madde' column values
                 madde_names_list = maddeler_monthly_df['Madde'].tolist()
@@ -2542,7 +2542,7 @@ def ana_gruplar():
     gruplar_data = []
     gruplar_columns = []
     try:
-        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df = cached_read_csv('gruplar_int.csv', index_col=0)
         gruplar_df.index = pd.to_datetime(gruplar_df.index)
         gruplar_df = gruplar_df.sort_index(ascending=False)
         gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
@@ -2564,7 +2564,7 @@ def ana_gruplar():
     gruplar_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
@@ -3199,13 +3199,13 @@ def harcama_gruplari():
         try:
             # Kırılım seviyesine göre endeks veri kaynağını seç
             if breakdown_level == '5':
-                df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
             elif breakdown_level == '4':
                 df_endeks=pd.read_csv("dörtlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
             elif breakdown_level == '3':
                 df_endeks=pd.read_csv("üçlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
             else:
-                df_endeks=pd.read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
             df_endeks['Tarih'] = pd.to_datetime(df_endeks['Tarih'])
             print('Seçilen harcama grubu:', selected_harcama_grubu)
             print('Endeks tablosu sütunları:', list(df_endeks.columns))
@@ -3597,13 +3597,13 @@ def harcama_gruplari():
         try:
             # Kırılım seviyesine göre endeks veri kaynağını seç
             if breakdown_level == '5':
-                harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+                harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
             elif breakdown_level == '4':
                 harcama_endeks_df = pd.read_csv('dörtlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
             elif breakdown_level == '3':
                 harcama_endeks_df = pd.read_csv('üçlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
             else:
-                harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+                harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
             harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
             harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
             harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
@@ -3621,7 +3621,7 @@ def harcama_gruplari():
     harcama_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
@@ -3705,7 +3705,7 @@ def maddeler():
     worksheet = spreadsheet.get_worksheet_by_id(1103913248)
     data = worksheet.get_all_values()
     df_madde = pd.DataFrame(data[1:], columns=data[0])"""
-    df_madde=pd.read_csv("maddeleraylık.csv",index_col=0)
+    df_madde=cached_read_csv("maddeleraylık.csv",index_col=0)
     df_madde[df_madde.columns[0]] = df_madde[df_madde.columns[0]].str.strip().str.lower()
     # Tarih seçenekleri
     date_options = df_madde.columns[1:].tolist()
@@ -3925,7 +3925,7 @@ def ozel_kapsamli_gostergeler():
     data = worksheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])"""
 
-    df=pd.read_csv("özelgöstergeler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+    df=cached_read_csv("özelgöstergeler.csv").rename(columns={"Unnamed: 0":"Tarih"})
     
     # Convert date column to datetime
     df['Tarih'] = pd.to_datetime(df['Tarih'])
@@ -3952,7 +3952,7 @@ def ozel_kapsamli_gostergeler():
     """monthly_worksheet = spreadsheet.get_worksheet_by_id(1767722805)
     monthly_data = monthly_worksheet.get_all_values()
     df_monthly = pd.DataFrame(monthly_data[1:], columns=monthly_data[0])"""
-    df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+    df_monthly_raw = cached_read_csv("özelgöstergeleraylık.csv", index_col=0)
     df_monthly_norm = df_monthly_raw.copy()
     first_column_name = df_monthly_norm.columns[0] if not df_monthly_norm.empty else None
     month_columns = list(df_monthly_norm.columns[1:]) if not df_monthly_norm.empty else []
@@ -4574,7 +4574,7 @@ def download_ozel_kapsamli_xlsx():
 @app.route('/download/ozel-kapsamli-aylik/csv')
 def download_ozel_kapsamli_aylik_csv():
     try:
-        df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+        df_monthly_raw = cached_read_csv("özelgöstergeleraylık.csv", index_col=0)
         
         # Transpose: dates as rows, indicators as columns
         ozel_monthly_df = df_monthly_raw.set_index(df_monthly_raw.columns[0]).T
@@ -4603,7 +4603,7 @@ def download_ozel_kapsamli_aylik_csv():
 @app.route('/download/ozel-kapsamli-aylik/xlsx')
 def download_ozel_kapsamli_aylik_xlsx():
     try:
-        df_monthly_raw = pd.read_csv("özelgöstergeleraylık.csv", index_col=0)
+        df_monthly_raw = cached_read_csv("özelgöstergeleraylık.csv", index_col=0)
         
         # Transpose: dates as rows, indicators as columns
         ozel_monthly_df = df_monthly_raw.set_index(df_monthly_raw.columns[0]).T
@@ -5173,7 +5173,7 @@ def download_ana_gruplar_xlsx():
 @app.route('/download/gruplar-endeksler/csv')
 def download_gruplar_endeksler_csv():
     try:
-        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df = cached_read_csv('gruplar_int.csv', index_col=0)
         gruplar_df.index = pd.to_datetime(gruplar_df.index)
         gruplar_df = gruplar_df.sort_index(ascending=False)
         gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
@@ -5197,7 +5197,7 @@ def download_gruplar_endeksler_csv():
 @app.route('/download/gruplar-endeksler/xlsx')
 def download_gruplar_endeksler_xlsx():
     try:
-        gruplar_df = pd.read_csv('gruplar_int.csv', index_col=0)
+        gruplar_df = cached_read_csv('gruplar_int.csv', index_col=0)
         gruplar_df.index = pd.to_datetime(gruplar_df.index)
         gruplar_df = gruplar_df.sort_index(ascending=False)
         gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
@@ -5222,7 +5222,7 @@ def download_gruplar_endeksler_xlsx():
 @app.route('/download/gruplar-aylik/csv')
 def download_gruplar_aylik_csv():
     try:
-        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
         date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
         
@@ -5259,7 +5259,7 @@ def download_gruplar_aylik_csv():
 @app.route('/download/harcama-endeksler/csv')
 def download_harcama_endeksler_csv():
     try:
-        harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+        harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
         harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
         harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
         harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
@@ -5281,7 +5281,7 @@ def download_harcama_endeksler_csv():
 @app.route('/download/harcama-endeksler/xlsx')
 def download_harcama_endeksler_xlsx():
     try:
-        harcama_endeks_df = pd.read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+        harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
         harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
         harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
         harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
@@ -5304,7 +5304,7 @@ def download_harcama_endeksler_xlsx():
 @app.route('/download/harcama-aylik/csv')
 def download_harcama_aylik_csv():
     try:
-        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
         date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
         
@@ -5341,7 +5341,7 @@ def download_harcama_aylik_csv():
 @app.route('/download/harcama-aylik/xlsx')
 def download_harcama_aylik_xlsx():
     try:
-        harcama_monthly_df = pd.read_csv('harcama_gruplarıaylık.csv', index_col=0)
+            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
         date_columns_harcama = [col for col in harcama_monthly_df.columns if col != 'Grup']
         
@@ -5379,7 +5379,7 @@ def download_harcama_aylik_xlsx():
 @app.route('/download/gruplar-aylik/xlsx')
 def download_gruplar_aylik_xlsx():
     try:
-        gruplar_monthly_df = pd.read_csv('gruplaraylık.csv', index_col=0)
+            gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
         date_columns_monthly = [col for col in gruplar_monthly_df.columns if col != 'Grup']
         
@@ -5418,7 +5418,7 @@ def download_gruplar_aylik_xlsx():
 def download_tufe_endeksler_csv():
     try:
         # Get endeksler.csv data
-        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
         endeksler_df.index = pd.to_datetime(endeksler_df.index)
         endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
         # Reset index to make Tarih a column
@@ -5441,7 +5441,7 @@ def download_tufe_endeksler_csv():
 def download_tufe_endeksler_xlsx():
     try:
         # Get endeksler.csv data
-        endeksler_df = pd.read_csv('endeksler.csv', index_col=0)
+        endeksler_df = cached_read_csv('endeksler.csv', index_col=0)
         endeksler_df.index = pd.to_datetime(endeksler_df.index)
         endeksler_df = endeksler_df.sort_index(ascending=False)  # Most recent first
         # Reset index to make Tarih a column
@@ -6752,7 +6752,7 @@ def get_subscription_count():
 def aclik_siniri():
     try:
         # Load açlıksınırı.csv
-        df_raw = pd.read_csv('açlıksınırı.csv', index_col=0)
+        df_raw = cached_read_csv('açlıksınırı.csv', index_col=0)
         # Clean column names (remove quotes and extra spaces)
         df_raw.columns = df_raw.columns.str.strip().str.strip('"').str.strip("'")
         df_raw.index = pd.to_datetime(df_raw.index)
