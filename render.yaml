@@ -3,7 +3,7 @@ services:
     name: web-tufe-flask
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 4 --threads 2 --timeout 120 --worker-class sync --max-requests 1000 --max-requests-jitter 50
+    startCommand: gunicorn app:app --workers 2 --threads 2 --timeout 60 --worker-class sync --max-requests 500 --max-requests-jitter 50 --preload
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION

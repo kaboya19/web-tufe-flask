@@ -68,13 +68,18 @@ def service_unavailable(error):
 
 # Cache configuration - FileSystemCache for multi-worker compatibility
 # FileSystemCache works across multiple Gunicorn workers (unlike SimpleCache)
+# Reduced threshold to save memory
 cache_config = {
     'CACHE_TYPE': 'FileSystemCache',  # File-based cache (works with multiple workers)
     'CACHE_DIR': '/tmp/flask-cache',  # Cache directory (Render provides /tmp)
     'CACHE_DEFAULT_TIMEOUT': 600,  # 10 minutes default cache timeout
-    'CACHE_THRESHOLD': 2000  # Maximum number of items in cache
+    'CACHE_THRESHOLD': 500  # Reduced from 2000 to save memory (RAM optimization)
 }
 cache = Cache(app, config=cache_config)
+
+# Create cache directory if it doesn't exist
+import os
+os.makedirs('/tmp/flask-cache', exist_ok=True)
 
 # Helper function to cache CSV reads
 @cache.memoize(timeout=600)  # 10 minutes cache timeout

@@ -1,0 +1,50 @@
+# Fly.io için örnek yapılandırma
+# Bu dosyayı fly.toml olarak kaydedin ve "fly launch" komutu ile deploy edin
+
+app = "web-tufe-flask"
+primary_region = "iad"
+
+[build]
+
+[env]
+  PYTHON_VERSION = "3.11.0"
+
+[http]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[services]]
+  http_checks = []
+  internal_port = 8000
+  processes = ["app"]
+  protocol = "tcp"
+  script_checks = []
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
+
+[[processes]]
+  name = "app"
+  command = "gunicorn app:app --workers 4 --threads 2 --timeout 120 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --bind 0.0.0.0:8000"
+
