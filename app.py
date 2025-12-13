@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, jsonify
+from flask_caching import Cache
+from flask_compress import Compress
 import pandas as pd
 import numpy as np
 import json
@@ -32,6 +34,51 @@ load_dotenv(override=False)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluştur
+
+# Compression configuration - Compress responses to reduce bandwidth
+Compress(app)
+
+# Global error handlers
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors gracefully"""
+    print(f"❌ Internal Server Error: {error}")
+    import traceback
+    traceback.print_exc()
+    return jsonify({
+        'error': 'Internal server error',
+        'message': 'Sunucuda bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+    }), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    """Handle 404 errors"""
+    return jsonify({
+        'error': 'Not found',
+        'message': 'Aradığınız sayfa bulunamadı.'
+    }), 404
+
+@app.errorhandler(503)
+def service_unavailable(error):
+    """Handle 503 errors (service unavailable)"""
+    return jsonify({
+        'error': 'Service unavailable',
+        'message': 'Servis şu anda kullanılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.'
+    }), 503
+
+# Cache configuration - Memory cache for better performance
+cache_config = {
+    'CACHE_TYPE': 'SimpleCache',  # In-memory cache (works well for single-instance deployments)
+    'CACHE_DEFAULT_TIMEOUT': 300,  # 5 minutes default cache timeout
+    'CACHE_THRESHOLD': 1000  # Maximum number of items in cache
+}
+cache = Cache(app, config=cache_config)
+
+# Helper function to cache CSV reads
+@cache.memoize(timeout=300)
+def cached_read_csv(filepath, **kwargs):
+    """Cached version of pd.read_csv to avoid repeated file I/O"""
+    return pd.read_csv(filepath, **kwargs)
 
 # Make get_turkish_month available in templates
 @app.template_global()
@@ -239,6 +286,7 @@ def get_google_credentials_2():
     except Exception as e:
         raise ValueError(f"Failed to decode credentials: {str(e)}")
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_google_sheets_data():
     # Google Sheets API setup
     creds = get_google_credentials()
@@ -288,6 +336,7 @@ def get_google_sheets_data():
     
     return pairs, month_name
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_tufe_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -314,6 +363,7 @@ def get_tufe_data():
     
     return df
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_monthly_change():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -337,6 +387,7 @@ def get_monthly_change():
         value = 0
     return value, last_col
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_tufe_vs_tuik_bar_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -411,6 +462,7 @@ def safe_get_turkish_month(m):
     else:
         return m
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_ana_gruplar_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -425,6 +477,7 @@ def get_ana_gruplar_data():
     df = df.sort_values('Tarih')
     return df
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_ana_grup_monthly_change(grup_adi):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -446,6 +499,7 @@ def get_ana_grup_monthly_change(grup_adi):
         value = 0
     return value, last_col
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_ana_grup_all_monthly_changes(grup_adi):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -708,6 +762,26 @@ def is_mobile_device(user_agent):
     return any(keyword in user_agent for keyword in mobile_keywords)
 
 from flask import send_from_directory
+
+# Health check endpoint for Render monitoring
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Render and monitoring services"""
+    try:
+        # Quick check: try to read a small CSV file to verify file system access
+        test_df = cached_read_csv('tüfe.csv', nrows=1)
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'cache_status': 'active'
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
 @app.route('/ads.txt')
 def ads_txt():
     return send_from_directory('static', 'ads.txt')
@@ -729,6 +803,7 @@ def redirect_page():
         # Masaüstü cihaz - ana sayfaya yönlendir
         return redirect('/ana-sayfa')
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_monthly_group_data_for_date(date_str):
     """Get monthly group data for a specific date"""
     try:
@@ -756,6 +831,7 @@ def get_monthly_group_data_for_date(date_str):
         print(f"Error in get_monthly_group_data_for_date: {e}")
         return None, None
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_available_dates():
     """Get list of available dates from monthly data"""
     try:
@@ -768,6 +844,7 @@ def get_available_dates():
         print(f"Error in get_available_dates: {e}")
         return []
 
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def get_top_movers():
     # Daily Data
     top_risers = []
