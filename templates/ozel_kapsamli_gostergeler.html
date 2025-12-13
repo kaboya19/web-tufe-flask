@@ -363,14 +363,7 @@
 
             <!-- Monthly Change Charts -->
             <div class="bg-white rounded-lg shadow-sm p-6 overflow-hidden">
-                <div class="mb-4 flex gap-2">
-                    <button id="btn-grafik-monthly" onclick="toggleViewMonthly('grafik')" class="px-4 py-2 text-sm font-semibold rounded-lg border transition-colors duration-150 bg-indigo-600 text-white shadow-md whitespace-nowrap">
-                        Grafik
-                    </button>
-                    <button id="btn-veri-monthly" onclick="toggleViewMonthly('veri')" class="px-4 py-2 text-sm font-semibold rounded-lg border border-indigo-200 bg-white text-gray-600 hover:bg-indigo-50 transition-colors duration-150 whitespace-nowrap">
-                        Veri
-                    </button>
-                </div>
+                <!-- View toggle buttons removed for performance -->
                 <div id="monthly-chart-view" class="overflow-x-auto">
                     <div class="graph-tabs">
                         <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
@@ -378,63 +371,6 @@
                     </div>
                     <div id="bar-chart" class="graph-content active" style="height: 400px; min-width: 0;"></div>
                     <div id="line-chart" class="graph-content" style="height: 400px; min-width: 0;"></div>
-                </div>
-                <div id="monthly-data-view" class="hidden">
-                    <div class="mb-4 flex justify-end gap-2">
-                        <a href="/download/ozel-kapsamli-aylik/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            CSV İndir
-                        </a>
-                        <a href="/download/ozel-kapsamli-aylik/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Excel İndir
-                        </a>
-                    </div>
-                    {% if ozel_monthly_data and ozel_monthly_columns %}
-                    <div class="overflow-x-auto rounded-xl border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-indigo-600 text-white">
-                                <tr>
-                                    {% for col in ozel_monthly_columns %}
-                                    <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide {% if loop.first %}sticky left-0 bg-indigo-600 z-10{% endif %}">
-                                        {{ col }}
-                                    </th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for row in ozel_monthly_data %}
-                                <tr class="hover:bg-gray-50">
-                                    {% for col in ozel_monthly_columns %}
-                                    <td class="py-3 px-4 text-sm text-gray-700 {% if loop.first %}sticky left-0 bg-white z-10 font-medium{% endif %}">
-                                        {% if col == 'Tarih' %}
-                                            {{ row[col] }}
-                                        {% else %}
-                                            {% set val = row.get(col) %}
-                                            {% if val is not none %}
-                                                {% if val is number %}
-                                                    {{ "%.2f"|format(val) }}
-                                                {% else %}
-                                                    {{ val }}
-                                                {% endif %}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p class="text-sm text-gray-500">Veri bulunamadı.</p>
-                    {% endif %}
                 </div>
             </div>
             {% elif view_type == 'table' %}
@@ -560,21 +496,10 @@
                 {% endif %}
             </div>
             {% elif view_type == 'data' %}
-            <!-- Data View -->
+            <!-- Data View removed for performance -->
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="mb-4 flex justify-end gap-2">
-                    <a href="/download/ozel-kapsamli/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        CSV İndir
-                    </a>
-                    <a href="/download/ozel-kapsamli/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Excel İndir
-                    </a>
+                    <!-- Download buttons removed for performance -->
                 </div>
                 {% if ozel_endeks_data and ozel_endeks_columns %}
                 <div class="overflow-x-auto rounded-xl border border-gray-200">
@@ -768,37 +693,12 @@
             }
         }
 
-        function toggleViewMonthly(viewType) {
-            const grafikBtn = document.getElementById('btn-grafik-monthly');
-            const veriBtn = document.getElementById('btn-veri-monthly');
-            const chartView = document.getElementById('monthly-chart-view');
-            const dataView = document.getElementById('monthly-data-view');
+        // toggleViewMonthly function removed for performance optimization
 
-            if (!grafikBtn || !veriBtn || !chartView || !dataView) {
-                return;
-            }
-
-            if (viewType === 'grafik') {
-                grafikBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                grafikBtn.classList.remove('bg-white', 'text-gray-600', 'border-indigo-200');
-                veriBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                veriBtn.classList.add('bg-white', 'text-gray-600', 'border-indigo-200');
-                chartView.classList.remove('hidden');
-                dataView.classList.add('hidden');
-            } else {
-                veriBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                veriBtn.classList.remove('bg-white', 'text-gray-600', 'border-indigo-200');
-                grafikBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                grafikBtn.classList.add('bg-white', 'text-gray-600', 'border-indigo-200');
-                chartView.classList.add('hidden');
-                dataView.classList.remove('hidden');
-            }
-        }
-
-        // Initialize monthly view on page load
+        // Initialize monthly view on page load - toggleViewMonthly removed for performance
         if (isGraphView) {
             setTimeout(function() {
-                toggleViewMonthly('grafik');
+                // toggleViewMonthly('grafik'); // Removed for performance
             }, 100);
         }
 

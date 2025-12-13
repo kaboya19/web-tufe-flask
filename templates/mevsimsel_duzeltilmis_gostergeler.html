@@ -254,39 +254,14 @@
                 </div>
             </div>
 
-            <!-- View Toggle Buttons -->
-            <div class="mb-4 flex gap-2">
-                <button type="button" onclick="toggleViewMain('grafik')" id="btn-grafik-main"
-                    class="px-4 py-2 text-sm font-semibold rounded-lg border transition-colors duration-150 bg-indigo-600 text-white shadow-md whitespace-nowrap">
-                    Grafik
-                </button>
-                <button type="button" onclick="toggleViewMain('veri')" id="btn-veri-main"
-                    class="px-4 py-2 text-sm font-semibold rounded-lg border border-indigo-200 bg-white text-gray-600 hover:bg-indigo-50 transition-colors duration-150 whitespace-nowrap">
-                    Veri
-                </button>
-            </div>
+            <!-- View toggle buttons removed for performance -->
 
             <!-- Index Chart -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-8 overflow-hidden">
                 <div id="chart-view" class="overflow-x-auto">
                     <div id="index-chart" class="w-full" style="height: 500px; min-width: 0;"></div>
                 </div>
-                <!-- Data view -->
-                <div id="data-view" class="w-full hidden">
-                    <div class="mb-4 flex justify-end gap-2">
-                        <a href="/download/mevsimsel/csv" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            CSV İndir
-                        </a>
-                        <a href="/download/mevsimsel/xlsx" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow transition flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Excel İndir
-                        </a>
-                    </div>
+                <!-- Data view removed for performance -->
                     {% if ma_data and ma_columns %}
                     <div class="overflow-x-auto rounded-xl border border-gray-200">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -345,36 +320,11 @@
     <script>
         console.log('Script started');  // Test log
 
-        function toggleViewMain(viewType) {
-            const grafikBtn = document.getElementById('btn-grafik-main');
-            const veriBtn = document.getElementById('btn-veri-main');
-            const chartView = document.getElementById('chart-view');
-            const dataView = document.getElementById('data-view');
+        // toggleViewMain function removed for performance optimization
 
-            if (!grafikBtn || !veriBtn || !chartView || !dataView) {
-                return;
-            }
-
-            if (viewType === 'grafik') {
-                grafikBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                grafikBtn.classList.remove('bg-white', 'text-gray-600', 'border-indigo-200');
-                veriBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                veriBtn.classList.add('bg-white', 'text-gray-600', 'border-indigo-200');
-                chartView.classList.remove('hidden');
-                dataView.classList.add('hidden');
-            } else {
-                veriBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                veriBtn.classList.remove('bg-white', 'text-gray-600', 'border-indigo-200');
-                grafikBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                grafikBtn.classList.add('bg-white', 'text-gray-600', 'border-indigo-200');
-                chartView.classList.add('hidden');
-                dataView.classList.remove('hidden');
-            }
-        }
-
-        // Initialize view on page load
+        // Initialize view on page load - toggleViewMain removed for performance
         setTimeout(function() {
-            toggleViewMain('grafik');
+            // toggleViewMain('grafik'); // Removed for performance
         }, 100);
 
         // Check if Plotly is loaded
