@@ -66,11 +66,13 @@ def service_unavailable(error):
         'message': 'Servis şu anda kullanılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.'
     }), 503
 
-# Cache configuration - Memory cache for better performance
+# Cache configuration - FileSystemCache for multi-worker compatibility
+# FileSystemCache works across multiple Gunicorn workers (unlike SimpleCache)
 cache_config = {
-    'CACHE_TYPE': 'SimpleCache',  # In-memory cache (works well for single-instance deployments)
-    'CACHE_DEFAULT_TIMEOUT': 600,  # 10 minutes default cache timeout (increased for better performance)
-    'CACHE_THRESHOLD': 2000  # Maximum number of items in cache (increased)
+    'CACHE_TYPE': 'FileSystemCache',  # File-based cache (works with multiple workers)
+    'CACHE_DIR': '/tmp/flask-cache',  # Cache directory (Render provides /tmp)
+    'CACHE_DEFAULT_TIMEOUT': 600,  # 10 minutes default cache timeout
+    'CACHE_THRESHOLD': 2000  # Maximum number of items in cache
 }
 cache = Cache(app, config=cache_config)
 
@@ -79,6 +81,34 @@ cache = Cache(app, config=cache_config)
 def cached_read_csv(filepath, **kwargs):
     """Cached version of pd.read_csv to avoid repeated file I/O"""
     return pd.read_csv(filepath, **kwargs)
+
+# Helper function to cache DataFrame transpose operations
+@cache.memoize(timeout=600)
+def cached_transpose_monthly_data(csv_file, index_col=0, name_column='Grup'):
+    """Cache the expensive DataFrame transpose operation"""
+    df = cached_read_csv(csv_file, index_col=index_col)
+    name_list = df[name_column].tolist() if name_column in df.columns else df.iloc[:, 0].tolist()
+    date_columns = [col for col in df.columns if col != name_column]
+    
+    transposed_data = []
+    for date_col in date_columns:
+        row_data = {'Tarih': date_col}
+        for idx, name in enumerate(name_list):
+            value = df.iloc[idx][date_col]
+            try:
+                value = float(str(value).replace(',', '.'))
+            except:
+                value = None
+            row_data[name] = value
+        transposed_data.append(row_data)
+    
+    time_series_df = pd.DataFrame(transposed_data)
+    try:
+        time_series_df['Tarih'] = pd.to_datetime(time_series_df['Tarih']).dt.strftime('%Y-%m-%d')
+    except:
+        pass
+    time_series_df = time_series_df.sort_values('Tarih', ascending=False)
+    return time_series_df.to_dict('records'), time_series_df.columns.tolist()
 
 # Make get_turkish_month available in templates
 @app.template_global()
@@ -1182,31 +1212,9 @@ def ana_sayfa():
         # Export combined
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        # Get monthly change data for data view (from gruplaraylık.csv)
+        # Get monthly change data for data view (from gruplaraylık.csv) - cached
         try:
-            monthly_df = cached_read_csv("gruplaraylık.csv", index_col=0)
-            # Transpose: groups become columns, dates become rows
-            # First column is group names, rest are dates
-            group_names = monthly_df.iloc[:, 0].tolist()
-            date_columns = monthly_df.columns[1:].tolist()
-            
-            # Create transposed dataframe
-            transposed_data = []
-            for date_col in date_columns:
-                row_data = {'Tarih': date_col}
-                for idx, group_name in enumerate(group_names):
-                    value = monthly_df.iloc[idx][date_col]
-                    try:
-                        value = float(str(value).replace(',', '.'))
-                    except:
-                        value = None
-                    row_data[group_name] = value
-                transposed_data.append(row_data)
-            
-            time_series_df = pd.DataFrame(transposed_data)
-            time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
-            time_series_data = time_series_df.to_dict('records')
-            time_series_columns = time_series_df.columns.tolist()
+            time_series_data, time_series_columns = cached_transpose_monthly_data("gruplaraylık.csv", index_col=0)
         except Exception as e:
             print(f"Error loading monthly data: {e}")
             time_series_data = []
@@ -1598,38 +1606,9 @@ def tufe():
             endeks_data = []
             endeks_columns = []
         
-        # Get maddeleraylık.csv data for monthly change data view
+        # Get maddeleraylık.csv data for monthly change data view - cached
         try:
-            # Read CSV: first column is index (0,1,2...), second column is 'Madde', rest are dates
-            maddeler_monthly_df = cached_read_csv('maddeleraylık.csv', index_col=0)
-            # After index_col=0, first column (index) is removed, so columns are: ['Madde', '2025-02-28', ...]
-            # Get 'Madde' column values
-            madde_names_list = maddeler_monthly_df['Madde'].tolist()
-            # Get date columns (all columns except 'Madde')
-            date_columns_monthly = [col for col in maddeler_monthly_df.columns if col != 'Madde']
-            
-            # Create transposed dataframe: dates as rows, maddeler as columns
-            transposed_monthly_data = []
-            for date_col in date_columns_monthly:
-                row_data = {'Tarih': date_col}
-                for idx, madde_name in enumerate(madde_names_list):
-                    value = maddeler_monthly_df.iloc[idx][date_col]
-                    try:
-                        value = float(str(value).replace(',', '.'))
-                    except:
-                        value = None
-                    row_data[madde_name] = value
-                transposed_monthly_data.append(row_data)
-            
-            maddeler_monthly_transposed_df = pd.DataFrame(transposed_monthly_data)
-            # Format Tarih column as YYYY-MM-DD string
-            try:
-                maddeler_monthly_transposed_df['Tarih'] = pd.to_datetime(maddeler_monthly_transposed_df['Tarih']).dt.strftime('%Y-%m-%d')
-            except:
-                pass
-            maddeler_monthly_transposed_df = maddeler_monthly_transposed_df.sort_values('Tarih', ascending=False)  # Most recent first
-            maddeler_monthly_data = maddeler_monthly_transposed_df.to_dict('records')
-            maddeler_monthly_columns = maddeler_monthly_transposed_df.columns.tolist()
+            maddeler_monthly_data, maddeler_monthly_columns = cached_transpose_monthly_data('maddeleraylık.csv', index_col=0, name_column='Madde')
         except Exception as e:
             print(f"Error loading maddeleraylık data: {e}")
             import traceback
