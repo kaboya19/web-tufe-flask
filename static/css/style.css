@@ -702,15 +702,12 @@ main {
     
     .donation-button-header {
         padding: 0.5rem 0.75rem !important;
+        font-size: 0.7rem !important;
     }
     
     .donation-button-header svg {
-        width: 1rem !important;
-        height: 1rem !important;
-    }
-    
-    .donation-button-header span {
-        font-size: 0.7rem !important;
+        width: 0.875rem !important;
+        height: 0.875rem !important;
     }
     
     header > div > div > div:first-child {
