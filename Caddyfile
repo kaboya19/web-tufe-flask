@@ -1,0 +1,31 @@
+webtufe.com {
+    reverse_proxy 127.0.0.1:8000
+    
+    # Gzip compression (Caddy otomatik yapar ama açıkça belirtmek iyi)
+    encode gzip
+    
+    # Security headers
+    header {
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+        # Prevent MIME sniffing
+        X-Content-Type-Options "nosniff"
+        # Clickjacking protection
+        X-Frame-Options "SAMEORIGIN"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+    
+    # Logging
+    log {
+        output file /var/log/caddy/webtufe.com.log
+        format json
+    }
+}
+
+# www subdomain'i de ana domain'e yönlendir
+www.webtufe.com {
+    redir https://webtufe.com{uri} permanent
+}
+
+
