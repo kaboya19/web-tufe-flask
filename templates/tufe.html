@@ -376,6 +376,21 @@
             return newMonths.concat(months);
         }
         
+        // Bar grafiklerin renklerini kontrol et ve ayarla
+        if (barGraphs && barGraphs.data) {
+            barGraphs.data.forEach(function(trace, idx) {
+                // marker_color veya marker.color kontrolü
+                if (!trace.marker_color && (!trace.marker || !trace.marker.color)) {
+                    // Renk yoksa varsayılan renkleri ayarla
+                    if (trace.name === 'Web TÜFE') {
+                        trace.marker_color = '#EF476F';
+                    } else if (trace.name === 'TÜİK TÜFE') {
+                        trace.marker_color = '#118AB2';
+                    }
+                }
+            });
+        }
+        
         Plotly.newPlot('bar-compare-chart', barGraphs.data, barGraphs.layout, { displayModeBar: false, responsive: true });
         Plotly.newPlot('line-compare-chart', lineGraphs.data, lineGraphs.layout, { displayModeBar: false, responsive: true });
 
@@ -414,6 +429,13 @@
                     trace.text = cumValues.map(v => v !== null ? '<b>' + v.toFixed(2) + '</b>' : '');
                     trace.cliponaxis = false; // Text'lerin grafik dışına çıkmasına izin ver
                     trace.constraintext = 'none'; // Text'leri kısıtlama
+                    // marker_color veya marker.color'u koru
+                    if (originalBarData.data[idx].marker_color) {
+                        trace.marker_color = originalBarData.data[idx].marker_color;
+                    } else if (originalBarData.data[idx].marker && originalBarData.data[idx].marker.color) {
+                        if (!trace.marker) trace.marker = {};
+                        trace.marker.color = originalBarData.data[idx].marker.color;
+                    }
                     allValues = allValues.concat(cumValues.filter(v => v !== null));
                 });
                 newBarData.layout.title.text = 'Kümülatif Aylık Web TÜFE ve TÜİK TÜFE Karşılaştırması (Ocak 2025 = 0)';

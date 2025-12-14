@@ -632,7 +632,9 @@ def create_monthly_graph(tufe_data):
                 title='Tarih',
                 title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                 tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF'
+                gridcolor='#E9ECEF',
+                tickformat='%Y-%m',
+                tickangle=45
             ),
             yaxis=dict(
                 title='Değişim (%)',
@@ -1398,9 +1400,9 @@ def tufe():
                 ),
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
-                tickformat='%d %B %Y',
-                tickangle=0,
-                ticktext=[f"{get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}" for date in first_days['Tarih'][1:]],
+                tickformat='%Y-%m',
+                tickangle=45,
+                ticktext=[f"{date.strftime('%Y-%m')}" for date in first_days['Tarih'][1:]],
                 tickvals=first_days['Tarih'][1:]
             ),
             yaxis=dict(
@@ -1449,30 +1451,50 @@ def tufe():
         bar_months, bar_tufe, bar_tuik = get_tufe_vs_tuik_bar_data()
         # Bar chart
         bar_fig = go.Figure()
+        # Web TÜFE
         bar_fig.add_trace(go.Bar(
             x=bar_months,
             y=bar_tufe,
             name='Web TÜFE',
-            marker_color='#EF476F',
+            marker=dict(color='#EF476F'),
             text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in bar_tufe],
             textposition='outside',
-            textfont=dict(size=14, color='#EF476F', family='Inter, sans-serif'),
+            textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
             width=0.35,
-            hovertemplate='Web TÜFE: %{y:.2f}<extra></extra>',
-            cliponaxis=False
+            hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
         ))
+        # TÜİK TÜFE
         bar_fig.add_trace(go.Bar(
             x=bar_months,
             y=bar_tuik,
             name='TÜİK TÜFE',
-            marker_color='#118AB2',
+            marker=dict(color='#118AB2'),
             text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in bar_tuik],
             textposition='outside',
             textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
             width=0.35,
-            hovertemplate='TÜİK TÜFE: %{y:.2f}<extra></extra>',
-            cliponaxis=False
+            hovertemplate='%{x}<br>TÜİK TÜFE: %{y:.2f}%<extra></extra>'
         ))
+        combined_values = bar_tufe + bar_tuik
+        valid_values = [v for v in combined_values if v is not None]
+
+        if valid_values:
+            y_min = min(valid_values)
+            y_max = max(valid_values)
+
+            # Marj hesapla
+            y_range = y_max - y_min
+            y_margin = y_range * 0.2 if y_range != 0 else abs(y_max) * 0.2
+
+            # Marjlı sınırlar
+            y_min_with_margin = y_min - y_margin
+            y_max_with_margin = y_max + y_margin
+
+            # Sıfıra yaklaşma kontrolü
+            if y_min >= 0:
+                y_min_with_margin = max(0, y_min - y_margin)
+            if y_max <= 0:
+                y_max_with_margin = min(0, y_max + y_margin)
         bar_fig.update_layout(
             barmode='group',
             title=dict(
@@ -1482,29 +1504,40 @@ def tufe():
             ),
             xaxis=dict(
                 title='Ay',
-                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF'
+                title_font=dict(
+                    size=14,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                gridcolor='#E9ECEF',
+                tickangle=45
             ),
             yaxis=dict(
                 title='Değişim (%)',
-                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
-                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF'
+                title_font=dict(
+                    size=14,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                tickfont=dict(
+                    size=12,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                gridcolor='#E9ECEF',
+                range=[y_min_with_margin, y_max_with_margin] if valid_values else None
             ),
             showlegend=True,
             plot_bgcolor='white',
             paper_bgcolor='white',
-            height=max(min(len(bar_months) * 40, 800), 400),
-            margin=dict(l=10, r=10, t=40, b=20),
-            hovermode='x',
-            legend=dict(
-                orientation='h',
-                yanchor='bottom',
-                y=1.02,
-                xanchor='right',
-                x=1
-            )
+            height=400,
+            margin=dict(l=20, r=20, t=80, b=20),
+            hovermode='x'
         )
         bar_graphJSON = json.dumps(bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
         # Line chart
@@ -1543,7 +1576,9 @@ def tufe():
                 title='Ay',
                 title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                 tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
-                gridcolor='#E9ECEF'
+                gridcolor='#E9ECEF',
+                tickformat='%Y-%m',
+                tickangle=45
             ),
             yaxis=dict(
                 title='Değişim (%)',
@@ -1718,8 +1753,8 @@ def tufe():
                     gridcolor='#E9ECEF',
                     zerolinecolor='#E9ECEF',
                     tickvals=tickvals,
-                    ticktext=ticktext,
-                    tickangle=0
+                    ticktext=[f"{date.strftime('%Y-%m')}" for date in tickvals],
+                    tickangle=45
                 ),
                 yaxis=dict(
                     title='Endeks',
@@ -1894,7 +1929,8 @@ def tufe():
                         family='Inter, sans-serif',
                         color='#2B2D42'
                     ),
-                    tickangle=0
+                    tickformat='%Y-%m',
+                    tickangle=45
                 ),
                 yaxis=dict(
                     title='Değişim (%)',
@@ -1959,7 +1995,8 @@ def tufe():
                         family='Inter, sans-serif',
                         color='#2B2D42'
                     ),
-                    tickangle=0
+                    tickformat='%Y-%m',
+                    tickangle=45
                 ),
                 yaxis=dict(
                     title='Değişim (%)',
@@ -2265,8 +2302,8 @@ def ana_gruplar():
         gridcolor='#E9ECEF',
         zerolinecolor='#E9ECEF',
         tickvals=tickvals,
-        ticktext=ticktext,
-        tickangle=0,
+        ticktext=[f"{date.strftime('%Y-%m')}" for date in tickvals],
+        tickangle=45,
         hoverformat=''
     ),
     yaxis=dict(
@@ -2428,7 +2465,9 @@ def ana_gruplar():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            gridcolor='#E9ECEF'
+            gridcolor='#E9ECEF',
+            tickformat='%Y-%m',
+            tickangle=45
         ),
         yaxis=dict(
             title='Değişim (%)',
@@ -2489,7 +2528,8 @@ def ana_gruplar():
             tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF',
-            tickangle=0
+            tickformat='%Y-%m',
+            tickangle=45
         ),
         yaxis=dict(
             title='Değişim (%)',
@@ -3292,9 +3332,9 @@ def harcama_gruplari():
                         tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                         gridcolor='#E9ECEF',
                         zerolinecolor='#E9ECEF',
-                        tickangle=0,
+                        tickangle=45,
                         tickvals=tickvals,
-                        ticktext=ticktext
+                        ticktext=[f"{date.strftime('%Y-%m')}" for date in tickvals]
                     ),
                     yaxis=dict(
                         title='Endeks',
@@ -3453,15 +3493,17 @@ def harcama_gruplari():
                                         family='Inter, sans-serif',
                                         color='#2B2D42'
                                     ),
-                                    tickfont=dict(
-                                        size=12,
-                                        family='Inter, sans-serif',
-                                        color='#2B2D42'
-                                    ),
-                                    gridcolor='#E9ECEF'
-                                ),
-                                yaxis=dict(
-                                    title='Değişim (%)',
+            tickfont=dict(
+                size=12,
+                family='Inter, sans-serif',
+                color='#2B2D42'
+            ),
+            gridcolor='#E9ECEF',
+            tickformat='%Y-%m',
+            tickangle=45
+        ),
+        yaxis=dict(
+            title='Değişim (%)',
                                     title_font=dict(
                                         size=14,
                                         family='Inter, sans-serif',
@@ -3527,7 +3569,8 @@ def harcama_gruplari():
                                     tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                                     gridcolor='#E9ECEF',
                                     zerolinecolor='#E9ECEF',
-                                    tickangle=0
+                                    tickformat='%Y-%m',
+                                    tickangle=45
                                 ),
                                 yaxis=dict(
                                     title='Değişim (%)',
@@ -4049,8 +4092,8 @@ def ozel_kapsamli_gostergeler():
                 gridcolor='#E9ECEF',
                 zerolinecolor='#E9ECEF',
                 tickvals=tickvals,
-                ticktext=ticktext,
-                tickangle=0,
+                ticktext=[f"{date.strftime('%Y-%m')}" for date in tickvals],
+                tickangle=45,
                 hoverformat='',
             ),
             yaxis=dict(
@@ -4212,7 +4255,9 @@ def ozel_kapsamli_gostergeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            gridcolor='#E9ECEF'
+            gridcolor='#E9ECEF',
+            tickformat='%Y-%m',
+            tickangle=45
         ),
         yaxis=dict(
             title='Değişim (%)',
@@ -4281,7 +4326,8 @@ def ozel_kapsamli_gostergeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            tickangle=0,
+            tickformat='%Y-%m',
+            tickangle=45,
             gridcolor='#E9ECEF'
         ),
         yaxis=dict(
@@ -4733,14 +4779,15 @@ def mevsimsel_duzeltilmis_gostergeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            tickfont=dict(
-                size=12,
-                family='Inter, sans-serif',
-                color='#2B2D42'
-            ),
-            gridcolor='#E9ECEF',
-            zerolinecolor='#E9ECEF',
-            tickangle=0,
+                    tickfont=dict(
+                        size=12,
+                        family='Inter, sans-serif',
+                        color='#2B2D42'
+                    ),
+                    gridcolor='#E9ECEF',
+                    zerolinecolor='#E9ECEF',
+                    tickformat='%Y-%m',
+                    tickangle=45,
             hoverformat='',
         ),
         yaxis=dict(
@@ -4755,7 +4802,9 @@ def mevsimsel_duzeltilmis_gostergeler():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            gridcolor='#E9ECEF'
+            gridcolor='#E9ECEF',
+            tickformat='%Y-%m',
+            tickangle=45
         ),
         showlegend=True,
         legend=dict(
