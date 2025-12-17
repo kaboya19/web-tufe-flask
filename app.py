@@ -1321,6 +1321,8 @@ def tufe():
     madde_names = df_madde.columns[1:].tolist()  # Get column names as madde names
     
     selected_madde = request.form.get('madde') if request.method == 'POST' else 'TÜFE'
+    # View type (graph/data)
+    view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
     
     if selected_madde == 'TÜFE':
         # Filter dates to show only first day of each month
@@ -1669,7 +1671,8 @@ def tufe():
             endeks_data=endeks_data,
             endeks_columns=endeks_columns,
             maddeler_monthly_data=maddeler_monthly_data,
-            maddeler_monthly_columns=maddeler_monthly_columns
+            maddeler_monthly_columns=maddeler_monthly_columns,
+            view_type=view_type
         )
     else:
         bar_labels=[]
@@ -2109,7 +2112,8 @@ def tufe():
                 endeks_data=endeks_data,
                 endeks_columns=endeks_columns,
                 maddeler_monthly_data=maddeler_monthly_data,
-                maddeler_monthly_columns=maddeler_monthly_columns
+                maddeler_monthly_columns=maddeler_monthly_columns,
+                view_type=view_type
             )
         else:
             # Get endeksler.csv data for data view
@@ -2182,7 +2186,8 @@ def tufe():
                 endeks_data=endeks_data,
                 endeks_columns=endeks_columns,
                 maddeler_monthly_data=maddeler_monthly_data,
-                maddeler_monthly_columns=maddeler_monthly_columns
+                maddeler_monthly_columns=maddeler_monthly_columns,
+                view_type=view_type
             )
 
 @app.route('/ana-gruplar', methods=['GET', 'POST'])
@@ -2196,6 +2201,8 @@ def ana_gruplar():
     df = get_ana_gruplar_data()
     grup_adlari = [col for col in df.columns if col not in ['Tarih', 'Web TÜFE']]
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
+    # View type (graph/data)
+    view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
 
     # Google Sheets bağlantısı
     """creds = get_google_credentials_2()
@@ -2639,7 +2646,8 @@ def ana_gruplar():
         gruplar_data=gruplar_data,
         gruplar_columns=gruplar_columns,
         gruplar_monthly_data=gruplar_monthly_data,
-        gruplar_monthly_columns=gruplar_monthly_columns
+        gruplar_monthly_columns=gruplar_monthly_columns,
+        view_type=view_type
     )
 
 @app.route('/harcama-gruplari', methods=['GET', 'POST'])
@@ -2653,6 +2661,8 @@ def harcama_gruplari():
     
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
     selected_date = request.form.get('date') if request.method == 'POST' else None
+    # View type (graph/data)
+    view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
     # Contribution controls (defaults: show=True, type='ana')
     show_contrib = False if request.method != 'POST' else ('show_contrib' in request.form)
     contrib_type = request.form.get('contrib_type', 'ana')
@@ -3710,7 +3720,8 @@ def harcama_gruplari():
         harcama_endeks_columns=harcama_endeks_columns,
         harcama_monthly_data=harcama_monthly_data,
         harcama_monthly_columns=harcama_monthly_columns,
-        breakdown_level=breakdown_level
+        breakdown_level=breakdown_level,
+        view_type=view_type
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
@@ -4674,6 +4685,9 @@ def mevsimsel_duzeltilmis_gostergeler():
     
     # Get selected indicator from form
     selected_indicator = request.form.get('indicator') if request.method == 'POST' else indicator_names[0]
+
+    # View type (graph/data)
+    view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
     
     # Get the selected indicator data from Web TÜFE
     indicator_data = df[df['Gösterge'] == selected_indicator]
@@ -4885,7 +4899,8 @@ def mevsimsel_duzeltilmis_gostergeler():
         last_date=last_date,
         month_name=last_month_from_csv,
         ma_data=ma_data,
-        ma_columns=ma_columns
+        ma_columns=ma_columns,
+        view_type=view_type
     )
 
 @app.route('/download/mevsimsel/csv')

@@ -5,25 +5,40 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="card-modern p-6 relative overflow-hidden">
-                <form method="post" class="mb-6">
+                <form method="post" id="tufe-form" class="mb-6">
+                    <input type="hidden" name="view_type" id="view_type_input" value="{{ view_type or 'graph' }}">
                     <label for="madde" class="block text-sm font-medium text-gray-700 mb-1">Madde Seçin:</label>
-                    <div class="relative w-full">
-                        <select name="madde" id="madde" onchange="this.form.submit()"
-                            class="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow focus:outline-none focus:ring-2 focus:ring-[#EF476F] focus:border-[#EF476F] text-base font-semibold text-gray-700 transition duration-150 ease-in-out cursor-pointer">
+                    <div class="flex items-center gap-4">
+                        <div class="relative w-full">
+                            <select name="madde" id="madde" onchange="this.form.submit()"
+                                class="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow focus:outline-none focus:ring-2 focus:ring-[#EF476F] focus:border-[#EF476F] text-base font-semibold text-gray-700 transition duration-150 ease-in-out cursor-pointer">
                             <option value="TÜFE" {% if selected_madde=='TÜFE' %}selected{% endif %}>TÜFE</option>
                             {% for madde in madde_names %}
                             <option value="{{ madde }}" {% if selected_madde==madde %}selected{% endif %}>{{ madde }}
                             </option>
                             {% endfor %}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.84a.75.75 0 01-1.02 0l-4.25-3.84a.75.75 0 01.02-1.06z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.584l3.71-3.354a.75.75 0 111.02 1.1l-4.25 3.84a.75.75 0 01-1.02 0l-4.25-3.84a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="inline-flex rounded-lg border border-indigo-200 overflow-hidden flex-shrink-0">
+                            <button type="button" onclick="setViewType('graph')"
+                                aria-pressed="{{ 'true' if view_type == 'graph' else 'false' }}"
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if view_type == 'graph' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Grafik
+                            </button>
+                            <button type="button" onclick="setViewType('data')"
+                                aria-pressed="{{ 'true' if view_type == 'data' else 'false' }}"
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none {% if view_type == 'data' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Veri
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -69,6 +84,7 @@
                         <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                     </div>
                 </div>
+                {% if view_type == 'graph' %}
                 <!-- Chart view -->
                 <div id="chart-view-tufe" class="w-full overflow-x-auto">
                     <div id="tufe-chart" class="w-full" style="min-width: 0;"></div>
@@ -197,6 +213,108 @@
                     </div>
                 </div>
                 {% endif %}
+                {% elif view_type == 'data' %}
+                <div class="mt-6">
+                    <div class="mb-4 flex justify-end gap-2">
+                        <a href="/download/tufe-endeksler/csv"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                            Endeks CSV indir
+                        </a>
+                        <a href="/download/tufe-endeksler/xlsx"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                            Endeks Excel indir
+                        </a>
+                        <a href="/download/maddeler-aylik/csv"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                            Aylık CSV indir
+                        </a>
+                        <a href="/download/maddeler-aylik/xlsx"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                            Aylık Excel indir
+                        </a>
+                    </div>
+
+                    {% if endeks_data and endeks_columns %}
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Endeks Verileri</h3>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-indigo-600 text-white">
+                                <tr>
+                                    {% for col in endeks_columns %}
+                                    <th scope="col"
+                                        class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide {% if loop.first %}sticky left-0 bg-indigo-600 z-10{% endif %}">
+                                        {{ col }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for row in endeks_data %}
+                                <tr class="hover:bg-gray-50">
+                                    {% for col in endeks_columns %}
+                                    <td class="py-3 px-4 text-sm text-gray-700 {% if loop.first %}sticky left-0 bg-white z-10 font-medium{% endif %}">
+                                        {% set val = row.get(col) %}
+                                        {% if val is not none and val != '' %}
+                                            {% if val is number %}
+                                                {{ "%.2f"|format(val) }}
+                                            {% else %}
+                                                {{ val }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">Endeks verisi bulunamadı.</p>
+                    {% endif %}
+
+                    {% if maddeler_monthly_data and maddeler_monthly_columns %}
+                    <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3">Aylık Değişim Verileri</h3>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-indigo-600 text-white">
+                                <tr>
+                                    {% for col in maddeler_monthly_columns %}
+                                    <th scope="col"
+                                        class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide {% if loop.first %}sticky left-0 bg-indigo-600 z-10{% endif %}">
+                                        {{ col }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for row in maddeler_monthly_data %}
+                                <tr class="hover:bg-gray-50">
+                                    {% for col in maddeler_monthly_columns %}
+                                    <td class="py-3 px-4 text-sm text-gray-700 {% if loop.first %}sticky left-0 bg-white z-10 font-medium{% endif %}">
+                                        {% set val = row.get(col) %}
+                                        {% if val is not none and val != '' %}
+                                            {% if val is number %}
+                                                {{ "%.2f"|format(val) }}
+                                            {% else %}
+                                                {{ val }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500 mt-6">Aylık veri bulunamadı.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
                 {% else %}
                 <div class="text-center text-red-600 font-bold text-lg py-12">Veri bulunamadı.</div>
                 {% endif %}
@@ -206,24 +324,34 @@
 
 {% block scripts %}
     <script>
-        var graphs = {{ graphJSON | safe }};
-        // Update layout to ensure chart fits within container
-        if (graphs.layout) {
-            graphs.layout.autosize = true;
-            graphs.layout.width = null; // Let Plotly calculate width
-            if (graphs.layout.margin) {
-                graphs.layout.margin.l = Math.min(graphs.layout.margin.l || 20, 40);
-                graphs.layout.margin.r = Math.min(graphs.layout.margin.r || 20, 40);
+        const isGraphView = '{{ view_type or "graph" }}' === 'graph';
+        if (isGraphView) {
+            var graphs = {{ graphJSON | safe }};
+            // Update layout to ensure chart fits within container
+            if (graphs.layout) {
+                graphs.layout.autosize = true;
+                graphs.layout.width = null; // Let Plotly calculate width
+                if (graphs.layout.margin) {
+                    graphs.layout.margin.l = Math.min(graphs.layout.margin.l || 20, 40);
+                    graphs.layout.margin.r = Math.min(graphs.layout.margin.r || 20, 40);
+                }
             }
+            Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { 
+                displayModeBar: false, 
+                responsive: true,
+                autosize: true
+            });
+            window.addEventListener('resize', function () {
+                Plotly.Plots.resize('tufe-chart');
+            });
         }
-        Plotly.newPlot('tufe-chart', graphs.data, graphs.layout, { 
-            displayModeBar: false, 
-            responsive: true,
-            autosize: true
-        });
-        window.addEventListener('resize', function () {
-            Plotly.Plots.resize('tufe-chart');
-        });
+
+        function setViewType(type) {
+            const input = document.getElementById('view_type_input');
+            if (input) input.value = type;
+            const form = document.getElementById('tufe-form');
+            if (form) form.submit();
+        }
     </script>
     {% if selected_madde != 'TÜFE' %}
     <script>

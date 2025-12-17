@@ -499,7 +499,22 @@
             <!-- Data View removed for performance -->
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="mb-4 flex justify-end gap-2">
-                    <!-- Download buttons removed for performance -->
+                    <a href="/download/ozel-kapsamli/csv"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                        Endeks CSV indir
+                    </a>
+                    <a href="/download/ozel-kapsamli/xlsx"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                        Endeks Excel indir
+                    </a>
+                    <a href="/download/ozel-kapsamli-aylik/csv"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                        Aylık CSV indir
+                    </a>
+                    <a href="/download/ozel-kapsamli-aylik/xlsx"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                        Aylık Excel indir
+                    </a>
                 </div>
                 {% if ozel_endeks_data and ozel_endeks_columns %}
                 <div class="overflow-x-auto rounded-xl border border-gray-200">

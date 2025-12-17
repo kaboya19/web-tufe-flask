@@ -5,7 +5,9 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="card-modern p-6">
-                <form method="POST" class="mb-6 flex items-center space-x-4">
+                <form method="POST" id="ana-gruplar-form" class="mb-6 flex items-center justify-between gap-4">
+                    <input type="hidden" name="view_type" id="view_type_input" value="{{ view_type or 'graph' }}">
+                    <div class="flex items-center space-x-4">
                     <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
                     <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
                         onchange="this.form.submit()">
@@ -13,6 +15,19 @@
                         <option value="{{ grup }}" {% if grup==selected_group %}selected{% endif %}>{{ grup }}</option>
                         {% endfor %}
                     </select>
+                    </div>
+                    <div class="inline-flex rounded-lg border border-indigo-200 overflow-hidden flex-shrink-0">
+                        <button type="button" onclick="setViewType('graph')"
+                            aria-pressed="{{ 'true' if view_type == 'graph' else 'false' }}"
+                            class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if view_type == 'graph' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                            Grafik
+                        </button>
+                        <button type="button" onclick="setViewType('data')"
+                            aria-pressed="{{ 'true' if view_type == 'data' else 'false' }}"
+                            class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none {% if view_type == 'data' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                            Veri
+                        </button>
+                    </div>
                 </form>
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -47,36 +62,139 @@
                         <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                     </div>
                 </div>
-                <!-- View toggle buttons removed for performance -->
+                {% if view_type == 'graph' %}
                 <!-- Main graph view -->
                 <div id="main-chart-view" class="w-full overflow-x-auto">
                     <div id="main-graph" class="w-full" style="min-width: 0;"></div>
                 </div>
-        <div class="mt-12 w-full">
-            <!-- View toggle buttons removed for performance -->
-            <!-- Monthly chart view -->
-            <div id="monthly-chart-view" class="w-full">
-                <div class="flex gap-4 mb-4">
-                    <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">Bar Grafik</button>
-                    <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm" onclick="showGraph('line', this)">Line Grafik</button>
+                <div class="mt-12 w-full">
+                    <!-- Monthly chart view -->
+                    <div id="monthly-chart-view" class="w-full">
+                        <div class="flex gap-4 mb-4">
+                            <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">Bar Grafik</button>
+                            <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm" onclick="showGraph('line', this)">Line Grafik</button>
+                        </div>
+                        <div id="bar-graph" class="w-full block"></div>
+                        <div id="line-graph" class="w-full hidden"></div>
+                    </div>
                 </div>
-                <div id="bar-graph" class="w-full block"></div>
-                <div id="line-graph" class="w-full hidden"></div>
-            </div>
-        </div>
+                {% elif view_type == 'data' %}
+                <div class="mt-6">
+                    <div class="mb-4 flex justify-end gap-2">
+                        <a href="/download/gruplar-endeksler/csv"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                            Endeks CSV indir
+                        </a>
+                        <a href="/download/gruplar-endeksler/xlsx"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                            Endeks Excel indir
+                        </a>
+                        <a href="/download/gruplar-aylik/csv"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                            Aylık CSV indir
+                        </a>
+                        <a href="/download/gruplar-aylik/xlsx"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-indigo-700 text-sm font-semibold border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                            Aylık Excel indir
+                        </a>
+                    </div>
+
+                    {% if gruplar_data and gruplar_columns %}
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Endeks Verileri</h3>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-indigo-600 text-white">
+                                <tr>
+                                    {% for col in gruplar_columns %}
+                                    <th scope="col"
+                                        class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide {% if loop.first %}sticky left-0 bg-indigo-600 z-10{% endif %}">
+                                        {{ col }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for row in gruplar_data %}
+                                <tr class="hover:bg-gray-50">
+                                    {% for col in gruplar_columns %}
+                                    <td class="py-3 px-4 text-sm text-gray-700 {% if loop.first %}sticky left-0 bg-white z-10 font-medium{% endif %}">
+                                        {% set val = row.get(col) %}
+                                        {% if val is not none and val != '' %}
+                                            {% if val is number %}
+                                                {{ "%.2f"|format(val) }}
+                                            {% else %}
+                                                {{ val }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">Endeks verisi bulunamadı.</p>
+                    {% endif %}
+
+                    {% if gruplar_monthly_data and gruplar_monthly_columns %}
+                    <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3">Aylık Değişim Verileri</h3>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-indigo-600 text-white">
+                                <tr>
+                                    {% for col in gruplar_monthly_columns %}
+                                    <th scope="col"
+                                        class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide {% if loop.first %}sticky left-0 bg-indigo-600 z-10{% endif %}">
+                                        {{ col }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for row in gruplar_monthly_data %}
+                                <tr class="hover:bg-gray-50">
+                                    {% for col in gruplar_monthly_columns %}
+                                    <td class="py-3 px-4 text-sm text-gray-700 {% if loop.first %}sticky left-0 bg-white z-10 font-medium{% endif %}">
+                                        {% set val = row.get(col) %}
+                                        {% if val is not none and val != '' %}
+                                            {% if val is number %}
+                                                {{ "%.2f"|format(val) }}
+                                            {% else %}
+                                                {{ val }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500 mt-6">Aylık veri bulunamadı.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
                     </div>
                 </div>
 {% endblock %}
 
 {% block scripts %}
                 <script>
-                    var barGraph = {{ bar_graphJSON | safe }};
-                    var lineGraph = {{ line_graphJSON | safe }};
-    var mainGraph = {{ graphJSON | safe }};
-    
-    Plotly.newPlot('main-graph', mainGraph.data, mainGraph.layout, { displayModeBar: false, responsive: true });
-                    Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
-                    Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
+                    const isGraphView = '{{ view_type or "graph" }}' === 'graph';
+                    if (isGraphView) {
+                        var barGraph = {{ bar_graphJSON | safe }};
+                        var lineGraph = {{ line_graphJSON | safe }};
+                        var mainGraph = {{ graphJSON | safe }};
+                        Plotly.newPlot('main-graph', mainGraph.data, mainGraph.layout, { displayModeBar: false, responsive: true });
+                        Plotly.newPlot('bar-graph', barGraph.data, barGraph.layout, { displayModeBar: false, responsive: true });
+                        Plotly.newPlot('line-graph', lineGraph.data, lineGraph.layout, { displayModeBar: false, responsive: true });
+                    }
 
     function showGraph(type, btn) {
         // Reset buttons
@@ -107,5 +225,12 @@
     }
 
     // toggleViewMain and toggleViewMonthly functions removed for performance optimization
+
+    function setViewType(type) {
+        const input = document.getElementById('view_type_input');
+        if (input) input.value = type;
+        const form = document.getElementById('ana-gruplar-form');
+        if (form) form.submit();
+    }
                 </script>
 {% endblock %}
