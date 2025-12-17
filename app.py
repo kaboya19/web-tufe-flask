@@ -4466,6 +4466,7 @@ def ozel_kapsamli_gostergeler():
                 {"label": "Haberleşme Hizmetleri", "source": "Haberleşme hizmetleri", "indent_px": 24},
                 {"label": "Diğer Hizmetler", "source": "Diğer hizmetler", "indent_px": 24},
                 {"label": "3. Temel Göstergeler", "source": None, "indent_px": 0, "is_section": True, "is_header_only": True},
+                {"label": "A- Mevsimlik Ürünler Hariç TÜFE", "source": "Mevsimlik Ürünler Hariç TÜFE", "indent_px": 24},
                 {"label": "B- İşlenmemiş Gıda, Enerji, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE B", "indent_px": 24},
                 {"label": "C- Gıda ve Alkolsüz İçecekler, Enerji, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE C", "indent_px": 24},
                 {"label": "D- İşlenmemiş Gıda, Alkollü İçecekler, Tütün ve Altın Hariç TÜFE", "source": "TÜFE D", "indent_px": 24},
