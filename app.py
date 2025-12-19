@@ -5116,7 +5116,7 @@ def bultenler():
 
 @app.route('/bultenler/pdf/<filename>')
 def serve_bulten_pdf(filename):
-    return render_template('pdf_viewer.html', filename=filename)
+    return render_template('pdf_viewer.html', filename=filename, active_page='bultenler')
 
 @app.route('/bultenler/pdf-direct/<filename>')
 def serve_bulten_pdf_direct(filename):
