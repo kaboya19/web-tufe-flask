@@ -4806,7 +4806,7 @@ def mevsimsel_duzeltilmis_gostergeler():
             hoverformat='',
         ),
         yaxis=dict(
-            title='Endeks',
+            title='Aylık Değişim',
             title_font=dict(
                 size=12,
                 family='Inter, sans-serif',
@@ -4818,8 +4818,6 @@ def mevsimsel_duzeltilmis_gostergeler():
                 color='#2B2D42'
             ),
             gridcolor='#E9ECEF',
-            tickformat='%Y-%m',
-            tickangle=45
         ),
         showlegend=True,
         legend=dict(
