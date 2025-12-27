@@ -7,6 +7,7 @@
     <div class="card-modern p-6">
                 <form method="POST" id="ana-gruplar-form" class="mb-6 flex items-center justify-between gap-4">
                     <input type="hidden" name="view_type" id="view_type_input" value="{{ view_type or 'graph' }}">
+                    <input type="hidden" name="classification" id="classification_input" value="{{ classification or 'eski' }}">
                     <div class="flex items-center space-x-4">
                     <label for="group" class="font-bold text-black text-lg">Ana Grup Seçin:</label>
                     <select name="group" id="group" class="border border-gray-300 rounded px-3 py-2 text-lg"
@@ -63,6 +64,15 @@
                     </div>
                 </div>
                 {% if view_type == 'graph' %}
+                <!-- Sınıflandırma butonları - Stats Cards ile grafik arası -->
+                <div class="mb-4 flex gap-2">
+                    <button type="button" onclick="setClassification('eski')" class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all {% if (classification is not defined) or (classification == 'eski') %}bg-indigo-600 text-white shadow-md{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                        Eski Sınıflandırma
+                    </button>
+                    <button type="button" onclick="setClassification('yeni')" class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all {% if classification == 'yeni' %}bg-indigo-600 text-white shadow-md{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                        Yeni Sınıflandırma
+                    </button>
+                </div>
                 <!-- Main graph view -->
                 <div id="main-chart-view" class="w-full overflow-x-auto">
                     <div id="main-graph" class="w-full" style="min-width: 0;"></div>
@@ -229,6 +239,13 @@
     function setViewType(type) {
         const input = document.getElementById('view_type_input');
         if (input) input.value = type;
+        const form = document.getElementById('ana-gruplar-form');
+        if (form) form.submit();
+    }
+
+    function setClassification(classification) {
+        const input = document.getElementById('classification_input');
+        if (input) input.value = classification;
         const form = document.getElementById('ana-gruplar-form');
         if (form) form.submit();
     }

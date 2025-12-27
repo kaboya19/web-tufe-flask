@@ -85,6 +85,11 @@ os.makedirs('/tmp/flask-cache', exist_ok=True)
 @cache.memoize(timeout=600)  # 10 minutes cache timeout
 def cached_read_csv(filepath, **kwargs):
     """Cached version of pd.read_csv to avoid repeated file I/O"""
+    # Eğer quotechar belirtilmemişse ve dosya gruplarv2.csv veya gruplaraylıkv2.csv ise, otomatik ekle
+    if 'quotechar' not in kwargs and ('gruplarv2.csv' in filepath or 'gruplaraylıkv2.csv' in filepath or 'tüik_anagruplar' in filepath):
+        kwargs['quotechar'] = '"'
+    if 'encoding' not in kwargs:
+        kwargs['encoding'] = 'utf-8'
     return pd.read_csv(filepath, **kwargs)
 
 # Helper function to cache DataFrame transpose operations
@@ -497,8 +502,9 @@ def safe_get_turkish_month(m):
     else:
         return m
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
-def get_ana_gruplar_data():
+# Cache'i geçici olarak devre dışı bırak - virgül sorunu için
+# @cache.memoize(timeout=600)  # Cache for 10 minutes
+def get_ana_gruplar_data(classification='eski'):
     # Google Sheets API setup
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -507,13 +513,16 @@ def get_ana_gruplar_data():
     data = worksheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])"""
 
-    df=cached_read_csv("gruplar_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
+    csv_file = "gruplarv2.csv" if classification == 'yeni' else "gruplar_int.csv"
+    # CSV okurken tırnak işaretlerini düzgün parse etmek için quotechar ve encoding parametreleri ekle
+    # Cache'i atla ve doğrudan oku çünkü cache'den yanlış veri gelebilir
+    df=pd.read_csv(csv_file, quotechar='"', encoding='utf-8').rename(columns={"Unnamed: 0":"Tarih"})
     df['Tarih'] = pd.to_datetime(df['Tarih'])
     df = df.sort_values('Tarih')
     return df
 
 @cache.memoize(timeout=600)  # Cache for 10 minutes
-def get_ana_grup_monthly_change(grup_adi):
+def get_ana_grup_monthly_change(grup_adi, classification='eski'):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
@@ -521,7 +530,9 @@ def get_ana_grup_monthly_change(grup_adi):
     data = worksheet.get_all_values()
     df = pd.DataFrame(data[1:], columns=data[0])"""
 
-    df=pd.read_csv("gruplaraylık.csv",index_col=0)
+    csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+    # CSV okurken tırnak işaretlerini düzgün parse etmek için quotechar parametresi ekle
+    df=cached_read_csv(csv_file, index_col=0, quotechar='"')
     last_col = df.columns[-1]
     row = df[df.iloc[:,0].str.strip().str.lower() == grup_adi.strip().lower()]
     if not row.empty:
@@ -841,10 +852,12 @@ def redirect_page():
         return redirect('/ana-sayfa')
 
 @cache.memoize(timeout=600)  # Cache for 10 minutes
-def get_monthly_group_data_for_date(date_str):
+def get_monthly_group_data_for_date(date_str, classification='eski'):
     """Get monthly group data for a specific date"""
     try:
-        df = cached_read_csv("gruplaraylık.csv", index_col=0)
+        # Select file based on classification
+        csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+        df = cached_read_csv(csv_file, index_col=0)
         
         # Check if the date exists in columns
         if date_str not in df.columns:
@@ -869,10 +882,11 @@ def get_monthly_group_data_for_date(date_str):
         return None, None
 
 @cache.memoize(timeout=600)  # Cache for 10 minutes
-def get_available_dates():
+def get_available_dates(classification='eski'):
     """Get list of available dates from monthly data"""
     try:
-        df = pd.read_csv("gruplaraylık.csv", index_col=0)
+        csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+        df = cached_read_csv(csv_file, index_col=0)
         # Return column names except the first one (group names), sorted in reverse order (newest first)
         dates = df.columns[1:].tolist()
         dates.sort(reverse=True)
@@ -960,8 +974,11 @@ def ana_sayfa():
      monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers) = get_top_movers()
     
     try:
+        # Get classification parameter (default: eski)
+        classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')
+        
         # Get available dates for the dropdown
-        available_dates = get_available_dates()
+        available_dates = get_available_dates(classification)
         selected_date = None
         
         # Handle POST request (date selection)
@@ -972,7 +989,7 @@ def ana_sayfa():
             show_contrib = 'show_contrib' in request.form
             if selected_date:
                 # Get data for selected date
-                data_pairs, month_name = get_monthly_group_data_for_date(selected_date)
+                data_pairs, month_name = get_monthly_group_data_for_date(selected_date, classification)
                 if data_pairs is None:
                     # Fallback to default data if selected date not found
                     data_pairs, month_name = get_google_sheets_data()
@@ -984,7 +1001,7 @@ def ana_sayfa():
             # GET request, use latest available date by default
             if available_dates:
                 selected_date = available_dates[0]  # First item is the latest due to reverse sort
-                data_pairs, month_name = get_monthly_group_data_for_date(selected_date)
+                data_pairs, month_name = get_monthly_group_data_for_date(selected_date, classification)
                 if data_pairs is None:
                     # Fallback to default data if latest date not found
                     data_pairs, month_name = get_google_sheets_data()
@@ -1068,9 +1085,10 @@ def ana_sayfa():
                 autosize=True
             )
             graphJSON = json.dumps(single_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            # Get monthly change data for data view (from gruplaraylık.csv)
+            # Get monthly change data for data view (from gruplaraylık.csv or gruplaraylıkv2.csv)
             try:
-                monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+                csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+                monthly_df = cached_read_csv(csv_file, index_col=0)
                 # Transpose: groups become columns, dates become rows
                 group_names = monthly_df.iloc[:, 0].tolist()
                 date_columns = monthly_df.columns[1:].tolist()
@@ -1106,6 +1124,7 @@ def ana_sayfa():
                                  sorted_group_data=data_pairs_sorted,
                                  show_contrib=show_contrib,
                                  chart_title=chart_title,
+                                 classification=classification,
                                  top_risers=top_risers,
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
@@ -1219,9 +1238,10 @@ def ana_sayfa():
         # Export combined
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        # Get monthly change data for data view (from gruplaraylık.csv) - cached
+        # Get monthly change data for data view (from gruplaraylık.csv or gruplaraylıkv2.csv) - cached
         try:
-            time_series_data, time_series_columns = cached_transpose_monthly_data("gruplaraylık.csv", index_col=0)
+            csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+            time_series_data, time_series_columns = cached_transpose_monthly_data(csv_file, index_col=0)
         except Exception as e:
             print(f"Error loading monthly data: {e}")
             time_series_data = []
@@ -1236,6 +1256,7 @@ def ana_sayfa():
                              sorted_group_data=data_pairs_sorted,
                              show_contrib=show_contrib,
                                  chart_title=chart_title,
+                                 classification=classification,
                                  top_risers=top_risers,
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
@@ -1248,10 +1269,12 @@ def ana_sayfa():
                                  time_series_columns=time_series_columns)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
-        available_dates = get_available_dates()
+        classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')
+        available_dates = get_available_dates(classification)
         # Get monthly change data for data view even on error
         try:
-            monthly_df = pd.read_csv("gruplaraylık.csv", index_col=0)
+            csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+            monthly_df = cached_read_csv(csv_file, index_col=0)
             # Transpose: groups become columns, dates become rows
             group_names = monthly_df.iloc[:, 0].tolist()
             date_columns = monthly_df.columns[1:].tolist()
@@ -2198,9 +2221,16 @@ def ana_gruplar():
     bar_values = []
     bar_colors = []
     turkish_month = ''
-    df = get_ana_gruplar_data()
+    # Get classification parameter (default: eski)
+    classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')
+    df = get_ana_gruplar_data(classification)
     grup_adlari = [col for col in df.columns if col not in ['Tarih', 'Web TÜFE']]
     selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
+    
+    # If selected_group is not in the current classification's groups, use the first group
+    if selected_group not in grup_adlari:
+        selected_group = grup_adlari[0] if grup_adlari else None
+    
     # View type (graph/data)
     view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
 
@@ -2210,40 +2240,71 @@ def ana_gruplar():
     spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')"""
 
     # Line plot için veriler
+    if selected_group is None or selected_group not in df.columns:
+        selected_group = grup_adlari[0] if grup_adlari else None
+        if selected_group is None:
+            flash('Grup verisi bulunamadı.', 'error')
+            return redirect(url_for('ana_gruplar'))
+    
     tarih = df['Tarih']
     values = df[selected_group]
     total_change = values.iloc[-1] - 100
-    monthly_change, last_col_date = get_ana_grup_monthly_change(selected_group)
+    monthly_change, last_col_date = get_ana_grup_monthly_change(selected_group, classification)
     month_name = get_turkish_month(last_col_date)
     aybasi_tarihler = df['Tarih'][df['Tarih'].dt.is_month_start]
     tickvals = aybasi_tarihler
     ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in aybasi_tarihler]
     
-    # Read TÜİK data from tuikytd.csv
+    # Read TÜİK data from tuikytd.csv or tüik_anagruplarv2.csv based on classification
     tuik_df = None
     tuik_column_name = None
     try:
-        tuik_df = pd.read_csv('tuikytd.csv', index_col=0)
+        tuik_file = "tüik_anagruplarv2.csv" if classification == 'yeni' else "tuikytd.csv"
+        tuik_df = cached_read_csv(tuik_file, index_col=0)
         tuik_df.index = pd.to_datetime(tuik_df.index)
         tuik_df = tuik_df.sort_index()
         
         # Map Web TÜFE group names to TÜİK column names
-        group_mapping = {
-            'Gıda ve alkolsüz içecekler': 'Gıda ve alkolsüz içecekler',
-            'Alkollü içecekler ve tütün': 'Alkollü içecekler ve tütün',
-            'Giyim ve ayakkabı': 'Giyim ve ayakkabı',
-            'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar': 'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar',
-            'Ev eşyası': 'Ev eşyası',
-            'Sağlık': 'Sağlık',
-            'Ulaştırma': 'Ulaştırma',
-            'Haberleşme': 'Haberleşme',
-            'Eğlence ve kültür': 'Eğlence ve kültür',
-            'Eğitim': 'Eğitim',
-            'Lokanta ve oteller': 'Lokanta ve oteller',
-            'Çeşitli mal ve hizmetler': 'Çeşitli mal ve hizmetler'
-        }
-        
-        tuik_column_name = group_mapping.get(selected_group)
+        # For new classification, group names need mapping due to slight differences
+        if classification == 'yeni':
+            # Yeni sınıflandırma için grup adı eşleştirmesi
+            # gruplarv2.csv ve tüik_anagruplarv2.csv arasındaki farklılıklar için mapping
+            new_classification_mapping = {
+                'Gıda ve alkolsüz içecekler': 'Gıda ve alkolsüz içecekler',
+                'Alkollü içecekler,tütün ve tütün ürünleri': 'Alkollü içecekler,tütün ve tütün ürünleri',
+                'Giyim ve ayakkabı': 'Giyim ve ayakkabı',
+                'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar': 'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar',
+                'Mobilya,mefruşat ve evde kullanılan ekipmanlar ile rutin ev bakım ve onarımı': 'Mobilya,mefruşat ve evde kullanılan ekipmanlar ile rutin ev bakım ve onarımı',
+                'Sağlık': 'Sağlık',
+                'Ulaştırma': 'Ulaştırma',
+                'Bilgi ve iletişim': 'Bilgi ve iletişim',
+                'Eğlence, spor ve kültür': 'Eğlence,spor ve kültür',  # Virgülden sonra boşluk farkı
+                'Eğitim hizmetleri': 'Eğitim hizmetleri',
+                'Lokantalar ve konaklama hizmetleri': 'Lokantalar ve konaklama hizmetleri',
+                'Kişisel bakım,sosyal koruma ve çeşitli mal ve hizmetler': 'Kişisel bakım,sosyal koruma ve çeşitli mal ve hizmetler',
+                'Sigorta ve finansal hizmetler': 'Sigorta ve finansal hizmetler'
+            }
+            tuik_column_name = new_classification_mapping.get(selected_group)
+            # Eğer mapping'de yoksa, doğrudan kontrol et
+            if tuik_column_name is None:
+                tuik_column_name = selected_group if selected_group in tuik_df.columns else None
+        else:
+            # Eski sınıflandırma için mapping
+            group_mapping = {
+                'Gıda ve alkolsüz içecekler': 'Gıda ve alkolsüz içecekler',
+                'Alkollü içecekler ve tütün': 'Alkollü içecekler ve tütün',
+                'Giyim ve ayakkabı': 'Giyim ve ayakkabı',
+                'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar': 'Konut,Su,Elektrik,Gaz ve Diğer Yakıtlar',
+                'Ev eşyası': 'Ev eşyası',
+                'Sağlık': 'Sağlık',
+                'Ulaştırma': 'Ulaştırma',
+                'Haberleşme': 'Haberleşme',
+                'Eğlence ve kültür': 'Eğlence ve kültür',
+                'Eğitim': 'Eğitim',
+                'Lokanta ve oteller': 'Lokanta ve oteller',
+                'Çeşitli mal ve hizmetler': 'Çeşitli mal ve hizmetler'
+            }
+            tuik_column_name = group_mapping.get(selected_group)
         
     except Exception as e:
         print(f"TÜİK verisi okunamadı: {e}")
@@ -2358,9 +2419,12 @@ def ana_gruplar():
     """worksheet = spreadsheet.get_worksheet_by_id(767776936)
     data = worksheet.get_all_values()
     df_monthly = pd.DataFrame(data[1:], columns=data[0])"""
-    df_monthly=pd.read_csv("gruplaraylık.csv",index_col=0)
-    df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.strip().str.lower()
-    selected_group_norm = selected_group.strip().lower()
+    csv_file_monthly = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+    # CSV okurken tırnak işaretlerini düzgün parse etmek için quotechar parametresi ekle
+    df_monthly=cached_read_csv(csv_file_monthly, index_col=0, quotechar='"')
+    # Virgül sonrası boşlukları normalize et (Eğlence, spor ve kültür -> Eğlence,spor ve kültür)
+    df_monthly[df_monthly.columns[0]] = df_monthly[df_monthly.columns[0]].str.replace(r',\s+', ',', regex=True).str.strip().str.lower()
+    selected_group_norm = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
     monthly_row = df_monthly[df_monthly.iloc[:,0] == selected_group_norm]
 
     if not monthly_row.empty:
@@ -2395,9 +2459,10 @@ def ana_gruplar():
 
     tuik_changes = []
     try:
-        # tuikaylik.csv dosyasından TÜİK verilerini oku
-        tuik_df = pd.read_csv("tuikaylik.csv", index_col=0)
-        tuik_df.index = pd.to_datetime(tuik_df.index).strftime("%Y-%m")
+        # tuikaylik.csv or tüik_anagruplaraylikv2.csv dosyasından TÜİK verilerini oku
+        tuik_monthly_file = "tüik_anagruplaraylikv2.csv" if classification == 'yeni' else "tuikaylik.csv"
+        tuik_df_monthly = cached_read_csv(tuik_monthly_file, index_col=0)
+        tuik_df_monthly.index = pd.to_datetime(tuik_df_monthly.index).strftime("%Y-%m")
         
         # TÜİK verilerini aylık değişim tarihleriyle eşleştir
         for date in monthly_dates:
@@ -2410,8 +2475,19 @@ def ana_gruplar():
                 }
                 date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
                 
-                if selected_group in tuik_df.columns and date_str in tuik_df.index:
-                    tuik_value = tuik_df.loc[date_str, selected_group]
+                # Yeni sınıflandırmada grup adı eşleştirmesi gerekebilir
+                if classification == 'yeni':
+                    # Yeni sınıflandırma için grup adı eşleştirmesi (virgül sonrası boşluk farkı)
+                    new_monthly_mapping = {
+                        'Eğlence, spor ve kültür': 'Eğlence,spor ve kültür',  # Virgülden sonra boşluk farkı
+                    }
+                    tuik_group_name = new_monthly_mapping.get(selected_group, selected_group)
+                else:
+                    # Eski sınıflandırma için grup adı aynı kalıyor
+                    tuik_group_name = selected_group
+                
+                if tuik_group_name in tuik_df_monthly.columns and date_str in tuik_df_monthly.index:
+                    tuik_value = tuik_df_monthly.loc[date_str, tuik_group_name]
                     tuik_changes.append(tuik_value)
                 else:
                     tuik_changes.append(None)
@@ -2435,6 +2511,10 @@ def ana_gruplar():
     ))
     combined_values = monthly_changes + tuik_changes
     valid_values = [v for v in combined_values if v is not None]
+
+    # Varsayılan değerler
+    y_min_with_margin = -10
+    y_max_with_margin = 10
 
     if valid_values:
         y_min = min(valid_values)
@@ -2569,11 +2649,12 @@ def ana_gruplar():
     )
     line_graphJSON = line_fig.to_json()
 
-    # Get gruplar_int.csv data for index data view
+    # Get gruplar_int.csv or gruplarv2.csv data for index data view
     gruplar_data = []
     gruplar_columns = []
     try:
-        gruplar_df = cached_read_csv('gruplar_int.csv', index_col=0)
+        csv_file_index = "gruplarv2.csv" if classification == 'yeni' else "gruplar_int.csv"
+        gruplar_df = cached_read_csv(csv_file_index, index_col=0)
         gruplar_df.index = pd.to_datetime(gruplar_df.index)
         gruplar_df = gruplar_df.sort_index(ascending=False)
         gruplar_df.index = gruplar_df.index.strftime('%Y-%m-%d')
@@ -2590,12 +2671,14 @@ def ana_gruplar():
         gruplar_data = []
         gruplar_columns = []
 
-    # Get gruplaraylık.csv data for monthly change data view
+    # Get gruplaraylık.csv or gruplaraylıkv2.csv data for monthly change data view
     gruplar_monthly_data = []
     gruplar_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-        gruplar_monthly_df = cached_read_csv('gruplaraylık.csv', index_col=0)
+        csv_file_monthly_data = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+        # CSV okurken tırnak işaretlerini düzgün parse etmek için quotechar parametresi ekle
+        gruplar_monthly_df = cached_read_csv(csv_file_monthly_data, index_col=0, quotechar='"')
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         grup_names_list = gruplar_monthly_df['Grup'].tolist()
@@ -2647,7 +2730,8 @@ def ana_gruplar():
         gruplar_columns=gruplar_columns,
         gruplar_monthly_data=gruplar_monthly_data,
         gruplar_monthly_columns=gruplar_monthly_columns,
-        view_type=view_type
+        view_type=view_type,
+        classification=classification
     )
 
 @app.route('/harcama-gruplari', methods=['GET', 'POST'])
