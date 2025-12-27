@@ -1011,9 +1011,41 @@ def ana_sayfa():
                 data_pairs, month_name = get_google_sheets_data()
                 selected_date = None
         
+        # Uzun grup isimlerini kısalt
+        def truncate_group_name(name, max_length=55):
+            """Grup ismini anlamlı bir yerden kes ve '...' ekle"""
+            if len(name) <= max_length:
+                return name
+            # Virgül, boşluk veya parantez gibi anlamlı yerlerden kes
+            # Önce virgülden sonra kesmeyi dene
+            if ',' in name:
+                parts = name.split(',')
+                result = parts[0]
+                for part in parts[1:]:
+                    if len(result + ',' + part) <= max_length - 3:
+                        result += ',' + part
+                    else:
+                        break
+                if result != name:
+                    return result + '...'
+            # Virgül yoksa, boşluklardan kes
+            words = name.split()
+            result = words[0]
+            for word in words[1:]:
+                if len(result + ' ' + word) <= max_length - 3:
+                    result += ' ' + word
+                else:
+                    break
+            if result != name:
+                return result + '...'
+            # Hiçbir anlamlı yer bulunamazsa, direkt kes
+            return name[:max_length-3] + '...'
+        
         # Sort data pairs by value in descending order for better visualization
         data_pairs_sorted = sorted(data_pairs, key=lambda x: x[1], reverse=True)
+        
         categories = [pair[0] for pair in data_pairs_sorted]
+        categories_display = [truncate_group_name(cat) for cat in categories]
         values = [pair[1] for pair in data_pairs_sorted]
         
         # Get last update date
@@ -1021,6 +1053,7 @@ def ana_sayfa():
         
         # Prepare left (monthly change) data
         left_categories = [pair[0] for pair in data_pairs_sorted]
+        left_categories_display = [truncate_group_name(cat) for cat in left_categories]
         left_values = [pair[1] for pair in data_pairs_sorted]
         
         valid_values = [v for _, v in data_pairs if v is not None]
@@ -1060,7 +1093,7 @@ def ana_sayfa():
             left_colors = ['#EF476F' if c == 'Web TÜFE' else '#118AB2' for c in left_categories]
             single_fig = go.Figure()
             single_fig.add_trace(go.Bar(
-                y=left_categories,
+                y=left_categories_display,
                 x=left_values,
                 orientation='h',
                 marker=dict(color=left_colors, line=dict(width=0)),
@@ -1068,7 +1101,8 @@ def ana_sayfa():
                 textposition='outside',
                 textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
                 cliponaxis=False,
-                hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+                hovertemplate='%{customdata}: %{x:+.2f}%<extra></extra>',
+                customdata=left_categories  # Orijinal isimleri hover için sakla
             ))
             chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları'
             single_fig.update_layout(
@@ -1132,11 +1166,12 @@ def ana_sayfa():
                                  time_series_data=time_series_data,
                                  time_series_columns=time_series_columns)
 
-        # Build contribution series from katkıpayları.csv (right side)
+        # Build contribution series from katkıpayları.csv or katkıpaylarıv2.csv (right side)
         contribGraphJSON = None
         contrib_df = None
         try:
-            contrib_df = pd.read_csv('katkıpayları.csv', index_col=0)
+            contrib_file = "katkıpaylarıv2.csv" if classification == 'yeni' else "katkıpayları.csv"
+            contrib_df = cached_read_csv(contrib_file, index_col=0, quotechar='"')
         except Exception:
             contrib_df = None
 
@@ -1165,7 +1200,7 @@ def ana_sayfa():
         # Left bars (monthly change)
         left_colors = ['#EF476F' if c == 'Web TÜFE' else '#118AB2' for c in left_categories]
         fig.add_trace(go.Bar(
-            y=left_categories,
+            y=left_categories_display,
             x=left_values,
             orientation='h',
             marker=dict(color=left_colors, line=dict(width=0)),
@@ -1174,13 +1209,14 @@ def ana_sayfa():
             textposition='outside',
             textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
             cliponaxis=False,
-            hovertemplate='%{y}: %{x:+.2f}%<extra></extra>'
+            hovertemplate='%{customdata}: %{x:+.2f}%<extra></extra>',
+            customdata=left_categories  # Orijinal isimleri hover için sakla
         ), row=1, col=1)
 
         # Right bars (contributions), if available
         if right_values is not None:
             fig.add_trace(go.Bar(
-                y=left_categories,
+                y=left_categories_display,
                 x=right_values,
                 orientation='h',
                 marker=dict(color='#118AB2', line=dict(width=0)),
@@ -1189,7 +1225,8 @@ def ana_sayfa():
                 textposition='outside',
                 textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
                 cliponaxis=False,
-                hovertemplate='%{y}: %{x:+.2f} puan<extra></extra>'
+                hovertemplate='%{customdata}: %{x:+.2f} puan<extra></extra>',
+                customdata=left_categories  # Orijinal isimleri hover için sakla
             ), row=1, col=2)
 
         # Determine ranges for both sides
