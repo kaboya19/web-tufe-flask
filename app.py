@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, jsonify
-from flask_caching import Cache
 from flask_compress import Compress
 import pandas as pd
 import numpy as np
@@ -66,25 +65,9 @@ def service_unavailable(error):
         'message': 'Servis şu anda kullanılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.'
     }), 503
 
-# Cache configuration - FileSystemCache for multi-worker compatibility
-# FileSystemCache works across multiple Gunicorn workers (unlike SimpleCache)
-# Reduced threshold to save memory
-cache_config = {
-    'CACHE_TYPE': 'FileSystemCache',  # File-based cache (works with multiple workers)
-    'CACHE_DIR': '/tmp/flask-cache',  # Cache directory (Render provides /tmp)
-    'CACHE_DEFAULT_TIMEOUT': 600,  # 10 minutes default cache timeout
-    'CACHE_THRESHOLD': 500  # Reduced from 2000 to save memory (RAM optimization)
-}
-cache = Cache(app, config=cache_config)
-
-# Create cache directory if it doesn't exist
-import os
-os.makedirs('/tmp/flask-cache', exist_ok=True)
-
-# Helper function to cache CSV reads
-@cache.memoize(timeout=600)  # 10 minutes cache timeout
+# Helper function to read CSV files
 def cached_read_csv(filepath, **kwargs):
-    """Cached version of pd.read_csv to avoid repeated file I/O"""
+    """Read CSV file with automatic quotechar and encoding settings"""
     # Eğer quotechar belirtilmemişse ve dosya gruplarv2.csv veya gruplaraylıkv2.csv ise, otomatik ekle
     if 'quotechar' not in kwargs and ('gruplarv2.csv' in filepath or 'gruplaraylıkv2.csv' in filepath or 'tüik_anagruplar' in filepath):
         kwargs['quotechar'] = '"'
@@ -92,10 +75,9 @@ def cached_read_csv(filepath, **kwargs):
         kwargs['encoding'] = 'utf-8'
     return pd.read_csv(filepath, **kwargs)
 
-# Helper function to cache DataFrame transpose operations
-@cache.memoize(timeout=600)
+# Helper function to transpose DataFrame operations
 def cached_transpose_monthly_data(csv_file, index_col=0, name_column='Grup'):
-    """Cache the expensive DataFrame transpose operation"""
+    """Transpose the DataFrame for monthly data"""
     df = cached_read_csv(csv_file, index_col=index_col)
     name_list = df[name_column].tolist() if name_column in df.columns else df.iloc[:, 0].tolist()
     date_columns = [col for col in df.columns if col != name_column]
@@ -326,7 +308,6 @@ def get_google_credentials_2():
     except Exception as e:
         raise ValueError(f"Failed to decode credentials: {str(e)}")
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_google_sheets_data():
     # Google Sheets API setup
     creds = get_google_credentials()
@@ -376,7 +357,6 @@ def get_google_sheets_data():
     
     return pairs, month_name
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_tufe_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -403,7 +383,6 @@ def get_tufe_data():
     
     return df
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_monthly_change():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -427,7 +406,6 @@ def get_monthly_change():
         value = 0
     return value, last_col
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_tufe_vs_tuik_bar_data():
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -502,8 +480,6 @@ def safe_get_turkish_month(m):
     else:
         return m
 
-# Cache'i geçici olarak devre dışı bırak - virgül sorunu için
-# @cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_gruplar_data(classification='eski'):
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -515,13 +491,11 @@ def get_ana_gruplar_data(classification='eski'):
 
     csv_file = "gruplarv2.csv" if classification == 'yeni' else "gruplar_int.csv"
     # CSV okurken tırnak işaretlerini düzgün parse etmek için quotechar ve encoding parametreleri ekle
-    # Cache'i atla ve doğrudan oku çünkü cache'den yanlış veri gelebilir
     df=pd.read_csv(csv_file, quotechar='"', encoding='utf-8').rename(columns={"Unnamed: 0":"Tarih"})
     df['Tarih'] = pd.to_datetime(df['Tarih'])
     df = df.sort_values('Tarih')
     return df
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_grup_monthly_change(grup_adi, classification='eski'):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -545,7 +519,6 @@ def get_ana_grup_monthly_change(grup_adi, classification='eski'):
         value = 0
     return value, last_col
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_ana_grup_all_monthly_changes(grup_adi):
     """creds = get_google_credentials_2()
     client = gspread.authorize(creds)
@@ -821,7 +794,6 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'cache_status': 'active'
         }), 200
     except Exception as e:
         return jsonify({
@@ -851,7 +823,6 @@ def redirect_page():
         # Masaüstü cihaz - ana sayfaya yönlendir
         return redirect('/ana-sayfa')
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_monthly_group_data_for_date(date_str, classification='eski'):
     """Get monthly group data for a specific date"""
     try:
@@ -881,7 +852,6 @@ def get_monthly_group_data_for_date(date_str, classification='eski'):
         print(f"Error in get_monthly_group_data_for_date: {e}")
         return None, None
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_available_dates(classification='eski'):
     """Get list of available dates from monthly data"""
     try:
@@ -895,7 +865,6 @@ def get_available_dates(classification='eski'):
         print(f"Error in get_available_dates: {e}")
         return []
 
-@cache.memoize(timeout=600)  # Cache for 10 minutes
 def get_top_movers():
     # Daily Data
     top_risers = []
@@ -1275,7 +1244,7 @@ def ana_sayfa():
         # Export combined
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        # Get monthly change data for data view (from gruplaraylık.csv or gruplaraylıkv2.csv) - cached
+        # Get monthly change data for data view (from gruplaraylık.csv or gruplaraylıkv2.csv)
         try:
             csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
             time_series_data, time_series_columns = cached_transpose_monthly_data(csv_file, index_col=0)
@@ -1708,7 +1677,7 @@ def tufe():
             endeks_data = []
             endeks_columns = []
         
-        # Get maddeleraylık.csv data for monthly change data view - cached
+        # Get maddeleraylık.csv data for monthly change data view
         try:
             maddeler_monthly_data, maddeler_monthly_columns = cached_transpose_monthly_data('maddeleraylık.csv', index_col=0, name_column='Madde')
         except Exception as e:
@@ -2776,11 +2745,24 @@ def harcama_gruplari():
     print("\nHarcama Grupları Route Başladı")
     print("Method:", request.method)
     
-    df = get_ana_gruplar_data()
+    # Get classification parameter (default: eski)
+    classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')
+    
+    df = get_ana_gruplar_data(classification)
     grup_adlari = [col for col in df.drop("Web TÜFE",axis=1).columns if col != 'Tarih']
     print("Grup adları:", grup_adlari)
     
-    selected_group = request.form.get('group') if request.method == 'POST' else grup_adlari[0]
+    # Get selected_group from form/args, or use first group from current classification
+    selected_group = request.form.get('group') if request.method == 'POST' else request.args.get('group', grup_adlari[0] if grup_adlari else None)
+    
+    # If selected_group is not in the current classification's groups, use the first group
+    if selected_group is None or selected_group not in grup_adlari:
+        selected_group = grup_adlari[0] if grup_adlari else None
+    
+    # If still no group available, return error
+    if selected_group is None:
+        flash('Grup verisi bulunamadı.', 'error')
+        return redirect(url_for('harcama_gruplari'))
     selected_date = request.form.get('date') if request.method == 'POST' else None
     # View type (graph/data)
     view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
@@ -2792,15 +2774,14 @@ def harcama_gruplari():
     print("Seçilen grup:", selected_group)
     print("Seçilen tarih:", selected_date)
     print("Kırılım seviyesi:", breakdown_level)
+    print("Sınıflandırma:", classification)
     
     # Ortak: harcama grupları ve tarih seçenekleri için worksheet ve dataframe
-    """creds = get_google_credentials_2()
-    client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key('14iiu_MQwtMxHTFt6ceyFhkk6v0OL-wuoQS1IGPzSpNE')
-    harcama_worksheet = spreadsheet.get_worksheet_by_id(1927818004)
-    harcama_data = harcama_worksheet.get_all_values()
-    df_harcama = pd.DataFrame(harcama_data[1:], columns=harcama_data[0])"""
-    df_harcama=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
+    # Yeni sınıflandırma için farklı dosyalar kullan
+    if classification == 'yeni':
+        df_harcama = cached_read_csv("harcama_gruplarıaylıkv2.csv", index_col=0, quotechar='"')
+    else:
+        df_harcama = cached_read_csv("harcama_gruplarıaylık.csv", index_col=0)
     date_options = df_harcama.columns[1:].tolist()
     # Tarih seçeneklerini YYYY-MM formatına çevir (görüntüleme için)
     formatted_date_options = []
@@ -2832,51 +2813,102 @@ def harcama_gruplari():
         selected_date = formatted_date_options[0]
 
     # --- Harcama grupları ve grafik verilerini HER ZAMAN hazırla (GET ve POST fark etmeksizin) ---
-    try:
-        urunler = pd.read_csv('ürünler.csv')
-        urunler['Ana Grup'] = urunler['Ana Grup'].str.strip().str.lower()
-        urunler['Grup'] = urunler['Grup'].str.strip().str.lower()
-        selected_group_norm = selected_group.strip().lower()
-        harcama_gruplari = urunler[urunler["Ana Grup"] == selected_group_norm]["Grup"].unique().tolist()
-    except Exception as e:
-        print("ürünler.csv okuma hatası:", e)
-        harcama_gruplari = []
+    selected_group_norm = selected_group.strip().lower()
+    # Normalize group names (remove spaces after commas) for new classification
+    import re
+    if classification == 'yeni':
+        selected_group_norm = re.sub(r',\s*', ',', selected_group_norm)
     
-    # Kırılım seviyesine göre verileri filtrele
-    try:
-        urunler_detay = pd.read_csv('harcamaürünleri1.csv')
-        urunler_detay['Ana Grup'] = urunler_detay['Ana Grup'].str.strip().str.lower()
-        urunler_detay['Grup'] = urunler_detay['Grup'].str.strip().str.lower()
-        urunler_detay['Üçlü'] = urunler_detay['Üçlü'].str.strip().str.lower()
-        urunler_detay['Dörtlü'] = urunler_detay['Dörtlü'].str.strip().str.lower()
+    if classification == 'yeni':
+        # Yeni sınıflandırma: sepet2025yeni.xlsx dosyasından oku
+        try:
+            sepet_df = pd.read_excel('sepet2025yeni.xlsx')
+            # Normalize column names (handle encoding issues)
+            sepet_df.columns = sepet_df.columns.str.strip()
+            # Find the correct column names
+            ana_grup_col = None
+            harcama_grubu_col = None
+            for col in sepet_df.columns:
+                col_lower = col.lower()
+                if 'ana grup' in col_lower or 'anagrup' in col_lower:
+                    ana_grup_col = col
+                elif 'beşli.1' in col_lower or 'besli.1' in col_lower or 'beşli' in col_lower:
+                    harcama_grubu_col = col
+            
+            if ana_grup_col and harcama_grubu_col:
+                sepet_df[ana_grup_col] = sepet_df[ana_grup_col].astype(str).str.strip().str.lower()
+                # Normalize ana grup names (remove spaces after commas) to match selected_group_norm
+                sepet_df[ana_grup_col] = sepet_df[ana_grup_col].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+                sepet_df[harcama_grubu_col] = sepet_df[harcama_grubu_col].astype(str).str.strip().str.lower()
+                # Normalize harcama grubu names (remove spaces after commas) to match CSV data
+                sepet_df[harcama_grubu_col] = sepet_df[harcama_grubu_col].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+                # Use normalized selected_group_norm (already normalized above)
+                selected_group_norm_excel = selected_group_norm
+                # Normalize harcama grubu names (remove spaces after commas) to match CSV data
+                sepet_df[harcama_grubu_col] = sepet_df[harcama_grubu_col].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+                harcama_gruplari = sepet_df[sepet_df[ana_grup_col] == selected_group_norm_excel][harcama_grubu_col].unique().tolist()
+                # Remove NaN values
+                harcama_gruplari = [g for g in harcama_gruplari if pd.notna(g) and g != '']
+            else:
+                print(f"Excel sütunları bulunamadı. Mevcut sütunlar: {sepet_df.columns.tolist()}")
+                harcama_gruplari = []
+        except Exception as e:
+            print(f"sepet2025yeni.xlsx okuma hatası: {e}")
+            harcama_gruplari = []
         
-        # Seçilen ana gruba göre filtrele
-        filtered_urunler = urunler_detay[urunler_detay["Ana Grup"] == selected_group_norm]
-        
-        # Kırılım seviyesine göre liste oluştur
-        if breakdown_level == '5':
-            # Harcama grupları (mevcut mantık)
-            breakdown_items = filtered_urunler["Grup"].unique().tolist()
-        elif breakdown_level == '4':
-            # Dörtlü endeksler
-            breakdown_items = filtered_urunler["Dörtlü"].unique().tolist()
-        elif breakdown_level == '3':
-            # Üçlü endeksler
-            breakdown_items = filtered_urunler["Üçlü"].unique().tolist()
-        else:
-            breakdown_items = harcama_gruplari
-    except Exception as e:
-        print("harcamaürünleri1.csv okuma hatası:", e)
+        # Yeni sınıflandırma için breakdown_items = harcama_gruplari (sadece harcama grupları)
         breakdown_items = harcama_gruplari if breakdown_level == '5' else []
+    else:
+        # Eski sınıflandırma: mevcut mantık
+        try:
+            urunler = pd.read_csv('ürünler.csv')
+            urunler['Ana Grup'] = urunler['Ana Grup'].str.strip().str.lower()
+            urunler['Grup'] = urunler['Grup'].str.strip().str.lower()
+            harcama_gruplari = urunler[urunler["Ana Grup"] == selected_group_norm]["Grup"].unique().tolist()
+        except Exception as e:
+            print("ürünler.csv okuma hatası:", e)
+            harcama_gruplari = []
+        
+        # Kırılım seviyesine göre verileri filtrele
+        try:
+            urunler_detay = pd.read_csv('harcamaürünleri1.csv')
+            urunler_detay['Ana Grup'] = urunler_detay['Ana Grup'].str.strip().str.lower()
+            urunler_detay['Grup'] = urunler_detay['Grup'].str.strip().str.lower()
+            urunler_detay['Üçlü'] = urunler_detay['Üçlü'].str.strip().str.lower()
+            urunler_detay['Dörtlü'] = urunler_detay['Dörtlü'].str.strip().str.lower()
+            
+            # Seçilen ana gruba göre filtrele
+            filtered_urunler = urunler_detay[urunler_detay["Ana Grup"] == selected_group_norm]
+            
+            # Kırılım seviyesine göre liste oluştur
+            if breakdown_level == '5':
+                # Harcama grupları (mevcut mantık)
+                breakdown_items = filtered_urunler["Grup"].unique().tolist()
+            elif breakdown_level == '4':
+                # Dörtlü endeksler
+                breakdown_items = filtered_urunler["Dörtlü"].unique().tolist()
+            elif breakdown_level == '3':
+                # Üçlü endeksler
+                breakdown_items = filtered_urunler["Üçlü"].unique().tolist()
+            else:
+                breakdown_items = harcama_gruplari
+        except Exception as e:
+            print("harcamaürünleri1.csv okuma hatası:", e)
+            breakdown_items = harcama_gruplari if breakdown_level == '5' else []
 
     # Seçili tarihi orijinal formata çevir
     sheet_date = date_mapping[selected_date]
-    # Ana grup değişimini 767776936 tablosundan al
-    """ana_grup_worksheet = spreadsheet.get_worksheet_by_id(767776936)
-    ana_grup_data = ana_grup_worksheet.get_all_values()
-    df_ana_grup = pd.DataFrame(ana_grup_data[1:], columns=ana_grup_data[0])"""
-    df_ana_grup=pd.read_csv("gruplaraylık.csv",index_col=0)
-    df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].str.strip().str.lower()
+    # Ana grup değişimini classification'a göre oku
+    if classification == 'yeni':
+        df_ana_grup = cached_read_csv("gruplaraylıkv2.csv", index_col=0, quotechar='"')
+        # Normalize group names (remove spaces after commas) for new classification
+        import re
+        df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].str.strip().str.lower()
+        df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+        selected_group_norm = re.sub(r',\s*', ',', selected_group_norm)
+    else:
+        df_ana_grup = cached_read_csv("gruplaraylık.csv", index_col=0)
+        df_ana_grup[df_ana_grup.columns[0]] = df_ana_grup[df_ana_grup.columns[0]].str.strip().str.lower()
     ana_grup_row = df_ana_grup[df_ana_grup.iloc[:,0] == selected_group_norm]
     ana_grup_value = None
     if not ana_grup_row.empty:
@@ -2889,6 +2921,10 @@ def harcama_gruplari():
         # Harcama grupları (mevcut mantık)
         df_data = df_harcama
         df_data[df_data.columns[0]] = df_data[df_data.columns[0]].str.strip().str.lower()
+        # Normalize group names for new classification
+        if classification == 'yeni':
+            import re
+            df_data[df_data.columns[0]] = df_data[df_data.columns[0]].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
         data_items = breakdown_items
     elif breakdown_level == '4':
         # Dörtlü endeksler
@@ -2911,6 +2947,10 @@ def harcama_gruplari():
     bar_colors = []
     for item in data_items:
         item_norm = item.strip().lower()
+        # Normalize group names for new classification (remove spaces after commas)
+        if classification == 'yeni':
+            import re
+            item_norm = re.sub(r',\s*', ',', item_norm)
         row = df_data[df_data.iloc[:,0] == item_norm]
         if not row.empty:
             try:
@@ -2947,25 +2987,46 @@ def harcama_gruplari():
         xaxis_range = [x_min - 0.1, x_max + 0.1]
     else:
         # Calculate margins based on data magnitude and distribution
-        margin_factor = 0.15  # 15% margin
+        # Use smaller margin factor for tighter range
+        margin_factor = 0.08  # 8% margin (reduced from 15%)
         margin = data_range * margin_factor
         
-        # Ensure minimum margin for small ranges
-        min_margin = 0.5
+        # Ensure minimum margin for small ranges (reduced)
+        min_margin = 0.2
         margin = max(margin, min_margin)
+        
+        # Calculate minimal additional margin for group names (only if really needed)
+        # Estimate text width based on longest group name
+        max_label_length = max([len(str(label)) for label in bar_labels]) if bar_labels else 2
+        # More conservative estimate: each character is approximately 0.3% of data range
+        text_width_estimate = max_label_length * 0.3 * (abs(x_max) + abs(x_min)) / 100
+        # Add minimal extra margin for negative values (left side where group names are)
+        # Only add if the value is very close to zero and might overlap
+        negative_margin_extra = 0
+        if x_min < 0:
+            # Only add extra margin if min value is close to zero (within 1% of range)
+            if abs(x_min) < data_range * 0.01:
+                negative_margin_extra = min(text_width_estimate, abs(x_min) * 0.2, data_range * 0.05)
+        
+        # Add minimal extra margin for positive values
+        positive_margin_extra = 0
+        if x_min >= 0:
+            # Only add extra margin if min value is close to zero (within 1% of range)
+            if abs(x_min) < data_range * 0.01:
+                positive_margin_extra = min(text_width_estimate * 0.2, data_range * 0.05, abs(x_max) * 0.05)
         
         # Apply asymmetric margins for better text fitting
         if x_min >= 0:
-            # All positive values
-            x_min_with_margin = max(0, x_min - margin * 0.5)
+            # All positive values - minimal left margin for group names
+            x_min_with_margin = max(0, x_min - margin * 0.3 - positive_margin_extra)
             x_max_with_margin = x_max + margin
         elif x_max <= 0:
-            # All negative values
-            x_min_with_margin = x_min - margin
-            x_max_with_margin = min(0, x_max + margin * 0.5)
+            # All negative values - minimal left margin for group names
+            x_min_with_margin = x_min - margin - negative_margin_extra
+            x_max_with_margin = min(0, x_max + margin * 0.3)
         else:
-            # Mixed positive and negative values
-            x_min_with_margin = x_min - margin
+            # Mixed positive and negative values - minimal left margin for group names
+            x_min_with_margin = x_min - margin - negative_margin_extra
             x_max_with_margin = x_max + margin
         
         xaxis_range = [x_min_with_margin, x_max_with_margin]
@@ -2989,25 +3050,16 @@ def harcama_gruplari():
     
     for i, value in enumerate(bar_values):
         # Determine text position based on value sign and magnitude
-        # For values near zero, place text on opposite side to avoid overlap with group names
-        if abs(value) <= 0.001:
-            # Near zero: place inside bar
-            text_x = value
-            align_anchor = 'center'
-        elif abs(value) < 0.1:  # Threshold for overlap detection - place on opposite side
-            # For values near zero, place on opposite side
-            if value >= 0:
-                # Positive but small: place on left (opposite)
-                text_x = value - text_offset
-                align_anchor = 'right'
-            else:
-                # Negative but small: place on right (opposite)
-                text_x = value + text_offset
-                align_anchor = 'left'
+        # Always place text on the correct side to avoid overlap with group names
+        if abs(value) <= 0.01:
+            # Near zero: place text at bar start position (0) with offset to the right
+            # This prevents overlap with group names on the left
+            text_x = 0 + text_offset
+            align_anchor = 'left'  # Text starts from 0 (bar start position)
         else:
-            # Normal values: place on normal side
+            # Normal values: place on normal side (right for positive, left for negative)
             if value >= 0:
-                # For positive values, place text to the right of the bar
+                # For positive values, always place text to the right of the bar
                 text_x = value + text_offset
                 align_anchor = 'left'
             else:
@@ -3066,13 +3118,15 @@ def harcama_gruplari():
                 family='Inter, sans-serif',
                 color='#2B2D42'
             ),
-            gridcolor='#E9ECEF'
+            gridcolor='#E9ECEF',
+            # Automatically adjust margin to prevent overlap with bars
+            automargin=True
         ),
         showlegend=False,
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=max(min(len(bar_labels) * 70, 1800), 500),
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=250, r=10, t=40, b=20),  # Increased left margin to prevent overlap with group names
         hovermode='y unified',
         hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
     )
@@ -3267,11 +3321,11 @@ def harcama_gruplari():
                     # Ana grup satırı: no text
                     right_text.append('')
                     right_textposition.append('inside')
-                elif abs(val) <= 0.001:
+                elif abs(val) <= 0.1:
                     # Near zero: place inside
                     right_text.append(f"<b>{val:+.2f}</b>")
                     right_textposition.append('inside')
-                elif abs(val) < 0.01:  # Threshold for overlap detection - place on opposite side
+                elif abs(val) < 0.1:  # Threshold for overlap detection - place on opposite side
                     # For values near zero, place on opposite side using annotation
                     if val >= 0:
                         # Positive but small: place on left (opposite)
@@ -3353,20 +3407,42 @@ def harcama_gruplari():
         son_ay=""
         try:
             # Kırılım seviyesine göre endeks veri kaynağını seç
-            if breakdown_level == '5':
-                df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
-            elif breakdown_level == '4':
-                df_endeks=pd.read_csv("dörtlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
-            elif breakdown_level == '3':
-                df_endeks=pd.read_csv("üçlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            if classification == 'yeni':
+                # Yeni sınıflandırma: sadece harcama grupları (breakdown_level == '5')
+                if breakdown_level == '5':
+                    df_endeks = cached_read_csv("harcama_gruplarıv2.csv", quotechar='"').rename(columns={"Unnamed: 0":"Tarih"})
+                else:
+                    # Yeni sınıflandırma için diğer kırılım seviyeleri desteklenmiyor
+                    df_endeks = None
             else:
-                df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                # Eski sınıflandırma: mevcut mantık
+                if breakdown_level == '5':
+                    df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                elif breakdown_level == '4':
+                    df_endeks=pd.read_csv("dörtlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                elif breakdown_level == '3':
+                    df_endeks=pd.read_csv("üçlüler.csv").rename(columns={"Unnamed: 0":"Tarih"})
+                else:
+                    df_endeks=cached_read_csv("harcama_grupları.csv").rename(columns={"Unnamed: 0":"Tarih"})
+            
+            if df_endeks is None:
+                raise Exception("Yeni sınıflandırma için sadece harcama grupları (kırılım seviyesi 5) destekleniyor")
             df_endeks['Tarih'] = pd.to_datetime(df_endeks['Tarih'])
             print('Seçilen harcama grubu:', selected_harcama_grubu)
             print('Endeks tablosu sütunları:', list(df_endeks.columns))
             # Sütun adlarını normalize et
             col_map = {col.strip().lower(): col for col in df_endeks.columns}
             selected_norm = selected_harcama_grubu.strip().lower()
+            # Normalize group names (remove spaces after commas) for new classification
+            if classification == 'yeni':
+                import re
+                col_map_normalized = {}
+                for col_lower, col_orig in col_map.items():
+                    col_normalized = re.sub(r',\s*', ',', col_lower)
+                    col_map_normalized[col_normalized] = col_orig
+                selected_norm = re.sub(r',\s*', ',', selected_norm)
+                col_map = col_map_normalized
+            
             if selected_norm in col_map:
                 real_col = col_map[selected_norm]
                 values = df_endeks[real_col]
@@ -3383,41 +3459,56 @@ def harcama_gruplari():
                 
                 # --- Fix: Son ay değişimi ve ay ismi kırılım seviyesine göre alınacak ---
                 # Kırılım seviyesine göre aylık değişim veri kaynağını seç
-                if breakdown_level == '5':
-                    df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
-                elif breakdown_level == '4':
-                    df_harcama_aylik=pd.read_csv("dörtlüleraylık.csv",index_col=0)
-                elif breakdown_level == '3':
-                    df_harcama_aylik=pd.read_csv("üçlüleraylık.csv",index_col=0)
+                if classification == 'yeni':
+                    # Yeni sınıflandırma: harcama_gruplarıaylıkv2.csv
+                    if breakdown_level == '5':
+                        df_harcama_aylik = cached_read_csv("harcama_gruplarıaylıkv2.csv", index_col=0, quotechar='"')
+                    else:
+                        df_harcama_aylik = None
                 else:
-                    df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
-                df_harcama_aylik[df_harcama_aylik.columns[0]] = df_harcama_aylik[df_harcama_aylik.columns[0]].str.strip().str.lower()
-                row = df_harcama_aylik[df_harcama_aylik.iloc[:,0] == selected_norm]
-                harcama_grubu_monthly_change = None
-                son_ay = None
-                if not row.empty:
-                    last_col = df_harcama_aylik.columns[-1]
-                    try:
-                        harcama_grubu_monthly_change = float(str(row[last_col].values[0]).replace(',', '.'))
-                        # Get the month name from the last column of the monthly change CSV
-                        son_ay = get_turkish_month(last_col) + f" {datetime.strptime(last_col, '%Y-%m-%d').year}"
-                    except:
-                        harcama_grubu_monthly_change = None
-                        son_ay = None
+                    # Eski sınıflandırma: mevcut mantık
+                    if breakdown_level == '5':
+                        df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
+                    elif breakdown_level == '4':
+                        df_harcama_aylik=pd.read_csv("dörtlüleraylık.csv",index_col=0)
+                    elif breakdown_level == '3':
+                        df_harcama_aylik=pd.read_csv("üçlüleraylık.csv",index_col=0)
+                    else:
+                        df_harcama_aylik=pd.read_csv("harcama_gruplarıaylık.csv",index_col=0)
+                if df_harcama_aylik is not None:
+                    df_harcama_aylik[df_harcama_aylik.columns[0]] = df_harcama_aylik[df_harcama_aylik.columns[0]].str.strip().str.lower()
+                    # Normalize group names for new classification
+                    if classification == 'yeni':
+                        import re
+                        df_harcama_aylik[df_harcama_aylik.columns[0]] = df_harcama_aylik[df_harcama_aylik.columns[0]].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+                    row = df_harcama_aylik[df_harcama_aylik.iloc[:,0] == selected_norm]
+                    harcama_grubu_monthly_change = None
+                    son_ay = None
+                    if not row.empty:
+                        last_col = df_harcama_aylik.columns[-1]
+                        try:
+                            harcama_grubu_monthly_change = float(str(row[last_col].values[0]).replace(',', '.'))
+                            # Get the month name from the last column of the monthly change CSV
+                            son_ay = get_turkish_month(last_col) + f" {datetime.strptime(last_col, '%Y-%m-%d').year}"
+                        except:
+                            harcama_grubu_monthly_change = None
+                            son_ay = None
+                else:
+                    harcama_grubu_monthly_change = None
+                    son_ay = None
                 # --- End Fix ---
                 
-                # Read TÜİK data from tuikytd.csv for spending groups
+                # Read TÜİK data from tuikytd.csv for spending groups (only for old classification)
                 tuik_dfy = None
                 tuik_column_name = None
-                try:
-                    tuik_dfy = pd.read_csv('tuikytd.csv', index_col=0)
-                    tuik_dfy.index = pd.to_datetime(tuik_dfy.index)
-                    tuik_dfy = tuik_dfy.sort_index()
-                    
-                    tuik_dfy.columns=tuik_dfy.columns.str.lower()
-                    
-                except Exception as e:
-                    print(f"TÜİK verisi okunamadı: {e}")
+                if classification == 'eski':
+                    try:
+                        tuik_dfy = pd.read_csv('tuikytd.csv', index_col=0)
+                        tuik_dfy.index = pd.to_datetime(tuik_dfy.index)
+                        tuik_dfy = tuik_dfy.sort_index()
+                        tuik_dfy.columns=tuik_dfy.columns.str.lower()
+                    except Exception as e:
+                        print(f"TÜİK verisi okunamadı: {e}")
                 
                 fig_endeks = go.Figure()
                 
@@ -3432,8 +3523,8 @@ def harcama_gruplari():
                     hovertemplate='%{x|%d.%m.%Y}<br>Web TÜFE: %{y:.2f}<extra></extra>'
                 ))
                 
-                # Add TÜİK line if data is available
-                if tuik_dfy is not None:
+                # Add TÜİK line if data is available (only for old classification)
+                if classification == 'eski' and tuik_dfy is not None:
                     # Filter TÜİK data to match Web TÜFE date range
                     tuik_filtered = tuik_dfy[tuik_dfy.index >= dates.min()]
                     tuik_filtered = tuik_filtered[tuik_filtered.index <= dates.max()]
@@ -3502,16 +3593,32 @@ def harcama_gruplari():
                 # Monthly change graphs
                 try:
                     # Kırılım seviyesine göre aylık değişim veri kaynağını seç
-                    if breakdown_level == '5':
-                        df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
-                    elif breakdown_level == '4':
-                        df_harcama_monthly = pd.read_csv("dörtlüleraylık.csv", index_col=0)
-                    elif breakdown_level == '3':
-                        df_harcama_monthly = pd.read_csv("üçlüleraylık.csv", index_col=0)
+                    if classification == 'yeni':
+                        # Yeni sınıflandırma: harcama_gruplarıaylıkv2.csv
+                        if breakdown_level == '5':
+                            df_harcama_monthly = cached_read_csv("harcama_gruplarıaylıkv2.csv", index_col=0, quotechar='"')
+                        else:
+                            df_harcama_monthly = None
                     else:
-                        df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
-                    df_harcama_monthly[df_harcama_monthly.columns[0]] = df_harcama_monthly[df_harcama_monthly.columns[0]].str.strip().str.lower()
-                    row = df_harcama_monthly[df_harcama_monthly.iloc[:,0] == selected_norm]
+                        # Eski sınıflandırma: mevcut mantık
+                        if breakdown_level == '5':
+                            df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+                        elif breakdown_level == '4':
+                            df_harcama_monthly = pd.read_csv("dörtlüleraylık.csv", index_col=0)
+                        elif breakdown_level == '3':
+                            df_harcama_monthly = pd.read_csv("üçlüleraylık.csv", index_col=0)
+                        else:
+                            df_harcama_monthly = pd.read_csv("harcama_gruplarıaylık.csv", index_col=0)
+                    
+                    if df_harcama_monthly is not None:
+                        df_harcama_monthly[df_harcama_monthly.columns[0]] = df_harcama_monthly[df_harcama_monthly.columns[0]].str.strip().str.lower()
+                        # Normalize group names for new classification
+                        if classification == 'yeni':
+                            import re
+                            df_harcama_monthly[df_harcama_monthly.columns[0]] = df_harcama_monthly[df_harcama_monthly.columns[0]].apply(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+                        row = df_harcama_monthly[df_harcama_monthly.iloc[:,0] == selected_norm]
+                    else:
+                        row = pd.DataFrame()
                     
                     if not row.empty:
                         # Get all monthly changes
@@ -3530,41 +3637,45 @@ def harcama_gruplari():
                         if monthly_changes and monthly_dates:  # Veri varsa grafikleri oluştur
                             print(monthly_changes)
                             
-                            # TÜİK verilerini al
+                            # TÜİK verilerini al (sadece eski sınıflandırma için)
                             tuik_changes = []
-                            try:
-                                # tuikaylik.csv dosyasından TÜİK verilerini oku
-                                tuik_df = pd.read_csv("tuikaylik.csv", index_col=0)
-                                tuik_df.index = pd.to_datetime(tuik_df.index).strftime("%Y-%m")
-                                tuik_df.columns=tuik_df.columns.str.lower()
-                                
-                                print(f"Selected harcama grubu: {selected_harcama_grubu}")
-                                print(f"TÜIK CSV columns: {list(tuik_df.columns[:10])}...")  # İlk 10 sütunu göster
-                                print(f"Harcama grubu in TÜIK columns: {selected_harcama_grubu in tuik_df.columns}")
-                                
-                                # TÜİK verilerini aylık değişim tarihleriyle eşleştir
-                                for date in monthly_dates:
-                                    try:
-                                        month, year = date.split()
-                                        month_map = {
-                                            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                                            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                                            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                                        }
-                                        date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
-                                        
-                                        if selected_harcama_grubu in tuik_df.columns and date_str in tuik_df.index:
-                                            tuik_value = tuik_df.loc[date_str, selected_harcama_grubu]
-                                            tuik_changes.append(tuik_value)
-                                            print(f"TÜİK value found for {date_str}: {tuik_value}")
-                                        else:
+                            if classification == 'eski':
+                                try:
+                                    # tuikaylik.csv dosyasından TÜİK verilerini oku
+                                    tuik_df = pd.read_csv("tuikaylik.csv", index_col=0)
+                                    tuik_df.index = pd.to_datetime(tuik_df.index).strftime("%Y-%m")
+                                    tuik_df.columns=tuik_df.columns.str.lower()
+                                    
+                                    print(f"Selected harcama grubu: {selected_harcama_grubu}")
+                                    print(f"TÜIK CSV columns: {list(tuik_df.columns[:10])}...")  # İlk 10 sütunu göster
+                                    print(f"Harcama grubu in TÜIK columns: {selected_harcama_grubu in tuik_df.columns}")
+                                    
+                                    # TÜİK verilerini aylık değişim tarihleriyle eşleştir
+                                    for date in monthly_dates:
+                                        try:
+                                            month, year = date.split()
+                                            month_map = {
+                                                'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                                'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                                'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                                            }
+                                            date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
+                                            
+                                            if selected_harcama_grubu in tuik_df.columns and date_str in tuik_df.index:
+                                                tuik_value = tuik_df.loc[date_str, selected_harcama_grubu]
+                                                tuik_changes.append(tuik_value)
+                                                print(f"TÜİK value found for {date_str}: {tuik_value}")
+                                            else:
+                                                tuik_changes.append(None)
+                                                print(f"TÜİK value not found for {date_str}")
+                                        except Exception as e:
+                                            print(f"TÜİK verisi eşleştirme hatası: {e}")
                                             tuik_changes.append(None)
-                                            print(f"TÜİK value not found for {date_str}")
-                                    except Exception as e:
-                                        print(f"TÜİK verisi eşleştirme hatası: {e}")
-                                        tuik_changes.append(None)
-                            except Exception as e:
-                                print("TÜİK verisi okunamadı:", e)
+                                except Exception as e:
+                                    print("TÜİK verisi okunamadı:", e)
+                                    tuik_changes = [None] * len(monthly_dates)
+                            else:
+                                # Yeni sınıflandırma için TÜİK verisi yok
                                 tuik_changes = [None] * len(monthly_dates)
                             
                             # Bar graph
@@ -3577,25 +3688,29 @@ def harcama_gruplari():
                                 text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in monthly_changes],
                                 textposition='outside',
                                 textfont=dict(size=14, color='#2B2D42', family='Inter, sans-serif'),
-                                width=0.35,
+                                width=0.35 if classification == 'eski' else 0.6,
                                 hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
                             ))
                             
-                            # TÜİK bar ekle
-                            bar_fig.add_trace(go.Bar(
-                                x=monthly_dates,
-                                y=tuik_changes,
-                                name='TÜİK',
-                                marker_color='#118AB2',
-                                text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
-                                textposition='outside',
-                                textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
-                                width=0.35,
-                                hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-                            ))
+                            # TÜİK bar ekle (sadece eski sınıflandırma için)
+                            if classification == 'eski':
+                                bar_fig.add_trace(go.Bar(
+                                    x=monthly_dates,
+                                    y=tuik_changes,
+                                    name='TÜİK',
+                                    marker_color='#118AB2',
+                                    text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
+                                    textposition='outside',
+                                    textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
+                                    width=0.35,
+                                    hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+                                ))
 
-                            # Calculate y-axis range with margin (including TUIK data)
-                            combined_values = monthly_changes + tuik_changes
+                            # Calculate y-axis range with margin (including TUIK data if available)
+                            if classification == 'eski':
+                                combined_values = monthly_changes + tuik_changes
+                            else:
+                                combined_values = monthly_changes
                             valid_values = [v for v in combined_values if v is not None]
                             y_min = min(valid_values) if valid_values else 0
                             y_max = max(valid_values) if valid_values else 0
@@ -3676,16 +3791,17 @@ def harcama_gruplari():
                                 hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
                             ))
                             
-                            # TÜİK line ekle
-                            line_fig.add_trace(go.Scatter(
-                                x=monthly_dates,
-                                y=tuik_changes,
-                                mode='lines+markers',
-                                name='TÜİK',
-                                line=dict(color='#118AB2', width=3),
-                                marker=dict(size=8, color='#118AB2'),
-                                hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-                            ))
+                            # TÜİK line ekle (sadece eski sınıflandırma için)
+                            if classification == 'eski':
+                                line_fig.add_trace(go.Scatter(
+                                    x=monthly_dates,
+                                    y=tuik_changes,
+                                    mode='lines+markers',
+                                    name='TÜİK',
+                                    line=dict(color='#118AB2', width=3),
+                                    marker=dict(size=8, color='#118AB2'),
+                                    hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+                                ))
 
                             line_fig.update_layout(
                                 height=400,
@@ -3754,19 +3870,32 @@ def harcama_gruplari():
     if selected_harcama_grubu:
         try:
             # Kırılım seviyesine göre endeks veri kaynağını seç
-            if breakdown_level == '5':
-                harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
-            elif breakdown_level == '4':
-                harcama_endeks_df = pd.read_csv('dörtlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
-            elif breakdown_level == '3':
-                harcama_endeks_df = pd.read_csv('üçlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            if classification == 'yeni':
+                # Yeni sınıflandırma: sadece harcama grupları (breakdown_level == '5')
+                if breakdown_level == '5':
+                    harcama_endeks_df = cached_read_csv('harcama_gruplarıv2.csv', quotechar='"').rename(columns={"Unnamed: 0":"Tarih"})
+                else:
+                    harcama_endeks_df = None
             else:
-                harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
-            harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
-            harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
-            harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
-            harcama_endeks_data = harcama_endeks_df.to_dict('records')
-            harcama_endeks_columns = harcama_endeks_df.columns.tolist()
+                # Eski sınıflandırma: mevcut mantık
+                if breakdown_level == '5':
+                    harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+                elif breakdown_level == '4':
+                    harcama_endeks_df = pd.read_csv('dörtlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
+                elif breakdown_level == '3':
+                    harcama_endeks_df = pd.read_csv('üçlüler.csv').rename(columns={"Unnamed: 0":"Tarih"})
+                else:
+                    harcama_endeks_df = cached_read_csv('harcama_grupları.csv').rename(columns={"Unnamed: 0":"Tarih"})
+            
+            if harcama_endeks_df is not None:
+                harcama_endeks_df['Tarih'] = pd.to_datetime(harcama_endeks_df['Tarih'])
+                harcama_endeks_df = harcama_endeks_df.sort_values('Tarih', ascending=False)
+                harcama_endeks_df['Tarih'] = harcama_endeks_df['Tarih'].dt.strftime('%Y-%m-%d')
+                harcama_endeks_data = harcama_endeks_df.to_dict('records')
+                harcama_endeks_columns = harcama_endeks_df.columns.tolist()
+            else:
+                harcama_endeks_data = []
+                harcama_endeks_columns = []
         except Exception as e:
             print(f"Error loading harcama_grupları.csv data: {e}")
             import traceback
@@ -3779,7 +3908,10 @@ def harcama_gruplari():
     harcama_monthly_columns = []
     try:
         # Read CSV: first column is index (0,1,2...), second column is 'Grup', rest are dates
-        harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        if classification == 'yeni':
+            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylıkv2.csv', index_col=0, quotechar='"')
+        else:
+            harcama_monthly_df = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
         # After index_col=0, first column (index) is removed, so columns are: ['Grup', '2025-02-28', ...]
         # Get 'Grup' column values
         harcama_grup_names_list = harcama_monthly_df['Grup'].tolist()
@@ -3842,7 +3974,8 @@ def harcama_gruplari():
         harcama_monthly_data=harcama_monthly_data,
         harcama_monthly_columns=harcama_monthly_columns,
         breakdown_level=breakdown_level,
-        view_type=view_type
+        view_type=view_type,
+        classification=classification
     )
 
 @app.route('/maddeler', methods=['GET', 'POST'])
