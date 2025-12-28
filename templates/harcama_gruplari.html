@@ -362,11 +362,18 @@
                     <!-- View toggle buttons removed for performance -->
                 </div>
                 <!-- Main chart view -->
-                <div id="main-chart-view-harcama" class="w-full">
+                <div id="main-chart-view-harcama" class="w-full relative">
                     {% if combined_graphJSON and show_contrib %}
                     <div id="contrib-combined-chart" class="w-full" style="min-height: 640px;"></div>
                     {% else %}
                     <div id="bar-chart" class="w-full" style="min-height: 640px;"></div>
+                    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu and not show_contrib %}
+                    <button onclick="downloadBarChart()" class="absolute top-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg shadow-md transition-colors duration-200 z-10" title="Grafiği PNG olarak indir">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </button>
+                    {% endif %}
                     {% endif %}
                 </div>
                 {% endif %}
@@ -556,6 +563,23 @@
             displayModeBar: false,
             responsive: true
         });
+        
+        function downloadBarChart() {
+            // Get the actual size from the chart's layout
+            var chartElement = document.getElementById('bar-chart');
+            var containerWidth = chartElement.offsetWidth || chartElement.clientWidth;
+            
+            // Get height from layout (which is calculated based on number of bars)
+            var chartHeight = barGraphs.layout.height;
+            
+            // Use container width and layout height to match the displayed size
+            Plotly.downloadImage('bar-chart', {
+                format: 'png',
+                width: containerWidth,
+                height: chartHeight,
+                filename: 'harcama-gruplari-grafik'
+            });
+        }
     </script>
     {% endif %}
     {% if contrib_graphJSON %}
