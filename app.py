@@ -469,8 +469,8 @@ def get_tufe_vs_tuik_bar_data():
                     val = float(str(val).replace(',', '.'))
                 except:
                     val = None
-            tufe_values.append(val)
-            tufe_months.append(col)
+        tufe_values.append(val)
+        tufe_months.append(col)
     # Read TUİK values from CSV
     tuik_df = cached_read_csv('tüik.csv', index_col=0)
     tuik_df.index = pd.to_datetime(tuik_df.index)
@@ -4561,25 +4561,25 @@ def harcama_gruplari():
                 # Endeks değerlerini float'a çevir (virgülleri noktaya çevir)
                 values = df_endeks[real_col].apply(lambda v: float(str(v).replace(',', '.')) if pd.notna(v) and v != '' else None)
                 dates = df_endeks['Tarih']
+                
+                # NaN değerleri filtrele (values ve dates'i birlikte filtrele)
+                combined_df = pd.DataFrame({'values': values, 'dates': dates})
+                combined_df = combined_df.dropna(subset=['values'])
+                values = combined_df['values']
+                dates = combined_df['dates']
+                
                 # Türkçe ay isimleriyle x ekseni için
                 turkish_months = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in dates]
-                tickvals = dates[::max(1, len(dates)//8)]  # 8 aralıkta göster
+                tickvals = dates[::max(1, len(dates)//8)] if len(dates) > 0 else []  # 8 aralıkta göster
                 ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tickvals]
                 # Değişim başlıkları için
-                first_date = dates.iloc[0]
-                last_date = dates.iloc[-1]
-                toplam_baslik = f"{first_date.strftime('%d.%m.%Y')} - {last_date.strftime('%d.%m.%Y')}"
-                # Total change hesaplarken ilk ve son None olmayan değerleri kullan
-                first_valid_idx = None
-                last_valid_idx = None
-                for i, v in enumerate(values):
-                    if pd.notna(v):
-                        if first_valid_idx is None:
-                            first_valid_idx = i
-                        last_valid_idx = i
-                if first_valid_idx is not None and last_valid_idx is not None:
-                    harcama_grubu_total_change = values.iloc[last_valid_idx] - values.iloc[first_valid_idx]
+                if len(dates) > 0:
+                    first_date = dates.iloc[0]
+                    last_date = dates.iloc[-1]
+                    toplam_baslik = f"{first_date.strftime('%d.%m.%Y')} - {last_date.strftime('%d.%m.%Y')}"
+                    harcama_grubu_total_change = values.iloc[-1] - values.iloc[0]
                 else:
+                    toplam_baslik = ""
                     harcama_grubu_total_change = None
                 
                 # --- Fix: Son ay değişimi ve ay ismi kırılım seviyesine göre alınacak ---
@@ -4607,27 +4607,24 @@ def harcama_gruplari():
                         df_harcama_aylik['Grup'] = df_harcama_aylik['Grup'].astype(str).str.strip().str.lower()
                         df_harcama_aylik['Grup'] = df_harcama_aylik['Grup'].map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
                         row = df_harcama_aylik[df_harcama_aylik['Grup'] == selected_norm]
-                        harcama_grubu_monthly_change = None
-                        son_ay = None
-                        if not row.empty:
-                            # Tarih sütunlarını bul (Grup hariç)
-                            date_columns = [col for col in df_harcama_aylik.columns if col != 'Grup']
-                            if date_columns:
-                                last_col = date_columns[-1]
-                                try:
-                                    raw_value = row[last_col].values[0]
-                                    # NaN kontrolü
-                                    if pd.isna(raw_value):
-                                        harcama_grubu_monthly_change = None
-                                        son_ay = None
-                                    else:
-                                        harcama_grubu_monthly_change = float(str(raw_value).replace(',', '.'))
-                                        # Get the month name from the last column of the monthly change CSV
-                                        son_ay = get_turkish_month(last_col) + f" {datetime.strptime(last_col, '%Y-%m-%d').year}"
-                                except:
+                    harcama_grubu_monthly_change = None
+                    son_ay = None
+                    if not row.empty:
+                        # Tarih sütunlarını bul (Grup hariç)
+                        date_columns = [col for col in df_harcama_aylik.columns if col != 'Grup']
+                        if date_columns:
+                            last_col = date_columns[-1]
+                            try:
+                                raw_value = row[last_col].values[0]
+                                # NaN kontrolü
+                                if pd.isna(raw_value):
                                     harcama_grubu_monthly_change = None
                                     son_ay = None
-                            else:
+                                else:
+                                    harcama_grubu_monthly_change = float(str(raw_value).replace(',', '.'))
+                                    # Get the month name from the last column of the monthly change CSV
+                                    son_ay = get_turkish_month(last_col) + f" {datetime.strptime(last_col, '%Y-%m-%d').year}"
+                            except:
                                 harcama_grubu_monthly_change = None
                                 son_ay = None
                         else:
@@ -4675,12 +4672,12 @@ def harcama_gruplari():
                     tuik_filtered = tuik_dfy[tuik_dfy.index >= dates.min()]
                     tuik_filtered = tuik_filtered[tuik_filtered.index <= dates.max()]
                     
+                    # selected_harcama_grubu'nu normalize et (zaten normalize edilmiş ama emin olmak için)
+                    import re
+                    selected_harcama_grubu_norm = str(selected_harcama_grubu).strip().lower() if selected_harcama_grubu else ""
+                    selected_harcama_grubu_norm = re.sub(r',\s*', ',', selected_harcama_grubu_norm)
+                    
                     if not tuik_filtered.empty:
-                        # selected_harcama_grubu'nu normalize et (zaten normalize edilmiş ama emin olmak için)
-                        import re
-                        selected_harcama_grubu_norm = str(selected_harcama_grubu).strip().lower() if selected_harcama_grubu else ""
-                        selected_harcama_grubu_norm = re.sub(r',\s*', ',', selected_harcama_grubu_norm)
-                        
                         # Normalize edilmiş sütun ismiyle eşleştir
                         if selected_harcama_grubu_norm in tuik_filtered.columns:
                             # Web TÜFE verisinde NaN olmayan ilk veriyi ve tarihini bul
@@ -4747,6 +4744,8 @@ def harcama_gruplari():
                         else:
                             print(f"DEBUG - TÜİK verisinde '{selected_harcama_grubu_norm}' sütunu bulunamadı")
                             print(f"DEBUG - TÜİK sütunları (first 10): {list(tuik_filtered.columns[:10])}")
+                    else:
+                        print(f"DEBUG - TÜİK verisi boş")
                 fig_endeks.update_layout(
                     title=dict(
                         text=f'{selected_harcama_grubu.title()} Endeksi',
