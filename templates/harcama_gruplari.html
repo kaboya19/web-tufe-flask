@@ -268,20 +268,6 @@
                         <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date }}</option>
                         {% endfor %}
                     </select>
-                    <label class="ml-6 flex items-center gap-2">
-                        <input type="checkbox" name="show_contrib" {% if show_contrib %}checked{% endif %} onchange="this.form.submit()">
-                        <span>Katkıları göster</span>
-                    </label>
-                    <div class="ml-4 flex items-center gap-4">
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="contrib_type" value="ana" {% if contrib_type=='ana' %}checked{% endif %} onchange="this.form.submit()">
-                            <span>Ana gruba katkı</span>
-                        </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="contrib_type" value="manset" {% if contrib_type=='manset' %}checked{% endif %} onchange="this.form.submit()">
-                            <span>Manşet enflasyona katkı</span>
-                        </label>
-                    </div>
                     </div>
                     <div class="inline-flex rounded-lg border border-indigo-200 overflow-hidden flex-shrink-0">
                         <button type="button" onclick="setViewType('graph')"
@@ -363,17 +349,26 @@
                 </div>
                 <!-- Main chart view -->
                 <div id="main-chart-view-harcama" class="w-full relative">
-                    {% if combined_graphJSON and show_contrib %}
-                    <div id="contrib-combined-chart" class="w-full" style="min-height: 640px;"></div>
-                    {% else %}
+                    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu %}
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                            <button id="main-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                                Aylık
+                            </button>
+                            <button id="main-yearly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                                Yıllık
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div id="bar-chart" class="w-full" style="min-height: 640px;"></div>
-                    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu and not show_contrib %}
+                    <div id="yearly-bar-chart-main" class="w-full" style="min-height: 640px; display: none;"></div>
+                    {% if selected_group and selected_date and bar_graphJSON and not selected_harcama_grubu %}
                     <button onclick="downloadBarChart()" class="absolute top-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg shadow-md transition-colors duration-200 z-10" title="Grafiği PNG olarak indir">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                     </button>
-                    {% endif %}
                     {% endif %}
                 </div>
                 {% endif %}
@@ -383,11 +378,11 @@
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 border border-blue-100">
-                            <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yılbaşından İtibaren Değişim</h3>
-                            <p class="text-4xl font-bold mb-1 {% if harcama_grubu_total_change > 0 %}text-red-600{% elif harcama_grubu_total_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
-                                {{ '%.2f' % harcama_grubu_total_change }}%
+                            <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yıllık Değişim</h3>
+                            <p class="text-4xl font-bold mb-1 {% if harcama_grubu_yearly_change is not none and harcama_grubu_yearly_change > 0 %}text-red-600{% elif harcama_grubu_yearly_change is not none and harcama_grubu_yearly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                                {% if harcama_grubu_yearly_change is not none %}{{ '%.2f' % harcama_grubu_yearly_change }}%{% else %}-{% endif %}
                             </p>
-                            <p class="text-xs text-gray-500">{{ toplam_baslik }}</p>
+                            <p class="text-xs text-gray-500">Son 12 aya göre</p>
                         </div>
                         <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-md p-6 border border-orange-100" style="overflow: visible;">
                             <div class="flex items-center gap-2" style="overflow: visible;">
@@ -407,8 +402,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="text-4xl font-bold mb-1 {% if harcama_grubu_monthly_change > 0 %}text-red-600{% elif harcama_grubu_monthly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
-                                {{ '%.2f' % harcama_grubu_monthly_change }}%
+                            <p class="text-4xl font-bold mb-1 {% if harcama_grubu_monthly_change is not none and harcama_grubu_monthly_change > 0 %}text-red-600{% elif harcama_grubu_monthly_change is not none and harcama_grubu_monthly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                                {% if harcama_grubu_monthly_change is not none %}{{ '%.2f' % harcama_grubu_monthly_change }}%{% else %}-{% endif %}
                             </p>
                             <p class="text-xs text-gray-500">Bir önceki aya göre</p>
                         </div>
@@ -429,18 +424,25 @@
                     <!-- View toggle buttons removed for performance -->
                     <!-- Monthly chart view -->
                     <div id="monthly-chart-view-harcama" class="w-full">
-                        <div class="graph-tabs">
-                            <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
-                            <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-3">
+                                <button id="harcama-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                                    Aylık
+                                </button>
+                                <button id="harcama-yearly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                                    Yıllık
+                                </button>
+                            </div>
+                            <div class="graph-tabs">
+                                <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
+                                <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
+                            </div>
                         </div>
                         <div id="monthly-bar-chart" class="graph-content active" style="height: 400px;"></div>
                         <div id="monthly-line-chart" class="graph-content" style="height: 400px;"></div>
+                        <div id="yearly-bar-chart" class="graph-content" style="height: 400px; display: none;"></div>
+                        <div id="yearly-line-chart" class="graph-content" style="height: 400px; display: none;"></div>
                     </div>
-                </div>
-                {% endif %}
-                {% if contrib_graphJSON %}
-                <div class="mt-8">
-                    <div id="contrib-chart" class="w-full" style="min-height: 600px;"></div>
                 </div>
                 {% endif %}
                 {% elif view_type == 'data' %}
@@ -564,6 +566,61 @@
             responsive: true
         });
         
+        {% if yearly_bar_graphJSON_main %}
+        var yearlyBarGraphsMain = {{ yearly_bar_graphJSON_main | safe }};
+        Plotly.newPlot('yearly-bar-chart-main', yearlyBarGraphsMain.data, yearlyBarGraphsMain.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+        
+        // Aylık/Yıllık toggle için JavaScript
+        var currentMainViewType = 'monthly'; // 'monthly' or 'yearly'
+        const mainMonthlyBtn = document.getElementById('main-monthly-btn');
+        const mainYearlyBtn = document.getElementById('main-yearly-btn');
+        const barChartMain = document.getElementById('bar-chart');
+        const yearlyBarChartMain = document.getElementById('yearly-bar-chart-main');
+        
+        function setMainActive(btn) {
+            mainMonthlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            mainMonthlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            mainYearlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            mainYearlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+        }
+        
+        function updateMainChart() {
+            if (currentMainViewType === 'monthly') {
+                barChartMain.style.display = 'block';
+                yearlyBarChartMain.style.display = 'none';
+            } else {
+                barChartMain.style.display = 'none';
+                yearlyBarChartMain.style.display = 'block';
+            }
+            
+            setTimeout(function() {
+                if (currentMainViewType === 'monthly') {
+                    Plotly.Plots.resize('bar-chart');
+                } else {
+                    Plotly.Plots.resize('yearly-bar-chart-main');
+                }
+            }, 100);
+        }
+        
+        mainMonthlyBtn.addEventListener('click', function() {
+            currentMainViewType = 'monthly';
+            setMainActive(mainMonthlyBtn);
+            updateMainChart();
+        });
+        
+        mainYearlyBtn.addEventListener('click', function() {
+            currentMainViewType = 'yearly';
+            setMainActive(mainYearlyBtn);
+            updateMainChart();
+        });
+        {% endif %}
+        
         function downloadBarChart() {
             // Get the actual size from the chart's layout
             var chartElement = document.getElementById('bar-chart');
@@ -582,24 +639,6 @@
         }
     </script>
     {% endif %}
-    {% if contrib_graphJSON %}
-    <script>
-        var contribGraph = {{ contrib_graphJSON | safe }};
-        Plotly.newPlot('contrib-chart', contribGraph.data, contribGraph.layout, {
-            displayModeBar: false,
-            responsive: true
-        });
-    </script>
-    {% endif %}
-    {% if combined_graphJSON and show_contrib %}
-    <script>
-        var combinedGraph = {{ combined_graphJSON | safe }};
-        Plotly.newPlot('contrib-combined-chart', combinedGraph.data, combinedGraph.layout, {
-            displayModeBar: false,
-            responsive: true
-        });
-    </script>
-    {% endif %}
     {% if harcama_grubu_endeks_graphJSON %}
     <script>
         var endeksGraph = {{ harcama_grubu_endeks_graphJSON | safe }};
@@ -608,23 +647,126 @@
             responsive: true
         });
 
-        {% if monthly_bar_graphJSON and monthly_line_graphJSON %}
+        {% if monthly_bar_graphJSON %}
         var monthlyBarGraph = {{ monthly_bar_graphJSON | safe }};
-        var monthlyLineGraph = {{ monthly_line_graphJSON | safe }};
         Plotly.newPlot('monthly-bar-chart', monthlyBarGraph.data, monthlyBarGraph.layout, { displayModeBar: false, responsive: true });
+        {% endif %}
+        {% if monthly_line_graphJSON %}
+        var monthlyLineGraph = {{ monthly_line_graphJSON | safe }};
         Plotly.newPlot('monthly-line-chart', monthlyLineGraph.data, monthlyLineGraph.layout, { displayModeBar: false, responsive: true });
+        {% endif %}
+        {% if yearly_bar_graphJSON %}
+        var yearlyBarGraph = {{ yearly_bar_graphJSON | safe }};
+        Plotly.newPlot('yearly-bar-chart', yearlyBarGraph.data, yearlyBarGraph.layout, { displayModeBar: false, responsive: true });
+        {% endif %}
+        {% if yearly_line_graphJSON %}
+        var yearlyLineGraph = {{ yearly_line_graphJSON | safe }};
+        Plotly.newPlot('yearly-line-chart', yearlyLineGraph.data, yearlyLineGraph.layout, { displayModeBar: false, responsive: true });
+        {% endif %}
+        
+        // Aylık/Yıllık toggle için JavaScript
+        {% if monthly_bar_graphJSON or yearly_bar_graphJSON %}
+        var currentViewType = 'monthly'; // 'monthly' or 'yearly'
+        var currentChartType = 'bar'; // 'bar' or 'line'
+        
+        const harcamaMonthlyBtn = document.getElementById('harcama-monthly-btn');
+        const harcamaYearlyBtn = document.getElementById('harcama-yearly-btn');
+        
+        function setHarcamaActive(btn) {
+            harcamaMonthlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            harcamaMonthlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            harcamaYearlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            harcamaYearlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+        }
+        
+        function updateHarcamaCharts() {
+            const monthlyBarChart = document.getElementById('monthly-bar-chart');
+            const monthlyLineChart = document.getElementById('monthly-line-chart');
+            const yearlyBarChart = document.getElementById('yearly-bar-chart');
+            const yearlyLineChart = document.getElementById('yearly-line-chart');
+            
+            if (currentViewType === 'monthly') {
+                if (currentChartType === 'bar') {
+                    monthlyBarChart.classList.add('active');
+                    monthlyBarChart.style.display = 'block';
+                    monthlyLineChart.classList.remove('active');
+                    monthlyLineChart.style.display = 'none';
+                } else {
+                    monthlyLineChart.classList.add('active');
+                    monthlyLineChart.style.display = 'block';
+                    monthlyBarChart.classList.remove('active');
+                    monthlyBarChart.style.display = 'none';
+                }
+                yearlyBarChart.style.display = 'none';
+                yearlyLineChart.style.display = 'none';
+            } else {
+                if (currentChartType === 'bar') {
+                    yearlyBarChart.style.display = 'block';
+                    yearlyLineChart.style.display = 'none';
+                } else {
+                    yearlyLineChart.style.display = 'block';
+                    yearlyBarChart.style.display = 'none';
+                }
+                monthlyBarChart.style.display = 'none';
+                monthlyLineChart.style.display = 'none';
+            }
+            
+            setTimeout(function() {
+                if (currentViewType === 'monthly') {
+                    if (currentChartType === 'bar' && typeof monthlyBarGraph !== 'undefined') {
+                        Plotly.Plots.resize('monthly-bar-chart');
+                    } else if (currentChartType === 'line' && typeof monthlyLineGraph !== 'undefined') {
+                        Plotly.Plots.resize('monthly-line-chart');
+                    }
+                } else {
+                    if (currentChartType === 'bar' && typeof yearlyBarGraph !== 'undefined') {
+                        Plotly.Plots.resize('yearly-bar-chart');
+                    } else if (currentChartType === 'line' && typeof yearlyLineGraph !== 'undefined') {
+                        Plotly.Plots.resize('yearly-line-chart');
+                    }
+                }
+            }, 100);
+        }
+        
+        harcamaMonthlyBtn.addEventListener('click', function() {
+            currentViewType = 'monthly';
+            setHarcamaActive(harcamaMonthlyBtn);
+            updateHarcamaCharts();
+        });
+        
+        harcamaYearlyBtn.addEventListener('click', function() {
+            currentViewType = 'yearly';
+            setHarcamaActive(harcamaYearlyBtn);
+            updateHarcamaCharts();
+        });
+        
+        // showGraph fonksiyonunu override et
+        window.showGraph = function(type) {
+            currentChartType = type;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
+            updateHarcamaCharts();
+        };
         {% endif %}
     </script>
     {% endif %}
     <script>
-        function showGraph(type) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
-            document.getElementById(`monthly-${type}-chart`).classList.add('active');
-            setTimeout(function () {
-                Plotly.Plots.resize(`monthly-${type}-chart`);
-            }, 100);
+        // showGraph fonksiyonu yukarıda tanımlanmış olabilir (aylık/yıllık toggle varsa)
+        // Eğer yukarıda tanımlanmamışsa burada tanımla
+        if (typeof window.showGraph === 'undefined') {
+            function showGraph(type) {
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
+                document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`).classList.add('active');
+                document.getElementById(`monthly-${type}-chart`).classList.add('active');
+                setTimeout(function () {
+                    Plotly.Plots.resize(`monthly-${type}-chart`);
+                }, 100);
+            }
+            window.showGraph = showGraph;
         }
 
         // toggleViewEndeks, toggleViewMonthlyHarcama, and toggleViewMainHarcama functions removed for performance optimization

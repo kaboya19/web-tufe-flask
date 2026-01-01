@@ -46,7 +46,7 @@
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 border border-blue-100">
-                        <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yılbaşından İtibaren Değişim</h3>
+                        <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yıllık Değişim</h3>
                         <p class="text-4xl font-bold mb-1 {% if change_rate > 0 %}text-red-600{% elif change_rate < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
                             {% if change_rate is not none %}
                             {{ '%.2f' % change_rate }}%
@@ -54,7 +54,7 @@
                             -
                             {% endif %}
                         </p>
-                        <p class="text-xs text-gray-500">1.01.2025 - {{ last_date.strftime('%d.%m.%Y') }}</p>
+                        <p class="text-xs text-gray-500">Son 12 aya göre</p>
                     </div>
                     <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-md p-6 border border-orange-100" style="overflow: visible;">
                         <div class="flex items-center gap-2" style="overflow: visible;">
@@ -117,7 +117,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                         </svg>
-                                        Kümülatif
+                                        Yıllık
                                     </button>
                         </div>
                         <div id="monthly-change-line-chart" class="w-full" style="width: 100% !important;">
@@ -183,10 +183,12 @@
                     <div id="tufe-compare-chart-view" class="w-full">
                         <div class="flex justify-between items-center mb-4">
                             <div class="flex items-center gap-3">
-                                <label class="flex items-center cursor-pointer">
-                                    <input type="checkbox" id="cumulative-checkbox" class="mr-2 w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
-                                    <span class="text-sm font-semibold text-gray-700">Kümülatif Göster</span>
-                                </label>
+                                <button id="tufe-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                                    Aylık
+                                </button>
+                                <button id="tufe-yearly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                                    Yıllık
+                                </button>
                             </div>
                     <div class="btn-group flex gap-3 justify-end">
                         <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
@@ -356,31 +358,12 @@
     {% if selected_madde != 'TÜFE' %}
     <script>
         var monthlyChangeLineGraph = {{ line_graphJSON | safe }};
+        var yearlyChangeLineGraph = {{ yearly_line_graphJSON | safe if yearly_line_graphJSON else 'null' }};
         
-        // Orijinal verileri sakla
+        // Orijinal verileri sakla (aylık veri)
         var originalMaddeLineData = JSON.parse(JSON.stringify(monthlyChangeLineGraph));
+        var yearlyMaddeLineData = yearlyChangeLineGraph ? JSON.parse(JSON.stringify(yearlyChangeLineGraph)) : null;
         
-        // Kümülatif hesaplama fonksiyonu (Ocak 2025 = 0 ile başlar)
-        function calculateMaddeCumulative(values) {
-            let cumulative = [0]; // Ocak 2025 = 0
-            let cumulativeProduct = 1;
-            
-            for (let i = 0; i < values.length; i++) {
-                if (values[i] !== null && values[i] !== undefined) {
-                    cumulativeProduct *= (1 + values[i] / 100);
-                    cumulative.push((cumulativeProduct - 1) * 100);
-                } else {
-                    cumulative.push(null);
-                }
-            }
-            return cumulative;
-        }
-        
-        // Ay listesine Ocak 2025 ekle
-        function addMaddeJanuaryToMonths(months) {
-            let newMonths = ['Ocak 2025'];
-            return newMonths.concat(months);
-        }
         
         Plotly.newPlot('monthly-change-line-chart', monthlyChangeLineGraph.data, monthlyChangeLineGraph.layout, { displayModeBar: false, responsive: true });
 
@@ -406,55 +389,15 @@
             Plotly.react('monthly-change-line-chart', originalMaddeLineData.data, originalMaddeLineData.layout, { displayModeBar: false, responsive: true });
         });
         
-        // Kümülatif butonu handler
+        // Yıllık butonu handler
         maddeCumulativeBtn.addEventListener('click', function() {
             setMaddeMode(maddeCumulativeBtn);
-            if (true) {
-                // Kümülatif moda geç
-                let newLineData = JSON.parse(JSON.stringify(originalMaddeLineData));
-                
-                let cumValues = null;
-                
-                // Line grafiği için kümülatif hesapla
-                if (newLineData.data.length > 0) {
-                    cumValues = calculateMaddeCumulative(originalMaddeLineData.data[0].y);
-                    let newMonths = addMaddeJanuaryToMonths(originalMaddeLineData.data[0].x);
-                    newLineData.data[0].x = newMonths;
-                    newLineData.data[0].y = cumValues;
-                    newLineData.data[0].text = cumValues.map(v => v !== null && v < 0 ? '   ' + v.toFixed(2) : (v !== null ? v.toFixed(2) : ''));
-                    newLineData.data[0].cliponaxis = false; // Text'lerin grafik dışına çıkmasına izin ver
-                }
-                newLineData.layout.title.text = newLineData.layout.title.text.replace('Aylık Değişim Oranları', 'Kümülatif Aylık Değişim Oranları (Ocak 2025 = 0)');
-                
-                // Y ekseni aralığını kümülatif değerlere göre ayarla
-                if (cumValues && cumValues.length > 0) {
-                    let validValues = cumValues.filter(v => v !== null);
-                    if (validValues.length > 0) {
-                        let yMin = Math.min(...validValues);
-                        let yMax = Math.max(...validValues);
-                        let yRange = yMax - yMin;
-                        // Line chart için makul marj
-                        let yMarginTop = yRange * 0.2;  // 20%
-                        let yMarginBottom = yRange * 0.1;
-                        newLineData.layout.yaxis.range = [
-                            Math.min(0, yMin - yMarginBottom),
-                            yMax + yMarginTop
-                        ];
-                    }
-                }
-                // Grafik kenar boşluklarını ve yüksekliği ayarla
-                newLineData.layout.margin = { l: 10, r: 40, t: 60, b: 20 };
-                newLineData.layout.height = 450;
-                newLineData.layout.uniformtext = { mode: 'hide', minsize: 8 };
-                if (newLineData.layout.xaxis) {
-                    newLineData.layout.xaxis.automargin = true;
-                }
-                
-                Plotly.react('monthly-change-line-chart', newLineData.data, newLineData.layout, { 
-                    displayModeBar: false, 
-                    responsive: true,
-                    staticPlot: false
-                });
+            // Yıllık veriyi göster
+            if (yearlyMaddeLineData) {
+                Plotly.react('monthly-change-line-chart', yearlyMaddeLineData.data, yearlyMaddeLineData.layout, { displayModeBar: false, responsive: true });
+            } else {
+                // Yıllık veri yoksa, aylık veriyi göster
+                Plotly.react('monthly-change-line-chart', originalMaddeLineData.data, originalMaddeLineData.layout, { displayModeBar: false, responsive: true });
             }
         });
 
@@ -475,41 +418,15 @@
     {% endif %}
     {% if selected_madde == 'TÜFE' %}
     <script>
-        var barGraphs = {{ bar_graphJSON | safe }};
-        var lineGraphs = {{ line_graphJSON | safe }};
-        
-        // Orijinal verileri sakla
-        var originalBarData = JSON.parse(JSON.stringify(barGraphs));
-        var originalLineData = JSON.parse(JSON.stringify(lineGraphs));
-        
-        // Kümülatif hesaplama fonksiyonu (Ocak 2025 = 0 ile başlar)
-        function calculateCumulative(values) {
-            let cumulative = [0]; // Ocak 2025 = 0
-            let cumulativeProduct = 1;
-            
-            for (let i = 0; i < values.length; i++) {
-                if (values[i] !== null && values[i] !== undefined) {
-                    cumulativeProduct *= (1 + values[i] / 100);
-                    cumulative.push((cumulativeProduct - 1) * 100);
-                } else {
-                    cumulative.push(null);
-                }
-            }
-            return cumulative;
-        }
-        
-        // Ay listesine Ocak 2025 ekle
-        function addJanuaryToMonths(months) {
-            let newMonths = ['Ocak 2025'];
-            return newMonths.concat(months);
-        }
+        var yearlyBarGraphs = {{ bar_graphJSON | safe }};
+        var yearlyLineGraphs = {{ line_graphJSON | safe }};
+        var monthlyBarGraphs = {{ tufe_monthly_bar_graphJSON | safe if tufe_monthly_bar_graphJSON else 'null' }};
+        var monthlyLineGraphs = {{ tufe_monthly_line_graphJSON | safe if tufe_monthly_line_graphJSON else 'null' }};
         
         // Bar grafiklerin renklerini kontrol et ve ayarla
-        if (barGraphs && barGraphs.data) {
-            barGraphs.data.forEach(function(trace, idx) {
-                // marker_color veya marker.color kontrolü
+        if (yearlyBarGraphs && yearlyBarGraphs.data) {
+            yearlyBarGraphs.data.forEach(function(trace, idx) {
                 if (!trace.marker_color && (!trace.marker || !trace.marker.color)) {
-                    // Renk yoksa varsayılan renkleri ayarla
                     if (trace.name === 'Web TÜFE') {
                         trace.marker_color = '#EF476F';
                     } else if (trace.name === 'TÜİK TÜFE') {
@@ -519,127 +436,108 @@
             });
         }
         
-        Plotly.newPlot('bar-compare-chart', barGraphs.data, barGraphs.layout, { displayModeBar: false, responsive: true });
-        Plotly.newPlot('line-compare-chart', lineGraphs.data, lineGraphs.layout, { displayModeBar: false, responsive: true });
+        if (monthlyBarGraphs && monthlyBarGraphs.data) {
+            monthlyBarGraphs.data.forEach(function(trace, idx) {
+                if (!trace.marker_color && (!trace.marker || !trace.marker.color)) {
+                    if (trace.name === 'Web TÜFE') {
+                        trace.marker_color = '#EF476F';
+                    } else if (trace.name === 'TÜİK TÜFE') {
+                        trace.marker_color = '#118AB2';
+                    }
+                }
+            });
+        }
+        
+        // Varsayılan olarak yıllık grafikleri göster
+        if (yearlyBarGraphs) {
+            Plotly.newPlot('bar-compare-chart', yearlyBarGraphs.data, yearlyBarGraphs.layout, { displayModeBar: false, responsive: true });
+        }
+        if (yearlyLineGraphs) {
+            Plotly.newPlot('line-compare-chart', yearlyLineGraphs.data, yearlyLineGraphs.layout, { displayModeBar: false, responsive: true });
+        }
 
         // Toggle logic for comparison chart
         const barBtn = document.getElementById('bar-btn');
         const lineBtn = document.getElementById('line-btn');
         const barChart = document.getElementById('bar-compare-chart');
         const lineChart = document.getElementById('line-compare-chart');
-        const cumulativeCheckbox = document.getElementById('cumulative-checkbox');
+        const tufeMonthlyBtn = document.getElementById('tufe-monthly-btn');
+        const tufeYearlyBtn = document.getElementById('tufe-yearly-btn');
+        
+        var currentViewType = 'monthly'; // 'yearly' or 'monthly'
 
-        function setActive(btn) {
-        barBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
-        barBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+        function setActiveChartType(btn) {
+            tufeMonthlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+            tufeMonthlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            tufeYearlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+            tufeYearlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+        }
+
+        function setActiveChart(btn) {
+            barBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+            barBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            lineBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+            lineBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
+        }
         
-        lineBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
-        lineBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
-        
-        btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
-        btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md');
-    }
-        
-        // Kümülatif checkbox handler
-        cumulativeCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                // Kümülatif moda geç
-                let newBarData = JSON.parse(JSON.stringify(originalBarData));
-                let newLineData = JSON.parse(JSON.stringify(originalLineData));
-                
-                // Bar grafiği için her trace'i kümülatif yap
-                let allValues = [];
-                newBarData.data.forEach(function(trace, idx) {
-                    let cumValues = calculateCumulative(originalBarData.data[idx].y);
-                    let newMonths = addJanuaryToMonths(originalBarData.data[idx].x);
-                    trace.x = newMonths;
-                    trace.y = cumValues;
-                    trace.text = cumValues.map(v => v !== null ? '<b>' + v.toFixed(2) + '</b>' : '');
-                    trace.cliponaxis = false; // Text'lerin grafik dışına çıkmasına izin ver
-                    trace.constraintext = 'none'; // Text'leri kısıtlama
-                    // marker_color veya marker.color'u koru
-                    if (originalBarData.data[idx].marker_color) {
-                        trace.marker_color = originalBarData.data[idx].marker_color;
-                    } else if (originalBarData.data[idx].marker && originalBarData.data[idx].marker.color) {
-                        if (!trace.marker) trace.marker = {};
-                        trace.marker.color = originalBarData.data[idx].marker.color;
-                    }
-                    allValues = allValues.concat(cumValues.filter(v => v !== null));
-                });
-                newBarData.layout.title.text = 'Kümülatif Aylık Web TÜFE ve TÜİK TÜFE Karşılaştırması (Ocak 2025 = 0)';
-                
-                // Y ekseni aralığını kümülatif değerlere göre ayarla
-                if (allValues.length > 0) {
-                    let yMin = Math.min(...allValues);
-                    let yMax = Math.max(...allValues);
-                    let yRange = yMax - yMin;
-                    // Üstteki text'ler için makul marj (20%)
-                    let yMarginTop = yRange * 0.2;
-                    let yMarginBottom = yRange * 0.1;
-                    newBarData.layout.yaxis.range = [
-                        Math.min(0, yMin - yMarginBottom),
-                        yMax + yMarginTop
-                    ];
-                }
-                // Grafik kenar boşluklarını ayarla
-                newBarData.layout.margin = { l: 10, r: 40, t: 60, b: 20 };  // Sağ marjı artırdık
-                newBarData.layout.uniformtext = { mode: 'hide', minsize: 8 };
-                if (newBarData.layout.xaxis) {
-                    newBarData.layout.xaxis.automargin = true;
-                }
-                
-                // Line grafiği için her trace'i kümülatif yap
-                newLineData.data.forEach(function(trace, idx) {
-                    let cumValues = calculateCumulative(originalLineData.data[idx].y);
-                    let newMonths = addJanuaryToMonths(originalLineData.data[idx].x);
-                    trace.x = newMonths;
-                    trace.y = cumValues;
-                    trace.text = cumValues.map(v => v !== null && v < 0 ? '   ' + v.toFixed(2) : (v !== null ? v.toFixed(2) : ''));
-                    trace.cliponaxis = false; // Text'lerin grafik dışına çıkmasına izin ver
-                });
-                newLineData.layout.title.text = 'Kümülatif Aylık Web TÜFE ve TÜİK TÜFE Karşılaştırması (Ocak 2025 = 0)';
-                
-                // Y ekseni aralığını kümülatif değerlere göre ayarla (line chart için de)
-                if (allValues.length > 0) {
-                    let yMin = Math.min(...allValues);
-                    let yMax = Math.max(...allValues);
-                    let yRange = yMax - yMin;
-                    // Line chart için makul marj
-                    let yMarginTop = yRange * 0.2;  // 20%
-                    let yMarginBottom = yRange * 0.1;
-                    newLineData.layout.yaxis.range = [
-                        Math.min(0, yMin - yMarginBottom),
-                        yMax + yMarginTop
-                    ];
-                }
-                // Grafik kenar boşluklarını ayarla
-                newLineData.layout.margin = { l: 10, r: 40, t: 60, b: 20 };  // Sağ marjı artırdık
-                newLineData.layout.uniformtext = { mode: 'hide', minsize: 8 };
-                if (newLineData.layout.xaxis) {
-                    newLineData.layout.xaxis.automargin = true;
-                }
-                
-                Plotly.react('bar-compare-chart', newBarData.data, newBarData.layout, { 
-                    displayModeBar: false, 
-                    responsive: true,
-                    staticPlot: false
-                });
-                Plotly.react('line-compare-chart', newLineData.data, newLineData.layout, { 
-                    displayModeBar: false, 
-                    responsive: true,
-                    staticPlot: false
-                });
+        function updateCharts() {
+            var barData, lineData;
+            if (currentViewType === 'monthly') {
+                barData = monthlyBarGraphs;
+                lineData = monthlyLineGraphs;
             } else {
-                // Normal moda geri dön
-                Plotly.react('bar-compare-chart', originalBarData.data, originalBarData.layout, { displayModeBar: false, responsive: true });
-                Plotly.react('line-compare-chart', originalLineData.data, originalLineData.layout, { displayModeBar: false, responsive: true });
+                barData = yearlyBarGraphs;
+                lineData = yearlyLineGraphs;
             }
+            
+            if (barData) {
+                Plotly.react('bar-compare-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+            }
+            if (lineData) {
+                Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+            }
+        }
+        
+        tufeMonthlyBtn.addEventListener('click', function() {
+            currentViewType = 'monthly';
+            setActiveChartType(tufeMonthlyBtn);
+            updateCharts();
+            setTimeout(function() {
+                if (!lineChart.classList.contains('hidden')) {
+                    Plotly.Plots.resize('line-compare-chart');
+                }
+                if (!barChart.classList.contains('hidden')) {
+                    Plotly.Plots.resize('bar-compare-chart');
+                }
+            }, 100);
+        });
+        
+        tufeYearlyBtn.addEventListener('click', function() {
+            currentViewType = 'yearly';
+            setActiveChartType(tufeYearlyBtn);
+            updateCharts();
+            setTimeout(function() {
+                if (!lineChart.classList.contains('hidden')) {
+                    Plotly.Plots.resize('line-compare-chart');
+                }
+                if (!barChart.classList.contains('hidden')) {
+                    Plotly.Plots.resize('bar-compare-chart');
+                }
+            }, 100);
         });
 
         barBtn.addEventListener('click', function () {
             barChart.classList.remove('hidden');
             lineChart.classList.add('hidden');
-            setActive(barBtn);
+            setActiveChart(barBtn);
             setTimeout(function () {
                 Plotly.Plots.resize('bar-compare-chart');
             }, 100);
@@ -648,14 +546,16 @@
         lineBtn.addEventListener('click', function () {
             lineChart.classList.remove('hidden');
             barChart.classList.add('hidden');
-            setActive(lineBtn);
+            setActiveChart(lineBtn);
             setTimeout(function () {
                 Plotly.Plots.resize('line-compare-chart');
             }, 100);
         });
 
-        // Varsayılan olarak bar aktif
-        setActive(barBtn);
+        // Varsayılan olarak aylık ve bar aktif
+        setActiveChartType(tufeMonthlyBtn);
+        setActiveChart(barBtn);
+        updateCharts(); // İlk yüklemede aylık grafiği göster
 
         // Window resize event to ensure charts fill the container
         window.addEventListener('resize', function () {

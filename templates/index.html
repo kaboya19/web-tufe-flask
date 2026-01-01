@@ -289,7 +289,6 @@
                             <div class="absolute left-0 top-0 flex gap-2 z-10">
                                 <form method="POST" action="/ana-sayfa" class="inline">
                                     <input type="hidden" name="selected_date" value="{{ selected_date or '' }}">
-                                    <input type="hidden" name="show_contrib" value="{{ 'on' if show_contrib else '' }}">
                                     <input type="hidden" name="classification" value="eski">
                                     <button type="submit" class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all {% if (classification is not defined) or (classification == 'eski') %}bg-indigo-600 text-white shadow-md{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                                         Eski Sınıflandırma
@@ -297,7 +296,6 @@
                                 </form>
                                 <form method="POST" action="/ana-sayfa" class="inline">
                                     <input type="hidden" name="selected_date" value="{{ selected_date or '' }}">
-                                    <input type="hidden" name="show_contrib" value="{{ 'on' if show_contrib else '' }}">
                                     <input type="hidden" name="classification" value="yeni">
                                     <button type="submit" class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all {% if classification == 'yeni' %}bg-indigo-600 text-white shadow-md{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                                         Yeni Sınıflandırma
@@ -313,10 +311,6 @@
                                         <option value="{{ date }}" {% if date==selected_date %}selected{% endif %}>{{ date[:7] if date|length >= 7 else date }}</option>
                                         {% endfor %}
                                     </select>
-                                    <label class="flex items-center gap-2 ml-4">
-                                        <input type="checkbox" name="show_contrib" class="auto-submit" {% if show_contrib is not defined or show_contrib %}checked{% endif %}>
-                                        <span class="text-sm text-gray-700">Katkıları göster</span>
-                                    </label>
                                 </form>
                             </div>
                         </div>

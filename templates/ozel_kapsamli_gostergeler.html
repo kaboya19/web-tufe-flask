@@ -314,15 +314,15 @@
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-md p-6 border border-blue-100">
-                    <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yılbaşından İtibaren Değişim</h3>
-                    <p class="text-4xl font-bold mb-1 {% if total_change > 0 %}text-red-600{% elif total_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
-                        {% if total_change is not none %}
-                        {{ "%.2f"|format(total_change) }}%
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Yıllık Değişim</h3>
+                    <p class="text-4xl font-bold mb-1 {% if yearly_change is not none and yearly_change > 0 %}text-red-600{% elif yearly_change is not none and yearly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                        {% if yearly_change is not none %}
+                        {{ "%.2f"|format(yearly_change) }}%
                         {% else %}
                         -
                         {% endif %}
                     </p>
-                    <p class="text-xs text-gray-500">1.01.2025 - {{ last_date.strftime('%d.%m.%Y') }}</p>
+                    <p class="text-xs text-gray-500">Son 12 aya göre</p>
                 </div>
                 <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-md p-6 border border-orange-100" style="overflow: visible;">
                     <div class="flex items-center gap-2" style="overflow: visible;">
@@ -361,16 +361,29 @@
                 </div>
             </div>
 
-            <!-- Monthly Change Charts -->
+            <!-- Monthly/Yearly Change Charts -->
             <div class="bg-white rounded-lg shadow-sm p-6 overflow-hidden">
-                <!-- View toggle buttons removed for performance -->
-                <div id="monthly-chart-view" class="overflow-x-auto">
-                    <div class="graph-tabs">
-                        <button class="tab-button active" onclick="showGraph('bar')">Bar Grafik</button>
-                        <button class="tab-button" onclick="showGraph('line')">Line Grafik</button>
+                <div id="monthly-yearly-chart-view" class="overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                            <button id="ozel-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                                Aylık
+                            </button>
+                            <button id="ozel-yearly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                                Yıllık
+                            </button>
+                        </div>
+                        <div class="btn-group flex gap-3 justify-end">
+                            <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">
+                                Bar Grafik
+                            </button>
+                            <button id="line-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm" onclick="showGraph('line', this)">
+                                Line Grafik
+                            </button>
+                        </div>
                     </div>
-                    <div id="bar-chart" class="graph-content active" style="height: 400px; min-width: 0;"></div>
-                    <div id="line-chart" class="graph-content" style="height: 400px; min-width: 0;"></div>
+                    <div id="bar-chart" class="block" style="height: 400px; min-width: 0;"></div>
+                    <div id="line-chart" class="hidden" style="height: 400px; min-width: 0;"></div>
                 </div>
             </div>
             {% elif view_type == 'table' %}
@@ -614,47 +627,86 @@
                     console.error('Error parsing index graph JSON:', parseError);
                 }
 
-                // Bar Chart
-                const rawBarGraphJSON = '{{ bar_graphJSON | tojson | safe }}';
-                console.log('Raw bar_graphJSON:', rawBarGraphJSON);
-                let barGraphData;
-                try {
-                    // Remove extra quotes if present
-                    const cleanJSON = rawBarGraphJSON.replace(/^"|"$/g, '');
-                    barGraphData = JSON.parse(cleanJSON);
-                    console.log('Parsed Bar Graph Data:', barGraphData);
-                    if (barGraphData && barGraphData.data && barGraphData.layout) {
-                        Plotly.newPlot('bar-chart', barGraphData.data, barGraphData.layout, {
-                            displayModeBar: false,
-                            responsive: true
-                        });
+                // Monthly/Yearly Chart Data
+                var monthlyBarGraph = {{ monthly_bar_graphJSON | safe }};
+                var monthlyLineGraph = {{ monthly_line_graphJSON | safe }};
+                var yearlyBarGraph = {{ yearly_bar_graphJSON | safe }};
+                var yearlyLineGraph = {{ yearly_line_graphJSON | safe }};
+
+                var currentViewType = 'monthly'; // 'monthly' or 'yearly'
+                var currentChartType = 'bar'; // 'bar' or 'line'
+
+                function updateCharts() {
+                    var viewType = window.ozelCurrentViewType || currentViewType;
+                    var chartType = window.ozelCurrentChartType || currentChartType;
+                    var barData, lineData;
+                    if (viewType === 'monthly') {
+                        barData = monthlyBarGraph;
+                        lineData = monthlyLineGraph;
                     } else {
-                        console.error('Invalid bar graph data structure:', barGraphData);
+                        barData = yearlyBarGraph;
+                        lineData = yearlyLineGraph;
                     }
-                } catch (parseError) {
-                    console.error('Error parsing bar graph JSON:', parseError);
+
+                    if (barData && chartType === 'bar' && barData.data && barData.layout) {
+                        Plotly.react('bar-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                    }
+                    if (lineData && chartType === 'line' && lineData.data && lineData.layout) {
+                        Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                    }
                 }
 
-                // Line Chart
-                const rawLineGraphJSON = '{{ line_graphJSON | tojson | safe }}';
-                console.log('Raw line_graphJSON:', rawLineGraphJSON);
-                let lineGraphData;
-                try {
-                    // Remove extra quotes if present
-                    const cleanJSON = rawLineGraphJSON.replace(/^"|"$/g, '');
-                    lineGraphData = JSON.parse(cleanJSON);
-                    console.log('Parsed Line Graph Data:', lineGraphData);
-                    if (lineGraphData && lineGraphData.data && lineGraphData.layout) {
-                        Plotly.newPlot('line-chart', lineGraphData.data, lineGraphData.layout, {
-                            displayModeBar: false,
-                            responsive: true
-                        });
-                    } else {
-                        console.error('Invalid line graph data structure:', lineGraphData);
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing line graph JSON:', parseError);
+                // İlk yüklemede aylık bar grafiğini göster
+                if (monthlyBarGraph && monthlyBarGraph.data && monthlyBarGraph.layout) {
+                    Plotly.newPlot('bar-chart', monthlyBarGraph.data, monthlyBarGraph.layout, { displayModeBar: false, responsive: true });
                 }
+                if (monthlyLineGraph && monthlyLineGraph.data && monthlyLineGraph.layout) {
+                    Plotly.newPlot('line-chart', monthlyLineGraph.data, monthlyLineGraph.layout, { displayModeBar: false, responsive: true });
+                }
+
+                // Aylık/Yıllık butonları
+                const ozelMonthlyBtn = document.getElementById('ozel-monthly-btn');
+                const ozelYearlyBtn = document.getElementById('ozel-yearly-btn');
+
+                function setOzelActive(btn) {
+                    ozelMonthlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                    ozelMonthlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                    ozelYearlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                    ozelYearlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+
+                    btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                    btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                }
+
+                ozelMonthlyBtn.addEventListener('click', function() {
+                    currentViewType = 'monthly';
+                    window.ozelCurrentViewType = 'monthly';
+                    setOzelActive(ozelMonthlyBtn);
+                    updateCharts();
+                    setTimeout(function() {
+                        var chartType = window.ozelCurrentChartType || currentChartType;
+                        if (chartType === 'bar') {
+                            Plotly.Plots.resize('bar-chart');
+                        } else {
+                            Plotly.Plots.resize('line-chart');
+                        }
+                    }, 100);
+                });
+
+                ozelYearlyBtn.addEventListener('click', function() {
+                    currentViewType = 'yearly';
+                    window.ozelCurrentViewType = 'yearly';
+                    setOzelActive(ozelYearlyBtn);
+                    updateCharts();
+                    setTimeout(function() {
+                        var chartType = window.ozelCurrentChartType || currentChartType;
+                        if (chartType === 'bar') {
+                            Plotly.Plots.resize('bar-chart');
+                        } else {
+                            Plotly.Plots.resize('line-chart');
+                        }
+                    }, 100);
+                });
 
                 // Handle window resize
                 window.addEventListener('resize', function () {
@@ -667,6 +719,11 @@
                         Plotly.Plots.resize(chartId);
                     }
                 });
+                
+                // Make updateCharts accessible globally
+                window.updateOzelCharts = updateCharts;
+                window.ozelCurrentViewType = currentViewType;
+                window.ozelCurrentChartType = currentChartType;
             } catch (error) {
                 console.error('Error initializing graphs:', error);
                 console.error('Error details:', {
@@ -676,25 +733,47 @@
             }
         });
 
-        function showGraph(type) {
+        function showGraph(type, btnElement) {
             if (!isGraphView) {
                 return;
             }
 
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.graph-content').forEach(content => content.classList.remove('active'));
-            const targetButton = document.querySelector(`.tab-button[onclick="showGraph('${type}')"]`);
-            const targetChart = document.getElementById(`${type}-chart`);
-
-            if (targetButton && targetChart) {
-                targetButton.classList.add('active');
-                targetChart.classList.add('active');
-
-                // Resize the chart after showing it
-                setTimeout(function () {
-                    Plotly.Plots.resize(`${type}-chart`);
-                }, 100);
+            if (window.ozelCurrentChartType !== undefined) {
+                window.ozelCurrentChartType = type;
             }
+
+            // Bar/Line butonlarını güncelle
+            const barBtn = document.getElementById('bar-btn');
+            const lineBtn = document.getElementById('line-btn');
+            const barChart = document.getElementById('bar-chart');
+            const lineChart = document.getElementById('line-chart');
+
+            if (type === 'bar') {
+                barBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                barBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                lineBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                lineBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                barChart.classList.remove('hidden');
+                barChart.classList.add('block');
+                lineChart.classList.remove('block');
+                lineChart.classList.add('hidden');
+            } else {
+                lineBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                lineBtn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                barBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+                barBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+                lineChart.classList.remove('hidden');
+                lineChart.classList.add('block');
+                barChart.classList.remove('block');
+                barChart.classList.add('hidden');
+            }
+
+            if (window.updateOzelCharts) {
+                window.updateOzelCharts();
+            }
+            setTimeout(function () {
+                Plotly.Plots.resize(`${type}-chart`);
+            }, 100);
         }
 
         function setViewType(view) {

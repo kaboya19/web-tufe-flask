@@ -1,0 +1,383 @@
+Ürün,Eski,Grup
+Pirinç,Gıda ve alkolsüz içecekler,Pirinç
+Buğday Unu,Gıda ve alkolsüz içecekler,Un ve diğer tahıllar
+Bebek Sütü (Toz Karışım),Gıda ve alkolsüz içecekler,Un ve diğer tahıllar
+Bulgur,Gıda ve alkolsüz içecekler,Un ve diğer tahıllar
+Ekmek,Gıda ve alkolsüz içecekler,Ekmek
+Bisküvi,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Kraker,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Gofret,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Pasta,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Kek,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Baklava,Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Ekmek Hamuru (Yufka),Gıda ve alkolsüz içecekler,"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)"
+Makarna,Gıda ve alkolsüz içecekler,Makarna çeşitleri
+Şehriye,Gıda ve alkolsüz içecekler,Makarna çeşitleri
+Tahıl Gevreği,Gıda ve alkolsüz içecekler,Kahvaltılık tahıl ürünleri
+Dana Eti,Gıda ve alkolsüz içecekler,Dana eti
+Kuzu Eti,Gıda ve alkolsüz içecekler,Kuzu eti
+Tavuk Eti,Gıda ve alkolsüz içecekler,Tavuk eti
+Sakatat,Gıda ve alkolsüz içecekler,Diğer etler ve yenilebilir sakatatlar
+Sucuk,Gıda ve alkolsüz içecekler,"Şarküteri ürünleri (sucuk, sosis, salam vb.)"
+Sosis,Gıda ve alkolsüz içecekler,"Şarküteri ürünleri (sucuk, sosis, salam vb.)"
+Salam,Gıda ve alkolsüz içecekler,"Şarküteri ürünleri (sucuk, sosis, salam vb.)"
+Hazır Et Yemekleri,Gıda ve alkolsüz içecekler,"Şarküteri ürünleri (sucuk, sosis, salam vb.)"
+Balık,Gıda ve alkolsüz içecekler,Taze balık
+Konserve Balık,Gıda ve alkolsüz içecekler,Konserve edilmiş veya işlenmiş balık
+Süt,Gıda ve alkolsüz içecekler,Süt
+Yoğurt,Gıda ve alkolsüz içecekler,"Diğer süt ürünleri (yoğurt, hazır sütlü tatlı vb.)"
+Hazır Sütlü Tatlılar,Gıda ve alkolsüz içecekler,"Diğer süt ürünleri (yoğurt, hazır sütlü tatlı vb.)"
+Beyaz Peynir,Gıda ve alkolsüz içecekler,Peynir
+Kaşar Peyniri,Gıda ve alkolsüz içecekler,Peynir
+Tulum Peyniri,Gıda ve alkolsüz içecekler,Peynir
+Krem Peynir,Gıda ve alkolsüz içecekler,Peynir
+Yumurta,Gıda ve alkolsüz içecekler,Yumurta
+Tereyağı (Kahvaltılık),Gıda ve alkolsüz içecekler,Tereyağı
+Margarin,Gıda ve alkolsüz içecekler,Margarin
+Zeytinyağı,Gıda ve alkolsüz içecekler,"Sıvı yağlar (zeytinyağı, ayçiçek yağı)"
+Ayçiçek Yağı,Gıda ve alkolsüz içecekler,"Sıvı yağlar (zeytinyağı, ayçiçek yağı)"
+Portakal,Gıda ve alkolsüz içecekler,Taze meyveler
+Üzüm,Gıda ve alkolsüz içecekler,Taze meyveler
+Armut,Gıda ve alkolsüz içecekler,Taze meyveler
+Ayva,Gıda ve alkolsüz içecekler,Taze meyveler
+Çilek,Gıda ve alkolsüz içecekler,Taze meyveler
+Elma,Gıda ve alkolsüz içecekler,Taze meyveler
+Karpuz,Gıda ve alkolsüz içecekler,Taze meyveler
+Kavun,Gıda ve alkolsüz içecekler,Taze meyveler
+Kivi,Gıda ve alkolsüz içecekler,Taze meyveler
+Limon,Gıda ve alkolsüz içecekler,Taze meyveler
+Mandalina,Gıda ve alkolsüz içecekler,Taze meyveler
+Muz,Gıda ve alkolsüz içecekler,Taze meyveler
+Nar,Gıda ve alkolsüz içecekler,Taze meyveler
+Şeftali,Gıda ve alkolsüz içecekler,Taze meyveler
+Badem İçi,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Ceviz İçi,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Fındık İçi,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Antep Fıstığı,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Yer Fıstığı,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Leblebi,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Ay Çekirdeği,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Kabak Çekirdeği,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Kuru Üzüm,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Kuru Kayısı,Gıda ve alkolsüz içecekler,Kuru meyve ve sert kabuklu yemişler
+Çarliston Biber,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Dolmalık Biber,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Sivri Biber,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Dereotu,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Domates,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Taze Fasulye,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Havuç,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Ispanak,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Kabak,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Karnabahar,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Kuru Soğan,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Beyaz Lahana,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Kırmızı Lahana,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Mantar,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Kıvırcık,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Maydanoz,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Nane,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Patlıcan,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Pırasa,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Roka,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Salatalık,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Sarımsak,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Kırmızı Turp,Gıda ve alkolsüz içecekler,Taze sebzeler (patates hariç)
+Patates,Gıda ve alkolsüz içecekler,Patates
+Kuru Fasulye,Gıda ve alkolsüz içecekler,Kuru baklagiller
+Nohut,Gıda ve alkolsüz içecekler,Kuru baklagiller
+Mercimek,Gıda ve alkolsüz içecekler,Kuru baklagiller
+Konserveler,Gıda ve alkolsüz içecekler,"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)"
+Turşu,Gıda ve alkolsüz içecekler,"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)"
+Salça,Gıda ve alkolsüz içecekler,"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)"
+Zeytin,Gıda ve alkolsüz içecekler,"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)"
+Cipsler,Gıda ve alkolsüz içecekler,"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)"
+Toz Şeker,Gıda ve alkolsüz içecekler,Şeker
+Kesme Şeker,Gıda ve alkolsüz içecekler,Şeker
+Reçel,Gıda ve alkolsüz içecekler,"Reçel, marmelat, bal vb. ürünler"
+Bal,Gıda ve alkolsüz içecekler,"Reçel, marmelat, bal vb. ürünler"
+Pekmez,Gıda ve alkolsüz içecekler,"Reçel, marmelat, bal vb. ürünler"
+Tahin Helvası,Gıda ve alkolsüz içecekler,"Reçel, marmelat, bal vb. ürünler"
+Fındık Ezmesi,Gıda ve alkolsüz içecekler,"Reçel, marmelat, bal vb. ürünler"
+Çikolata Tablet,Gıda ve alkolsüz içecekler,Çikolata ve şekerlemeler
+Çikolata Krem,Gıda ve alkolsüz içecekler,Çikolata ve şekerlemeler
+Lokum,Gıda ve alkolsüz içecekler,Çikolata ve şekerlemeler
+Sakız,Gıda ve alkolsüz içecekler,Çikolata ve şekerlemeler
+Kağıtlı Şeker,Gıda ve alkolsüz içecekler,Çikolata ve şekerlemeler
+Dondurma,Gıda ve alkolsüz içecekler,Dondurma
+Baharat,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Tuz,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Kabartma Maddeleri,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Sirke,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Ketçap,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Mayonez,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Tahin,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Hazır Çorbalar,Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Hazır Pakette Toz Tatlılar (Puding),Gıda ve alkolsüz içecekler,"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, kabartma maddeleri, sirke, ketçap, mayonez vb.)"
+Kahve,Gıda ve alkolsüz içecekler,Kahve
+Hazır Kahve,Gıda ve alkolsüz içecekler,Kahve
+Çay,Gıda ve alkolsüz içecekler,Çay ve bitki çayları
+Bitki ve Meyve Çayı (Poşet),Gıda ve alkolsüz içecekler,Çay ve bitki çayları
+Kakao,Gıda ve alkolsüz içecekler,Toz kakao
+Su,Gıda ve alkolsüz içecekler,Su ve maden suyu
+Maden Suyu ve Sodası,Gıda ve alkolsüz içecekler,Su ve maden suyu
+Gazoz Meyveli,Gıda ve alkolsüz içecekler,"Alkolsüz içecekler (meşrubat, ayran vb.)"
+Kola,Gıda ve alkolsüz içecekler,"Alkolsüz içecekler (meşrubat, ayran vb.)"
+Soğuk Çay,Gıda ve alkolsüz içecekler,"Alkolsüz içecekler (meşrubat, ayran vb.)"
+Ayran,Gıda ve alkolsüz içecekler,"Alkolsüz içecekler (meşrubat, ayran vb.)"
+Meyve Suyu,Gıda ve alkolsüz içecekler,Meyve ve sebze suları
+Votka,Alkollü içecekler ve tütün,"Alkollü içecekler (rakı, viski, votka vb.)"
+Rakı,Alkollü içecekler ve tütün,"Alkollü içecekler (rakı, viski, votka vb.)"
+Viski,Alkollü içecekler ve tütün,"Alkollü içecekler (rakı, viski, votka vb.)"
+Şarap,Alkollü içecekler ve tütün,Şarap
+Bira,Alkollü içecekler ve tütün,Bira
+Sigaralar,Alkollü içecekler ve tütün,Sigaralar
+Kaban (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Erkek Mont,Giyim ve ayakkabı,Erkek giyim
+Takım Elbise (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Ceket (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Pantolon (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Kazak (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Gömlek (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Sweatshirt (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Tişört (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Eşofman (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Pijama (Erkek için),Giyim ve ayakkabı,Erkek giyim
+İç Çamaşırı (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Çorap (Erkek için),Giyim ve ayakkabı,Erkek giyim
+Kadın Mont (Anorak),Giyim ve ayakkabı,Kadın giyim
+Tayt (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Kaban (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Elbise (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Ceket (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Etek,Giyim ve ayakkabı,Kadın giyim
+Pantolon (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Hırka (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Kazak (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Gömlek (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Sweatshirt (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Tişört (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Eşofman (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Pijama (Kadın için),Giyim ve ayakkabı,Kadın giyim
+İç Çamaşırı (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Çorap (Kadın için),Giyim ve ayakkabı,Kadın giyim
+Kaban Anorak (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Elbise (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Pantolon (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Kazak (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Sweatshirt (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Tişört (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Tayt (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Eşofman (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Pijama (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+İç çamaşırı (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Çorap (Çocuk için),Giyim ve ayakkabı,Çocuk giyim
+Bebek Tulumu,Giyim ve ayakkabı,Bebek giyim
+Bebek Pijaması,Giyim ve ayakkabı,Bebek giyim
+Bebek İç Çamaşırı,Giyim ve ayakkabı,Bebek giyim
+Örgü Yünü,Giyim ve ayakkabı,"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)"
+Kravat,Giyim ve ayakkabı,"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)"
+Kemer,Giyim ve ayakkabı,"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)"
+Eşarp,Giyim ve ayakkabı,"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)"
+Kuru Temizleme Ücreti,Giyim ve ayakkabı,Giyim eşyalarının temizlenmesi ve tadilatı
+Ayakkabı (Erkek için),Giyim ve ayakkabı,Erkek ayakkabısı
+Bot (Erkek için),Giyim ve ayakkabı,Erkek ayakkabısı
+Spor Ayakkabısı (Erkek için),Giyim ve ayakkabı,Erkek ayakkabısı
+Ayakkabı (Kadın için),Giyim ve ayakkabı,Kadın ayakkabısı
+Bot (Kadın için),Giyim ve ayakkabı,Kadın ayakkabısı
+Spor Ayakkabısı (Kadın için),Giyim ve ayakkabı,Kadın ayakkabısı
+Terlik (Kadın için),Giyim ve ayakkabı,Kadın ayakkabısı
+Bot (Çocuk için),Giyim ve ayakkabı,Çocuk ve bebek ayakkabısı
+Spor Ayakkabısı (Çocuk için),Giyim ve ayakkabı,Çocuk ve bebek ayakkabısı
+Ayakkabı Tamiri (Erkek),Giyim ve ayakkabı,Ayakkabı bakım ve tamiri
+Ayakkabı Tamiri (Kadın),Giyim ve ayakkabı,Ayakkabı bakım ve tamiri
+Kiracı Tarafından Ödenen Gerçek Kira,Konut,Gerçek kira
+Badana ve Boya Malzemeleri,Konut,Konutun bakım ve onarımı için malzemeler
+Yer ve Duvar Döşemesi,Konut,Konutun bakım ve onarımı için malzemeler
+Pencere (PVC),Konut,Konutun bakım ve onarımı için malzemeler
+Sıhhi Techizat Malzemeleri,Konut,Konutun bakım ve onarımı için malzemeler
+Su Faturası,Konut,Su (şebeke suyu)
+Elektrik Ücreti,Konut,Elektrik
+Doğalgaz Ücreti,Konut,Doğalgaz ve ilgili abonelik ücretleri
+Tüp Gaz Ücreti,Konut,Tüpgaz (ev tüpü)
+Kömür Ücreti,Konut,"Katı yakıtlar (odun, kömür)"
+Odun Ücreti,Konut,"Katı yakıtlar (odun, kömür)"
+Tek Masa,Ev eşyası,Mutfak mobilyaları
+Tek Sandalye,Ev eşyası,Mutfak mobilyaları
+Yatak Odası Takımı,Ev eşyası,Yatak odası mobilyaları
+Yatak (Tek Kişilik),Ev eşyası,Yatak odası mobilyaları
+Yatak (Çift Kişilik),Ev eşyası,Yatak odası mobilyaları
+Yatak Bazası,Ev eşyası,Yatak odası mobilyaları
+Genç Odası Takımı,Ev eşyası,Yatak odası mobilyaları
+Oturma Odası Takımı,Ev eşyası,Yemek odası ve oturma odası mobilyaları
+Yemek Odası Takımı,Ev eşyası,Yemek odası ve oturma odası mobilyaları
+Sehpa,Ev eşyası,Yemek odası ve oturma odası mobilyaları
+Halı,Ev eşyası,Halı
+Perde,Ev eşyası,Ev tekstili
+Stor Perde,Ev eşyası,Ev tekstili
+Tül,Ev eşyası,Ev tekstili
+Yatak Örtüsü,Ev eşyası,Ev tekstili
+Yorgan,Ev eşyası,Ev tekstili
+Battaniye,Ev eşyası,Ev tekstili
+Pike Takımı,Ev eşyası,Ev tekstili
+Nevresim Takımı,Ev eşyası,Ev tekstili
+Yastık,Ev eşyası,Ev tekstili
+Havlu,Ev eşyası,Ev tekstili
+No-Frost Buzdolabı,Ev eşyası,"Buzdolabı, derin dondurucu"
+Derin Dondurucu,Ev eşyası,"Buzdolabı, derin dondurucu"
+Çamaşır Makinesi,Ev eşyası,Çamaşır ve bulaşık makineleri
+Bulaşık Makinesi,Ev eşyası,Çamaşır ve bulaşık makineleri
+Ankastre Mikrodalga Fırın,Ev eşyası,"Fırın, ocak ve fırınlı ocak"
+Ankastre Ocak (Set Üstü) ,Ev eşyası,"Fırın, ocak ve fırınlı ocak"
+Ankastre Fırın,Ev eşyası,"Fırın, ocak ve fırınlı ocak"
+Klima,Ev eşyası,Klima ve ısıtıcılar
+Soba,Ev eşyası,Klima ve ısıtıcılar
+Kombi,Ev eşyası,Klima ve ısıtıcılar
+Davlumbaz,Ev eşyası,Klima ve ısıtıcılar
+Elektrikli Süpürge,Ev eşyası,Diğer büyük ev aletleri (elektrikli süpürge vb.)
+Elektrikli Kesici Aletler (Blender),Ev eşyası,Elektrikli küçük ev aletleri
+Elektrikli Küçük Ev Aletleri (Tost Makinası),Ev eşyası,Elektrikli küçük ev aletleri
+Sıcak İçecek Makinaları,Ev eşyası,Elektrikli küçük ev aletleri
+Ütü,Ev eşyası,Elektrikli küçük ev aletleri
+Cam Ev Eşyası,Ev eşyası,"Cam, porselen, seramik vb. mutfak eşyaları"
+Porselen Ev Eşyası,Ev eşyası,"Cam, porselen, seramik vb. mutfak eşyaları"
+"Kaşık, Çatal, Bıçak Takımı (Çelik)",Ev eşyası,Çatal-bıçak takımı
+Çelik Mutfak Eşyaları,Ev eşyası,"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)"
+Teflon Mutfak Eşyaları,Ev eşyası,"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)"
+Diğer Elektriksiz Ev Aletleri,Ev eşyası,"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)"
+Pil,Ev eşyası,"Çeşitli küçük aksesuarlar (pil, ampul vb.)"
+Ampul,Ev eşyası,"Çeşitli küçük aksesuarlar (pil, ampul vb.)"
+"Kapı Aksesuarları (Anahtar, Kilit)",Ev eşyası,Evle ilgili küçük bakım-tamir mal ve hizmetleri
+Çamaşır İçin Temizlik ve Bakım Ürünleri,Ev eşyası,"Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)"
+Bulaşık İçin Temizlik ve Bakım Ürünleri,Ev eşyası,"Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)"
+Hijyenik Zeminler İçin Temizlik ve Bakım Ürünleri,Ev eşyası,"Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)"
+Her Türlü Ev Temizlik Aletleri,Ev eşyası,"Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)"
+Bulaşık Bezleri,Ev eşyası,"Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)"
+Saklama ve Muhafaza Malzemeleri,Ev eşyası,"Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)"
+Kağıt Sofra Malzemeleri,Ev eşyası,"Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)"
+Gündelikçi Ücreti,Ev eşyası,Ev içi hizmetler (gündelikçi ücreti)
+Halı Temizleme,Ev eşyası,Ev eşyalarının yıkanması ve temizlenmesi hizmetleri
+İlaçlar,Sağlık,İlaçlar
+Diğer Sağlık Ürünleri,Sağlık,Diğer sağlık ürünleri (hasta bezi vb.)
+Numaralı Gözlük Cam ve Çerçevesi,Sağlık,Gözlükler ve kontakt lensler
+Kontakt Lens,Sağlık,Gözlükler ve kontakt lensler
+Sağlık İle İlgili Araç Gereçler (Tansiyon Aleti),Sağlık,Diğer sağlık ekipmanları (tansiyon aleti vb.)
+Uzman Doktor Muayene Ücreti,Sağlık,"Ayakta tedavi hizmetleri (muayene ücreti, muayene katkı payı vb.)"
+İmplant Tedavisi (Muayenehane),Sağlık,Diş hekimliği hizmetleri
+Diş Çekme Ücreti,Sağlık,Diş hekimliği hizmetleri
+Diş Dolgu Ücreti,Sağlık,Diş hekimliği hizmetleri
+Röntgen Ücreti,Sağlık,"Tıbbi tahlil, analiz ve röntgen çekim hizmetleri"
+Labaratuvar Tahlil Ücretleri,Sağlık,"Tıbbi tahlil, analiz ve röntgen çekim hizmetleri"
+Otomobil (Dizel),Ulaştırma,Dizel otomobiller (sıfır km)
+Otomobil (Elektrikli),Ulaştırma,Benzinli ve elektrikli otomobiller (sıfır km)
+Otomobil (Benzinli),Ulaştırma,Benzinli ve elektrikli otomobiller (sıfır km)
+Motorsiklet,Ulaştırma,Motosikletler
+Bisiklet,Ulaştırma,Bisikletler
+Araç Yedek Parça ve Ekipmanları,Ulaştırma,Kişisel ulaştırma araçlarının yedek parça ve aksesuarları
+"Araba İle İlgili, Temizlik ve Bakım Ürünleri",Ulaştırma,Kişisel ulaştırma araçlarının yedek parça ve aksesuarları
+Benzin,Ulaştırma,"Kişisel ulaştırma araçlarının yakıt ve yağları (benzin, motorin, motor yağı)"
+LPG (Araba Tüpü Dolum)  Ücreti,Ulaştırma,"Kişisel ulaştırma araçlarının yakıt ve yağları (benzin, motorin, motor yağı)"
+Motorin,Ulaştırma,"Kişisel ulaştırma araçlarının yakıt ve yağları (benzin, motorin, motor yağı)"
+Motor Yağları,Ulaştırma,"Kişisel ulaştırma araçlarının yakıt ve yağları (benzin, motorin, motor yağı)"
+Araçların  Tamirine ve Bakımına Ödenen Ücretler (İşçilik),Ulaştırma,Kişisel ulaştırma araçlarının bakım ve onarımı
+Araba Kiralama Ücreti,Ulaştırma,Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban geçiş ücretleri dahil)
+Otopark Ücreti,Ulaştırma,Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban geçiş ücretleri dahil)
+Otoban Geçiş Ücreti,Ulaştırma,Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban geçiş ücretleri dahil)
+Köprü Geçiş Ücreti,Ulaştırma,Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban geçiş ücretleri dahil)
+Sürücü Eğitim Kurs Ücreti,Ulaştırma,Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban geçiş ücretleri dahil)
+Tren Ücreti Banliyo,Ulaştırma,Demiryolu ile şehir içi yolcu taşımacılığı
+Metro Ücreti,Ulaştırma,Demiryolu ile şehir içi yolcu taşımacılığı
+Tramvay Ücreti,Ulaştırma,Demiryolu ile şehir içi yolcu taşımacılığı
+Tren Ücreti (Şehirlerarası),Ulaştırma,Demiryolu ile şehirler arası yolcu taşımacılığı
+Belediye Otobüs Ücreti,Ulaştırma,Otobüs ile şehir içi yolcu taşımacılığı
+Dolmuş Ücreti,Ulaştırma,Otobüs ile şehir içi yolcu taşımacılığı
+Servis Ücreti,Ulaştırma,Otobüs ile şehir içi yolcu taşımacılığı
+Taksi Ücreti,Ulaştırma,Taksi ile şehir içi yolcu taşımacılığı
+Şehirlerarası Otobüs Ücreti ,Ulaştırma,Karayolu ile şehirler arası yolcu taşımacılığı
+Uçak Bileti Ücreti,Ulaştırma,Havayolu ile yolcu taşımacılığı
+Vapur Bilet Ücreti ,Ulaştırma,Deniz ve yurt içi su yolu ile yolcu taşımacılığı
+Kargo Gönderme Ücreti,Ulaştırma,"Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)"
+Telefon Ekipmanları (Cep Telefonu),Haberleşme,"Mobil telefon, ekipman ve aksesuarları"
+Telefon Yedek Parçaları,Haberleşme,"Mobil telefon, ekipman ve aksesuarları"
+Telefon Onarım Ücreti,Haberleşme,"Mobil telefon, ekipman ve aksesuarları"
+Cep Telefonu Görüşme Ücreti,Haberleşme,Telefon (mobil ve sabit hat) ve internet ücretleri
+İnternet Ücreti,Haberleşme,Telefon (mobil ve sabit hat) ve internet ücretleri
+Televizyon,Eğlence ve kültür,Televizyonlar
+Bilgisayar,Eğlence ve kültür,Bilgisayar ve ekipmanları
+Bilgisayar Ekipmanları,Eğlence ve kültür,Bilgisayar ve ekipmanları
+Tablet (Bilgisayar),Eğlence ve kültür,Bilgisayar ve ekipmanları
+Müzik Aletleri ,Eğlence ve kültür,Müzik enstrümanları
+Oyuncak,Eğlence ve kültür,"Oyunlar, oyuncaklar ve hobiler"
+Scooter (Çocuk),Eğlence ve kültür,"Oyunlar, oyuncaklar ve hobiler"
+Sporla İlgili Aletler (Futbol Topu),Eğlence ve kültür,"Spor, kamp ve açık hava eğlence malzemeleri"
+Evcil Hayvanlar İçin Gıda Harcamaları,Eğlence ve kültür,Evcil hayvanlar ile ilgili ürünler
+Veteriner Ücreti,Eğlence ve kültür,Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler
+Spor Müsabakalarına Giriş Ücreti,Eğlence ve kültür,Eğlence ve spor hizmetleri
+Sportif Faaliyetler İçin Yapılan Ödemeler,Eğlence ve kültür,Eğlence ve spor hizmetleri
+Resim Çektirme Ücreti,Eğlence ve kültür,Fotoğrafçılık hizmetleri
+Kablolu- Özel Televizyon Yayın Hizmetleri,Eğlence ve kültür,"Diğer eğlence ve kültür hizmetleri (sinema, tiyatro vb.)"
+Şans Oyunları,Eğlence ve kültür,Şans oyunları
+Çocuk Kitapları,Eğlence ve kültür,Kitaplar
+Test Kitapları,Eğlence ve kültür,Kitaplar
+Diğer Kitaplar,Eğlence ve kültür,Kitaplar
+Gazeteler,Eğlence ve kültür,Gazete ve dergiler
+Magazinler ve Dergiler,Eğlence ve kültür,Gazete ve dergiler
+Okul Defteri,Eğlence ve kültür,Kırtasiye malzemeleri
+Kalem,Eğlence ve kültür,Kırtasiye malzemeleri
+Resim Boyaları,Eğlence ve kültür,Kırtasiye malzemeleri
+Yazım ve Çizim Kağıtları,Eğlence ve kültür,Kırtasiye malzemeleri
+Diğer Kırtasiye Malzemeleri,Eğlence ve kültür,Kırtasiye malzemeleri
+Yurtiçi Haftasonu Turları,Eğlence ve kültür,Paket turlar
+Yurtiçi Bir Hafta ve Daha Fazla Süreli Turlar,Eğlence ve kültür,Paket turlar
+Yurt Dışı Bir Hafta ve Daha Fazla Süreli Turlar,Eğlence ve kültür,Paket turlar
+Hacca Gidiş Ücreti,Eğlence ve kültür,Paket turlar
+Umreye Gidiş Ücreti,Eğlence ve kültür,Paket turlar
+Özel İlköğretim Ücreti,Eğitim,Okul öncesi eğitim ve ilköğretim
+Özel Lise Ücreti,Eğitim,Orta öğretim
+Özel Üniversite Ücreti,Eğitim,Üniversite eğitimi
+Çorbalar,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+"Hazır Yemekler (Pilav, Kuru Fasulye)",Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Kebaplar,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Pideler,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Çiğ Köfte,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Ekmekarası Yiyecekler (Döner),Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Burgerler,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Pizzalar,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Pastane Ürünleri,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Hamur Tatlıları,Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde yenen yemekler"
+Sıcak İçecekler (Servis edilen),Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde içilen içecekler"
+Soğuk İçecekler (Servis edilen),Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde içilen içecekler"
+Ayran (Servis edilen),Lokanta ve oteller,"Lokanta, pastane, kafe vb. yerlerde içilen içecekler"
+Otel Ücreti,Lokanta ve oteller,"Otel, pansyion vb. yerlerde konaklama hizmetleri"
+Yurt Ücreti,Lokanta ve oteller,Diğer konaklama hizmetleri (öğrenci yurtları)
+Erkek Berberi,Çeşitli mal ve hizmetler,Erkekler için kuaförlük hizmetleri
+Kadın Berberi,Çeşitli mal ve hizmetler,Kadınlar için kuaförlük hizmetleri
+Kişisel Bakım Hizmetleri (Kadın İçin),Çeşitli mal ve hizmetler,Kadınlar için kuaförlük hizmetleri
+Elektrikli Saç Bakım Aletleri,Çeşitli mal ve hizmetler,Kişisel bakımda kullanılan elektrikli aletler
+Tıraş Malzemeleri,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Ağız ve Diş Bakımı Ürünleri,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Tuvalet ve Güzellik Sabunu,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Sabun,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Parfüm,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Deodorant,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Kolonya,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Cilt ve Vücut Ürünleri,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Makyaj Malzemeleri,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Saç Bakım Ürünleri,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Tuvalet Kağıdı,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Mendil,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Bebek Bezi,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Hijyenik Kadın Bağı,Çeşitli mal ve hizmetler,"Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler"
+Mücevher (Altın),Çeşitli mal ve hizmetler,"Mücevheratlar, saat ve kol saatleri"
+Saat,Çeşitli mal ve hizmetler,"Mücevheratlar, saat ve kol saatleri"
+Seyahat Malzemeleri,Çeşitli mal ve hizmetler,Seyahat malzemeleri ve diğer kişisel aksesuarlar
+Çanta (Kadın İçin),Çeşitli mal ve hizmetler,Seyahat malzemeleri ve diğer kişisel aksesuarlar
+Okul Çantası,Çeşitli mal ve hizmetler,Seyahat malzemeleri ve diğer kişisel aksesuarlar
+Güneş Gözlüğü,Çeşitli mal ve hizmetler,Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar
+Bebek Arabası,Çeşitli mal ve hizmetler,Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar
+"Yangın, Hırsızlık ve Diğer Afetler İçin Sigorta",Çeşitli mal ve hizmetler,Konut sigortası
+Sağlık Sigortası,Çeşitli mal ve hizmetler,Sağlık sigortası
+Kasko ve Zorunlu Trafik Sigortası,Çeşitli mal ve hizmetler,Ulaştırma sigortası
+Banka ile Para Havale Ücreti,Çeşitli mal ve hizmetler,Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.)
+Ulaşım Araçları ile İlgili Hizmet Ücreti,Çeşitli mal ve hizmetler,"Başka yerde sınıflandırılmayan diğer hizmetler (noterlik, avukatlık hizmetleri vb.)"
+Avukatlık Ücreti,Çeşitli mal ve hizmetler,"Başka yerde sınıflandırılmayan diğer hizmetler (noterlik, avukatlık hizmetleri vb.)"
