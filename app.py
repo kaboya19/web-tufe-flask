@@ -505,10 +505,10 @@ def get_tufe_vs_tuik_bar_data():
                     val_float = float(val)
                     if val_float == 0.0:
                         filtered_tuik.append(None)
-                    else:
-                        filtered_tuik.append(val_float)
             else:
-                filtered_tuik.append(None)
+                filtered_tuik.append(val_float)
+        else:
+            filtered_tuik.append(None)
     # TÜFE'nin olduğu tüm aylar ve değerleri
     month_labels = [f"{safe_get_turkish_month(m)} {m[:4]}" for m in filtered_months]
     bar_months = month_labels
@@ -4558,7 +4558,8 @@ def harcama_gruplari():
             
             if selected_norm in col_map:
                 real_col = col_map[selected_norm]
-                values = df_endeks[real_col]
+                # Endeks değerlerini float'a çevir (virgülleri noktaya çevir)
+                values = df_endeks[real_col].apply(lambda v: float(str(v).replace(',', '.')) if pd.notna(v) and v != '' else None)
                 dates = df_endeks['Tarih']
                 # Türkçe ay isimleriyle x ekseni için
                 turkish_months = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in dates]
@@ -4568,7 +4569,18 @@ def harcama_gruplari():
                 first_date = dates.iloc[0]
                 last_date = dates.iloc[-1]
                 toplam_baslik = f"{first_date.strftime('%d.%m.%Y')} - {last_date.strftime('%d.%m.%Y')}"
-                harcama_grubu_total_change = values.iloc[-1] - values.iloc[0]
+                # Total change hesaplarken ilk ve son None olmayan değerleri kullan
+                first_valid_idx = None
+                last_valid_idx = None
+                for i, v in enumerate(values):
+                    if pd.notna(v):
+                        if first_valid_idx is None:
+                            first_valid_idx = i
+                        last_valid_idx = i
+                if first_valid_idx is not None and last_valid_idx is not None:
+                    harcama_grubu_total_change = values.iloc[last_valid_idx] - values.iloc[first_valid_idx]
+                else:
+                    harcama_grubu_total_change = None
                 
                 # --- Fix: Son ay değişimi ve ay ismi kırılım seviyesine göre alınacak ---
                 # Kırılım seviyesine göre aylık değişim veri kaynağını seç
@@ -4671,9 +4683,58 @@ def harcama_gruplari():
                         
                         # Normalize edilmiş sütun ismiyle eşleştir
                         if selected_harcama_grubu_norm in tuik_filtered.columns:
+                            # Web TÜFE verisinde NaN olmayan ilk veriyi ve tarihini bul
+                            first_non_nan_date = None
+                            for i, (date_val, val) in enumerate(zip(dates, values)):
+                                if pd.notna(val):
+                                    first_non_nan_date = date_val
+                                    break
+                            
+                            # Eğer NaN olmayan ilk veri 2025-12-31 veya sonrası ise, TÜİK verisini normalize et
+                            tuik_values = tuik_filtered[selected_harcama_grubu_norm].copy()
+                            base_date = pd.to_datetime('2025-12-31')
+                            should_normalize = first_non_nan_date is not None and first_non_nan_date >= base_date
+                            
+                            if should_normalize:
+                                # İlk NaN olmayan tarihte TÜİK değerini bul
+                                if first_non_nan_date in tuik_filtered.index:
+                                    tuik_first_value = tuik_filtered.loc[first_non_nan_date, selected_harcama_grubu_norm]
+                                    # TÜİK değeri varsa normalize et
+                                    if pd.notna(tuik_first_value) and tuik_first_value != 0:
+                                        # TÜİK verisini ilk değere göre normalize et (ilk değer = 100)
+                                        tuik_values_normalized = (tuik_values / tuik_first_value) * 100
+                                    else:
+                                        tuik_values_normalized = tuik_values
+                                else:
+                                    # İlk tarih TÜİK verisinde yoksa, en yakın tarihi bul
+                                    if len(tuik_filtered.index) > 0:
+                                        # İlk tarihten önceki en yakın TÜİK tarihini bul
+                                        tuik_dates_before = tuik_filtered.index[tuik_filtered.index <= first_non_nan_date]
+                                        if len(tuik_dates_before) > 0:
+                                            tuik_base_date = tuik_dates_before[-1]
+                                            tuik_base_value = tuik_filtered.loc[tuik_base_date, selected_harcama_grubu_norm]
+                                            if pd.notna(tuik_base_value) and tuik_base_value != 0:
+                                                # TÜİK verisini base değere göre normalize et
+                                                tuik_values_normalized = (tuik_values / tuik_base_value) * 100
+                                            else:
+                                                tuik_values_normalized = tuik_values
+                                        else:
+                                            # İlk tarihten önce TÜİK verisi yoksa normalize etme
+                                            tuik_values_normalized = tuik_values
+                                    else:
+                                        tuik_values_normalized = tuik_values
+                                
+                                # TÜİK verisini ilk NaN olmayan tarihten itibaren filtrele
+                                tuik_filtered_normalized = tuik_filtered[tuik_filtered.index >= first_non_nan_date]
+                                tuik_values_normalized_filtered = tuik_values_normalized[tuik_filtered_normalized.index]
+                            else:
+                                # İlk tarih 2025-12-31'den önce ise normalize etme
+                                tuik_values_normalized_filtered = tuik_values
+                                tuik_filtered_normalized = tuik_filtered
+                            
                             fig_endeks.add_trace(go.Scatter(
-                                x=tuik_filtered.index,
-                                y=tuik_filtered[selected_harcama_grubu_norm],
+                                x=tuik_filtered_normalized.index,
+                                y=tuik_values_normalized_filtered,
                                 mode='lines',
                                 name='TÜİK',
                                 line=dict(
