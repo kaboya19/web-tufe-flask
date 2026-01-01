@@ -410,47 +410,34 @@ def get_tufe_vs_tuik_bar_data():
     # Yıllık değişim için tüfeyıllık.csv dosyasından oku
     try:
         df_tufe_yillik = pd.read_csv("tüfeyıllık.csv", quotechar='"')
-        # İlk sütun tarih, diğer sütunlar değerler
-        # Tarih sütununu index yap
-        if 'Tarih' in df_tufe_yillik.columns:
-            df_tufe_yillik = df_tufe_yillik.set_index('Tarih')
-        elif df_tufe_yillik.columns[0] == 'Unnamed: 0':
-            df_tufe_yillik = df_tufe_yillik.rename(columns={'Unnamed: 0': 'Tarih'})
-            df_tufe_yillik = df_tufe_yillik.set_index('Tarih')
-        else:
-            df_tufe_yillik = df_tufe_yillik.set_index(df_tufe_yillik.columns[0])
-        
-        # TÜFE sütununu bul (büyük küçük harf duyarsız)
-        tufe_col = None
-        for col in df_tufe_yillik.columns:
-            if 'tüfe' in str(col).lower() or 'web' in str(col).lower():
-                tufe_col = col
-                break
-        
-        if tufe_col is None and len(df_tufe_yillik.columns) > 0:
-            tufe_col = df_tufe_yillik.columns[0]  # İlk sütunu kullan
+        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+        # "Web TÜFE" satırını bul
+        tufe_row = df_tufe_yillik[df_tufe_yillik.iloc[:, 0].str.strip().str.lower() == 'web tüfe']
         
         tufe_values = []
         tufe_months = []
-        for date_str, row in df_tufe_yillik.iterrows():
-            val = row[tufe_col] if tufe_col else None
-            if pd.isna(val):
-                val = None
-            else:
-                try:
-                    val = float(str(val).replace(',', '.'))
-                except:
+        if not tufe_row.empty:
+            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+            date_columns = df_tufe_yillik.columns[1:]
+            for date_col in date_columns:
+                val = tufe_row[date_col].values[0] if date_col in tufe_row.columns else None
+                if pd.isna(val):
                     val = None
-            tufe_values.append(val)
-            # Tarihi YYYY-MM formatına çevir
-            try:
-                if isinstance(date_str, str):
-                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                 else:
-                    date_obj = pd.to_datetime(date_str)
-                tufe_months.append(date_obj.strftime('%Y-%m'))
-            except:
-                tufe_months.append(str(date_str))
+                    try:
+                        val = float(str(val).replace(',', '.'))
+                    except:
+                        val = None
+                tufe_values.append(val)
+                # Tarihi YYYY-MM formatına çevir
+                try:
+                    if isinstance(date_col, str):
+                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
+                    else:
+                        date_obj = pd.to_datetime(date_col)
+                    tufe_months.append(date_obj.strftime('%Y-%m'))
+                except:
+                    tufe_months.append(str(date_col))
     except FileNotFoundError:
         # Dosya yoksa eski mantığı kullan (gruplaraylık.csv)
         df=pd.read_csv("gruplaraylık.csv",index_col=0)
@@ -2018,27 +2005,27 @@ def tufe():
             yearly_change = None
             try:
                 df_yillik = pd.read_csv("maddeleryıllık.csv", quotechar='"')
-                # İlk sütun tarih, diğer sütunlar madde isimleri
-                if 'Tarih' in df_yillik.columns:
-                    df_yillik = df_yillik.set_index('Tarih')
-                elif df_yillik.columns[0] == 'Unnamed: 0':
-                    df_yillik = df_yillik.rename(columns={'Unnamed: 0': 'Tarih'})
-                    df_yillik = df_yillik.set_index('Tarih')
-                else:
-                    df_yillik = df_yillik.set_index(df_yillik.columns[0])
-                
-                # Sütun isimlerini normalize et
-                df_yillik.columns = df_yillik.columns.str.strip().str.lower()
-                
-                # Seçili maddeyi bul
-                if selected_madde_norm in df_yillik.columns:
-                    # Son yıllık değişim değerini al (son satırdan)
-                    last_value_yillik = df_yillik[selected_madde_norm].iloc[-1]
-                    if not pd.isna(last_value_yillik):
-                        try:
-                            yearly_change = float(str(last_value_yillik).replace(',', '.'))
-                        except:
-                            yearly_change = None
+                # Yeni yapı: İlk sütun boş, ikinci sütun "index" (tarih), sonraki sütunlar madde isimleri
+                # İkinci sütun tarih sütunu (başlık "index" ama değer tarih)
+                if len(df_yillik.columns) > 1:
+                    # Madde isimleri: üçüncü sütundan itibaren (index=2'den itibaren)
+                    madde_columns = df_yillik.columns[2:] if len(df_yillik.columns) > 2 else []
+                    
+                    # Seçili maddeyi bul (büyük küçük harf duyarsız)
+                    madde_col = None
+                    for col in madde_columns:
+                        if str(col).strip().lower() == selected_madde_norm:
+                            madde_col = col
+                            break
+                    
+                    if madde_col is not None and len(df_yillik) > 0:
+                        # Son yıllık değişim değerini al (son satırdan)
+                        last_value_yillik = df_yillik[madde_col].iloc[-1]
+                        if not pd.isna(last_value_yillik):
+                            try:
+                                yearly_change = float(str(last_value_yillik).replace(',', '.'))
+                            except:
+                                yearly_change = None
             except Exception as e:
                 print(f"maddeleryıllık.csv okuma hatası (yıllık değişim için): {e}")
                 yearly_change = None
@@ -2171,40 +2158,41 @@ def tufe():
             yillik_dates = []
             try:
                 df_yillik = pd.read_csv("maddeleryıllık.csv", quotechar='"')
-                # İlk sütun tarih, diğer sütunlar madde isimleri
-                if 'Tarih' in df_yillik.columns:
-                    df_yillik = df_yillik.set_index('Tarih')
-                elif df_yillik.columns[0] == 'Unnamed: 0':
-                    df_yillik = df_yillik.rename(columns={'Unnamed: 0': 'Tarih'})
-                    df_yillik = df_yillik.set_index('Tarih')
-                else:
-                    df_yillik = df_yillik.set_index(df_yillik.columns[0])
-                
-                # Sütun isimlerini normalize et
-                df_yillik.columns = df_yillik.columns.str.strip().str.lower()
-                
-                # Seçili maddeyi bul
-                if selected_madde_norm in df_yillik.columns:
-                    for date_str, row in df_yillik.iterrows():
-                        val = row[selected_madde_norm]
-                        if pd.isna(val):
-                            yillik_changes.append(None)
-                        else:
-                            try:
-                                val = float(str(val).replace(',', '.'))
-                                yillik_changes.append(val)
-                            except:
+                # Yeni yapı: İlk sütun boş, ikinci sütun "index" (tarih), sonraki sütunlar madde isimleri
+                # İkinci sütun tarih sütunu (başlık "index" ama değer tarih)
+                if len(df_yillik.columns) > 1:
+                    date_col = df_yillik.columns[1]  # İkinci sütun tarih sütunu
+                    # Madde isimleri: üçüncü sütundan itibaren (index=2'den itibaren)
+                    madde_columns = df_yillik.columns[2:] if len(df_yillik.columns) > 2 else []
+                    
+                    # Seçili maddeyi bul (büyük küçük harf duyarsız)
+                    madde_col = None
+                    for col in madde_columns:
+                        if str(col).strip().lower() == selected_madde_norm:
+                            madde_col = col
+                            break
+                    
+                    if madde_col is not None:
+                        # Tüm satırlardan değeri al
+                        for idx, row in df_yillik.iterrows():
+                            val = row[madde_col]
+                            if pd.isna(val):
                                 yillik_changes.append(None)
-                        
-                        # Tarihi formatla
-                        try:
-                            if isinstance(date_str, str):
-                                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                             else:
-                                date_obj = pd.to_datetime(date_str)
-                            yillik_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
-                        except:
-                            yillik_dates.append(str(date_str))
+                                try:
+                                    yillik_changes.append(float(str(val).replace(',', '.')))
+                                except:
+                                    yillik_changes.append(None)
+                            # Tarihi formatla (ikinci sütundan)
+                            date_str = row[date_col]
+                            try:
+                                if isinstance(date_str, str):
+                                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                else:
+                                    date_obj = pd.to_datetime(date_str)
+                                yillik_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
+                            except:
+                                yillik_dates.append(str(date_str))
             except Exception as e:
                 print(f"maddeleryıllık.csv okuma hatası: {e}")
                 yillik_changes = []
@@ -2914,29 +2902,22 @@ def ana_gruplar():
     try:
         csv_file_yearly = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
         df_yearly = pd.read_csv(csv_file_yearly, quotechar='"')
-        # İlk sütun tarih, diğer sütunlar grup isimleri
-        if 'Tarih' in df_yearly.columns:
-            df_yearly = df_yearly.set_index('Tarih')
-        elif df_yearly.columns[0] == 'Unnamed: 0':
-            df_yearly = df_yearly.rename(columns={'Unnamed: 0': 'Tarih'})
-            df_yearly = df_yearly.set_index('Tarih')
-        else:
-            df_yearly = df_yearly.set_index(df_yearly.columns[0])
-        
-        # Sütun isimlerini normalize et (virgül sonrası boşlukları kaldır)
-        df_yearly.columns = df_yearly.columns.str.replace(r',\s+', ',', regex=True).str.strip()
-        
+        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
         # Seçili grubu bul (büyük küçük harf duyarsız)
-        selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip()
-        group_col = None
-        for col in df_yearly.columns:
-            if col.replace(', ', ',').strip().lower() == selected_group_normalized.lower():
-                group_col = col
+        selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
+        group_row = None
+        for idx, row in df_yearly.iterrows():
+            group_name = str(row.iloc[0]).strip().lower()
+            group_name_normalized = group_name.replace(', ', ',').replace(', ', ',').strip()
+            if group_name_normalized == selected_group_normalized:
+                group_row = row
                 break
         
-        if group_col is not None:
-            for date_str, row in df_yearly.iterrows():
-                val = row[group_col]
+        if group_row is not None:
+            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+            date_columns = df_yearly.columns[1:]
+            for date_col in date_columns:
+                val = group_row[date_col]
                 if pd.isna(val):
                     yearly_changes.append(None)
                 else:
@@ -2946,13 +2927,13 @@ def ana_gruplar():
                         yearly_changes.append(None)
                 # Tarihi formatla
                 try:
-                    if isinstance(date_str, str):
-                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    if isinstance(date_col, str):
+                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
                     else:
-                        date_obj = pd.to_datetime(date_str)
+                        date_obj = pd.to_datetime(date_col)
                     yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
                 except:
-                    yearly_dates.append(str(date_str))
+                    yearly_dates.append(str(date_col))
         
         # Son yıllık değişim değerini bul
         if yearly_changes:
@@ -3977,48 +3958,44 @@ def harcama_gruplari():
                 df_yearly_main = None
             
             if df_yearly_main is not None and not df_yearly_main.empty:
-                # İlk sütun tarih olmalı
-                if df_yearly_main.columns[0] == 'Unnamed: 0' or df_yearly_main.columns[0] == '':
-                    df_yearly_main = df_yearly_main.rename(columns={df_yearly_main.columns[0]: 'Tarih'})
-                else:
-                    first_col = df_yearly_main.columns[0]
-                    if 'Tarih' not in df_yearly_main.columns:
-                        df_yearly_main = df_yearly_main.rename(columns={first_col: 'Tarih'})
-                
-                df_yearly_main = df_yearly_main.set_index('Tarih')
-                df_yearly_main.index = pd.to_datetime(df_yearly_main.index)
-                df_yearly_main = df_yearly_main.sort_index()
-                
-                # Seçili tarihe göre en son tarihi bul (selected_date formatı YYYY-MM)
+                # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+                # Seçili tarihe göre en son tarih sütununu bul (selected_date formatı YYYY-MM)
+                target_date_col = None
                 try:
                     selected_date_obj = datetime.strptime(selected_date, '%Y-%m')
-                    # Yıllık CSV'de bu tarihe en yakın tarihi bul
-                    available_dates = df_yearly_main.index
-                    # Seçili tarihe en yakın tarihi bul (büyük eşit)
-                    matching_dates = available_dates[available_dates <= selected_date_obj]
-                    if len(matching_dates) > 0:
-                        target_date = matching_dates[-1]
+                    # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+                    date_columns = df_yearly_main.columns[1:]
+                    # Seçili tarihe en yakın tarih sütununu bul
+                    matching_date_cols = []
+                    for date_col in date_columns:
+                        try:
+                            if isinstance(date_col, str):
+                                date_col_obj = datetime.strptime(date_col, '%Y-%m-%d')
+                            else:
+                                date_col_obj = pd.to_datetime(date_col)
+                            if date_col_obj <= selected_date_obj:
+                                matching_date_cols.append((date_col, date_col_obj))
+                        except:
+                            continue
+                    if len(matching_date_cols) > 0:
+                        # En yakın tarihi bul (en son)
+                        matching_date_cols.sort(key=lambda x: x[1])
+                        target_date_col = matching_date_cols[-1][0]
                     else:
-                        target_date = available_dates[0] if len(available_dates) > 0 else None
+                        # Eşleşen tarih yoksa ilk tarihi kullan
+                        target_date_col = date_columns[0] if len(date_columns) > 0 else None
                 except:
-                    target_date = df_yearly_main.index[-1] if len(df_yearly_main.index) > 0 else None
+                    # Hata durumunda son tarih sütununu kullan
+                    date_columns = df_yearly_main.columns[1:]
+                    target_date_col = date_columns[-1] if len(date_columns) > 0 else None
                 
-                if target_date is not None:
+                if target_date_col is not None:
                     # Yıllık değişim verilerini al
                     yearly_bar_labels = []
                     yearly_bar_values = []
                     yearly_bar_colors = []
                     
-                    # Sütun isimlerini normalize et
-                    import re
-                    col_map_yearly_main = {}
-                    for col in df_yearly_main.columns:
-                        if col is not None and pd.notna(col):
-                            col_str = str(col).strip().lower()
-                            col_str = re.sub(r',\s*', ',', col_str)
-                            col_map_yearly_main[col_str] = col
-                    
-                    # Ana grup için yıllık değişim - gruplaryıllık.csv dosyasından oku (aylık gibi)
+                    # Ana grup için yıllık değişim - gruplaryıllık.csv dosyasından oku
                     yearly_ana_grup_value = None
                     try:
                         if classification == 'yeni':
@@ -4026,57 +4003,73 @@ def harcama_gruplari():
                         else:
                             df_ana_grup_yearly = pd.read_csv("gruplaryıllık.csv", quotechar='"')
                         
-                        # İlk sütun tarih olmalı
-                        if df_ana_grup_yearly.columns[0] == 'Unnamed: 0' or df_ana_grup_yearly.columns[0] == '':
-                            df_ana_grup_yearly = df_ana_grup_yearly.rename(columns={df_ana_grup_yearly.columns[0]: 'Tarih'})
-                        else:
-                            first_col_yearly = df_ana_grup_yearly.columns[0]
-                            if 'Tarih' not in df_ana_grup_yearly.columns:
-                                df_ana_grup_yearly = df_ana_grup_yearly.rename(columns={first_col_yearly: 'Tarih'})
+                        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+                        # Seçili grubu bul
+                        selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
+                        group_row_ana = None
+                        for idx, row in df_ana_grup_yearly.iterrows():
+                            group_name = str(row.iloc[0]).strip().lower()
+                            group_name_normalized = group_name.replace(', ', ',').replace(', ', ',').strip()
+                            if group_name_normalized == selected_group_normalized:
+                                group_row_ana = row
+                                break
                         
-                        df_ana_grup_yearly = df_ana_grup_yearly.set_index('Tarih')
-                        df_ana_grup_yearly.index = pd.to_datetime(df_ana_grup_yearly.index)
-                        df_ana_grup_yearly = df_ana_grup_yearly.sort_index()
-                        
-                        # Sütun isimlerini normalize et
-                        col_map_ana_grup_yearly = {}
-                        for col in df_ana_grup_yearly.columns:
-                            if col is not None and pd.notna(col):
-                                col_str = str(col).strip().lower()
-                                col_str = re.sub(r',\s*', ',', col_str)
-                                col_map_ana_grup_yearly[col_str] = col
-                        
-                        # Seçili tarihe göre en son tarihi bul
-                        try:
-                            selected_date_obj = datetime.strptime(selected_date, '%Y-%m')
-                            available_dates_ana = df_ana_grup_yearly.index
-                            matching_dates_ana = available_dates_ana[available_dates_ana <= selected_date_obj]
-                            if len(matching_dates_ana) > 0:
-                                target_date_ana = matching_dates_ana[-1]
-                            else:
-                                target_date_ana = available_dates_ana[0] if len(available_dates_ana) > 0 else None
-                        except:
-                            target_date_ana = df_ana_grup_yearly.index[-1] if len(df_ana_grup_yearly.index) > 0 else None
-                        
-                        if target_date_ana is not None and selected_group_norm in col_map_ana_grup_yearly:
-                            real_col_ana = col_map_ana_grup_yearly[selected_group_norm]
-                            yearly_ana_grup_value = df_ana_grup_yearly.loc[target_date_ana, real_col_ana]
-                            if pd.isna(yearly_ana_grup_value):
-                                yearly_ana_grup_value = None
-                            else:
-                                yearly_ana_grup_value = float(str(yearly_ana_grup_value).replace(',', '.'))
+                        if group_row_ana is not None:
+                            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+                            date_columns_ana = df_ana_grup_yearly.columns[1:]
+                            # target_date_col'a en yakın tarih sütununu bul
+                            target_date_col_ana = None
+                            try:
+                                if isinstance(target_date_col, str):
+                                    target_date_obj = datetime.strptime(target_date_col, '%Y-%m-%d')
+                                else:
+                                    target_date_obj = pd.to_datetime(target_date_col)
+                                matching_date_cols_ana = []
+                                for date_col in date_columns_ana:
+                                    try:
+                                        if isinstance(date_col, str):
+                                            date_col_obj = datetime.strptime(date_col, '%Y-%m-%d')
+                                        else:
+                                            date_col_obj = pd.to_datetime(date_col)
+                                        if date_col_obj <= target_date_obj:
+                                            matching_date_cols_ana.append((date_col, date_col_obj))
+                                    except:
+                                        continue
+                                if len(matching_date_cols_ana) > 0:
+                                    matching_date_cols_ana.sort(key=lambda x: x[1])
+                                    target_date_col_ana = matching_date_cols_ana[-1][0]
+                                else:
+                                    target_date_col_ana = date_columns_ana[0] if len(date_columns_ana) > 0 else None
+                            except:
+                                target_date_col_ana = date_columns_ana[-1] if len(date_columns_ana) > 0 else None
+                            
+                            if target_date_col_ana is not None:
+                                val = group_row_ana[target_date_col_ana]
+                                if pd.isna(val):
+                                    yearly_ana_grup_value = None
+                                else:
+                                    yearly_ana_grup_value = float(str(val).replace(',', '.'))
                     except Exception as e:
                         print(f'Ana grup yıllık değişim okuma hatası: {e}')
                         yearly_ana_grup_value = None
                     
                     # Breakdown items için yıllık değişim
+                    import re
                     for item in data_items:
                         item_norm = item.strip().lower()
                         item_norm = re.sub(r',\s*', ',', item_norm)
                         
-                        if item_norm in col_map_yearly_main:
-                            real_col = col_map_yearly_main[item_norm]
-                            val = df_yearly_main.loc[target_date, real_col]
+                        # Seçili item'ı bul
+                        item_row = None
+                        for idx, row in df_yearly_main.iterrows():
+                            item_name = str(row.iloc[0]).strip().lower()
+                            item_name_normalized = re.sub(r',\s*', ',', item_name)
+                            if item_name_normalized == item_norm:
+                                item_row = row
+                                break
+                        
+                        if item_row is not None:
+                            val = item_row[target_date_col]
                             if pd.isna(val):
                                 value = None
                             else:
@@ -4186,7 +4179,10 @@ def harcama_gruplari():
                     
                     # Turkish month name for title
                     try:
-                        target_date_obj = pd.to_datetime(target_date)
+                        if isinstance(target_date_col, str):
+                            target_date_obj = datetime.strptime(target_date_col, '%Y-%m-%d')
+                        else:
+                            target_date_obj = pd.to_datetime(target_date_col)
                         turkish_month_yearly = get_turkish_month(target_date_obj.strftime('%Y-%m-%d'))
                     except:
                         turkish_month_yearly = selected_date
@@ -5115,32 +5111,23 @@ def harcama_gruplari():
                                     df_yearly = None
                             
                             if df_yearly is not None and not df_yearly.empty:
-                                # İlk sütun tarih olmalı
-                                if df_yearly.columns[0] == 'Unnamed: 0' or df_yearly.columns[0] == '':
-                                    df_yearly = df_yearly.rename(columns={df_yearly.columns[0]: 'Tarih'})
-                                else:
-                                    first_col = df_yearly.columns[0]
-                                    if 'Tarih' not in df_yearly.columns:
-                                        df_yearly = df_yearly.rename(columns={first_col: 'Tarih'})
-                                
-                                df_yearly = df_yearly.set_index('Tarih')
-                                df_yearly.index = pd.to_datetime(df_yearly.index)
-                                df_yearly = df_yearly.sort_index()
-                                
-                                # Sütun isimlerini normalize et (virgüllerden sonra boşlukları kaldır)
+                                # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+                                # selected_norm ile eşleşen satırı bul
                                 import re
-                                col_map_yearly = {}
-                                for col in df_yearly.columns:
-                                    if col is not None and pd.notna(col):
-                                        col_str = str(col).strip().lower()
-                                        col_str = re.sub(r',\s*', ',', col_str)
-                                        col_map_yearly[col_str] = col
+                                selected_norm_normalized = selected_norm.strip().lower()
+                                group_row_yearly = None
+                                for idx, row in df_yearly.iterrows():
+                                    group_name = str(row.iloc[0]).strip().lower()
+                                    group_name_normalized = re.sub(r',\s*', ',', group_name)
+                                    if group_name_normalized == selected_norm_normalized:
+                                        group_row_yearly = row
+                                        break
                                 
-                                # selected_norm ile eşleşen sütunu bul
-                                if selected_norm in col_map_yearly:
-                                    real_col_yearly = col_map_yearly[selected_norm]
-                                    for date_str, row in df_yearly.iterrows():
-                                        val = row[real_col_yearly]
+                                if group_row_yearly is not None:
+                                    # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+                                    date_columns_yearly = df_yearly.columns[1:]
+                                    for date_col in date_columns_yearly:
+                                        val = group_row_yearly[date_col]
                                         if pd.isna(val):
                                             yearly_changes.append(None)
                                         else:
@@ -5149,13 +5136,13 @@ def harcama_gruplari():
                                             except:
                                                 yearly_changes.append(None)
                                         try:
-                                            if isinstance(date_str, str):
-                                                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                            if isinstance(date_col, str):
+                                                date_obj = datetime.strptime(date_col, '%Y-%m-%d')
                                             else:
-                                                date_obj = pd.to_datetime(date_str)
+                                                date_obj = pd.to_datetime(date_col)
                                             yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
                                         except:
-                                            yearly_dates.append(str(date_str))
+                                            yearly_dates.append(str(date_col))
                                 
                                 # Yıllık bar ve line grafikleri oluştur
                                 if yearly_changes and yearly_dates:
@@ -6078,6 +6065,10 @@ def ozel_kapsamli_gostergeler():
             y_min_with_margin = max(0, y_min - y_margin)
         if y_max <= 0:
             y_max_with_margin = min(0, y_max + y_margin)
+    else:
+        # Eğer geçerli değer yoksa varsayılan aralık kullan
+        y_min_with_margin = -10
+        y_max_with_margin = 10
 
     bar_fig.update_layout(
         barmode='group',
@@ -6217,42 +6208,21 @@ def ozel_kapsamli_gostergeler():
     yearly_change_date = None
     try:
         df_yearly = pd.read_csv("özelgöstergeleryıllık.csv", quotechar='"')
-        # İlk sütun tarih (boş başlık olabilir), diğer sütunlar göstergeler
-        # İlk sütunu 'Tarih' olarak ayarla
-        if df_yearly.columns[0] == 'Unnamed: 0' or df_yearly.columns[0] == '' or df_yearly.columns[0] is None:
-            df_yearly = df_yearly.rename(columns={df_yearly.columns[0]: 'Tarih'})
-        elif 'Tarih' not in df_yearly.columns:
-            # İlk sütun zaten tarih olabilir ama ismi farklı
-            df_yearly = df_yearly.rename(columns={df_yearly.columns[0]: 'Tarih'})
-        
-        # Tarih sütununu index yap
-        df_yearly = df_yearly.set_index('Tarih')
-        df_yearly.index = pd.to_datetime(df_yearly.index)
-        df_yearly = df_yearly.sort_index()
-        
-        # Sütun isimlerini normalize et (büyük küçük harf duyarsız eşleştirme için)
-        col_map = {}
-        for col in df_yearly.columns:
-            col_normalized = str(col).strip().lower()
-            col_map[col_normalized] = col
-        
+        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
         # Seçili göstergeyi bul (büyük küçük harf duyarsız)
         selected_indicator_norm = selected_indicator.strip().lower()
-        indicator_col = None
+        indicator_row = None
+        for idx, row in df_yearly.iterrows():
+            indicator_name = str(row.iloc[0]).strip().lower()
+            if indicator_name == selected_indicator_norm:
+                indicator_row = row
+                break
         
-        # Önce tam eşleşme dene
-        if selected_indicator_norm in col_map:
-            indicator_col = col_map[selected_indicator_norm]
-        else:
-            # Kısmi eşleşme dene
-            for col_norm, col in col_map.items():
-                if selected_indicator_norm in col_norm or col_norm in selected_indicator_norm:
-                    indicator_col = col
-                    break
-        
-        if indicator_col and indicator_col in df_yearly.columns:
-            for date_str, row in df_yearly.iterrows():
-                val = row[indicator_col]
+        if indicator_row is not None:
+            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
+            date_columns = df_yearly.columns[1:]
+            for date_col in date_columns:
+                val = indicator_row[date_col]
                 if pd.isna(val):
                     yearly_changes.append(None)
                 else:
@@ -6261,13 +6231,13 @@ def ozel_kapsamli_gostergeler():
                     except:
                         yearly_changes.append(None)
                 try:
-                    if isinstance(date_str, str):
-                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    if isinstance(date_col, str):
+                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
                     else:
-                        date_obj = pd.to_datetime(date_str)
+                        date_obj = pd.to_datetime(date_col)
                     yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
                 except:
-                    yearly_dates.append(str(date_str))
+                    yearly_dates.append(str(date_col))
         
         # Son yıllık değişim değerini bul
         if yearly_changes:
@@ -6528,7 +6498,33 @@ def ozel_kapsamli_gostergeler():
         except Exception:
             return None
     
-    def get_ytd_value(series_name):
+    def get_yearly_value(series_name):
+        # Yıllık değişim için özelgöstergeleryıllık.csv dosyasından oku
+        try:
+            df_yearly_table = pd.read_csv("özelgöstergeleryıllık.csv", quotechar='"')
+            # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+            series_name_norm = series_name.strip().lower()
+            series_row = None
+            for idx, row in df_yearly_table.iterrows():
+                series_name_in_csv = str(row.iloc[0]).strip().lower()
+                if series_name_in_csv == series_name_norm:
+                    series_row = row
+                    break
+            
+            if series_row is not None:
+                # Son tarih sütunundan değeri al
+                date_columns = df_yearly_table.columns[1:]
+                if len(date_columns) > 0:
+                    last_date_col = date_columns[-1]
+                    val = series_row[last_date_col]
+                    if pd.isna(val):
+                        return None
+                    else:
+                        return float(str(val).replace(',', '.'))
+        except Exception as e:
+            print(f"Yıllık değişim okuma hatası ({series_name}): {e}")
+        
+        # Fallback: eski mantık (yılbaşından itibaren değişim)
         try:
             if series_name in df.columns:
                 return float(df[series_name].iloc[-1]) - 100
@@ -6577,7 +6573,7 @@ def ozel_kapsamli_gostergeler():
                 
                 previous_value = parse_numeric(row.get(selected_previous_col)) if selected_previous_col else None
                 current_value = parse_numeric(row.get(selected_current_col))
-                ytd_value = get_ytd_value(group_name)
+                ytd_value = get_yearly_value(group_name)
                 
                 table_values[group_name] = {
                     'previous': previous_value,
@@ -6607,16 +6603,31 @@ def ozel_kapsamli_gostergeler():
                             current_value_tufe = parse_numeric(val)
                         except Exception:
                             pass
-                    # YTD değerini tüfe.csv'den al
+                    # Yıllık değişim değerini tüfeyıllık.csv'den al
                     ytd_value_tufe = None
                     try:
-                        df_tufe = cached_read_csv("tüfe.csv").rename(columns={"Unnamed: 0": "Tarih"})
-                        df_tufe['Tarih'] = pd.to_datetime(df_tufe['Tarih'])
-                        if 'Web TÜFE' in df_tufe.columns:
-                            last_value = df_tufe['Web TÜFE'].iloc[-1]
-                            ytd_value_tufe = float(last_value) - 100
+                        df_tufe_yearly = pd.read_csv("tüfeyıllık.csv", quotechar='"')
+                        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
+                        web_tufe_row_yearly = df_tufe_yearly[df_tufe_yearly.iloc[:, 0].str.strip().str.lower() == 'web tüfe']
+                        if not web_tufe_row_yearly.empty:
+                            # Son tarih sütunundan değeri al
+                            date_columns_tufe = df_tufe_yearly.columns[1:]
+                            if len(date_columns_tufe) > 0:
+                                last_date_col_tufe = date_columns_tufe[-1]
+                                val = web_tufe_row_yearly[last_date_col_tufe].values[0]
+                                if pd.notna(val):
+                                    ytd_value_tufe = float(str(val).replace(',', '.'))
                     except Exception as e:
-                        print(f"Web TÜFE YTD değeri okunamadı: {e}")
+                        print(f"Web TÜFE yıllık değişim değeri okunamadı: {e}")
+                        # Fallback: eski mantık (yılbaşından itibaren değişim)
+                        try:
+                            df_tufe = cached_read_csv("tüfe.csv").rename(columns={"Unnamed: 0": "Tarih"})
+                            df_tufe['Tarih'] = pd.to_datetime(df_tufe['Tarih'])
+                            if 'Web TÜFE' in df_tufe.columns:
+                                last_value = df_tufe['Web TÜFE'].iloc[-1]
+                                ytd_value_tufe = float(last_value) - 100
+                        except Exception as e2:
+                            print(f"Web TÜFE fallback değeri okunamadı: {e2}")
                     
                     table_values['Web TÜFE'] = {
                         'previous': previous_value_tufe,

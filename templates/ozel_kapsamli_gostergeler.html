@@ -342,7 +342,7 @@
                             </div>
                         </div>
                     </div>
-                    <p class="text-4xl font-bold mb-1 {% if monthly_change > 0 %}text-red-600{% elif monthly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
+                    <p class="text-4xl font-bold mb-1 {% if monthly_change is not none and monthly_change > 0 %}text-red-600{% elif monthly_change is not none and monthly_change < 0 %}text-green-600{% else %}text-gray-700{% endif %}">
                         {% if monthly_change is not none %}
                         {{ "%.2f"|format(monthly_change) }}%
                         {% else %}
@@ -393,7 +393,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">Özel Kapsamlı Göstergeler Tablosu</h3>
-                        <p class="text-sm text-gray-500">Aylık değişimler ve yılbaşından itibaren değişimler.</p>
+                        <p class="text-sm text-gray-500">Aylık değişimler ve yıllık değişimler.</p>
                     </div>
                     <div class="text-sm text-gray-500 space-x-2">
                         {% if previous_month_label and current_month_label %}
@@ -459,7 +459,7 @@
                                     </div>
                                 </th>
                                 <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide">
-                                    Yılbaşından İtibaren
+                                    Yıllık Değişim
                                 </th>
                             </tr>
                         </thead>
@@ -501,8 +501,7 @@
                     </table>
                 </div>
                 <p class="mt-4 text-xs text-gray-500 leading-relaxed">
-                    * Nihai aylık değişim verileri ayın 24'ünde kesinleşir. Yılbaşından itibaren değişim, 31 Aralık 2024 baz
-                    değerine göre hesaplanır.
+                    * Nihai aylık değişim verileri ayın 24'ünde kesinleşir. Yıllık değişim, bir önceki yılın aynı ayına göre hesaplanır.
                 </p>
                 {% else %}
                 <p class="text-sm text-gray-500">Tablo verisi şu an için görüntülenemiyor.</p>
