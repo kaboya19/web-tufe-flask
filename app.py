@@ -2001,6 +2001,17 @@ def tufe():
             endeks_seri = df_endeks[real_col].apply(lambda v: float(str(v).replace(',', '.')) if v not in [None, ''] else None)
             endeks_dates = df_endeks.index
             
+            # NaN değerleri kaldır - DataFrame oluşturup dropna() kullan
+            df_plot = pd.DataFrame({
+                'Tarih': endeks_dates,
+                'Endeks': endeks_seri
+            })
+            df_plot = df_plot.dropna(subset=['Endeks'])
+            
+            # Temizlenmiş verileri al
+            endeks_dates_clean = df_plot['Tarih'].values
+            endeks_seri_clean = df_plot['Endeks'].values
+            
             # Yıllık değişim oranını maddeleryıllık.csv dosyasından al
             yearly_change = None
             try:
@@ -2031,7 +2042,7 @@ def tufe():
                 yearly_change = None
             
             # Fallback: toplam değişim oranını hesapla (eğer yıllık değişim bulunamazsa)
-            total_change = endeks_seri.iloc[-1] - 100 if not endeks_seri.empty else None
+            total_change = endeks_seri_clean[-1] - 100 if len(endeks_seri_clean) > 0 else None
             # Yıllık değişim değerini change_rate olarak kullan (yoksa total_change kullan)
             change_rate = yearly_change if yearly_change is not None else total_change
             
@@ -2049,19 +2060,22 @@ def tufe():
                 except:
                     monthly_change = None
             
-            print("Endeks serisi uzunluğu:", len(endeks_seri))
-            print("Endeks tarihleri uzunluğu:", len(endeks_dates))
-            print("İlk birkaç endeks değeri:", endeks_seri.head().tolist())
+            print("Endeks serisi uzunluğu (temizlenmiş):", len(endeks_seri_clean))
+            print("Endeks tarihleri uzunluğu (temizlenmiş):", len(endeks_dates_clean))
+            print("İlk birkaç endeks değeri (temizlenmiş):", endeks_seri_clean[:5].tolist() if len(endeks_seri_clean) > 0 else [])
             
-            turkish_dates = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in endeks_dates]
-            aybasi_tarihler = [d for d in endeks_dates if d.day == 1]
+            # Tarihleri pandas Timestamp'e dönüştür (eğer değilse)
+            endeks_dates_clean_ts = pd.to_datetime(endeks_dates_clean)
+            
+            turkish_dates = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in endeks_dates_clean_ts]
+            aybasi_tarihler = [d for d in endeks_dates_clean_ts if d.day == 1]
             tickvals = aybasi_tarihler
             ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in aybasi_tarihler]
             
             fig = go.Figure()
             fig.add_trace(go.Scatter(
-                x=endeks_dates,
-                y=endeks_seri,
+                x=endeks_dates_clean_ts,
+                y=endeks_seri_clean,
                 mode='lines',
                 name=selected_madde,
                 customdata=turkish_dates,
