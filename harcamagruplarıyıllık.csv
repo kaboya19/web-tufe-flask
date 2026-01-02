@@ -46,7 +46,7 @@ Bebek giyim,3.8601603175659527
 "Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)",14.226108916092484
 Giyim eşyalarının temizlenmesi ve tadilatı,29.752731497989735
 Erkek ayakkabısı,22.80197437626821
-Kadın ayakkabısı,15.895461026804947
+Kadın ayakkabısı,15.895461026804924
 Çocuk ve bebek ayakkabısı,20.798069733627745
 Ayakkabı bakım ve tamiri,30.49287957300022
 Gerçek kira,59.89869231583944
@@ -57,7 +57,7 @@ Doğalgaz ve ilgili abonelik ücretleri,24.5593689263794
 Tüpgaz (ev tüpü),25.012960167474873
 "Katı yakıtlar (odun, kömür)",35.99986574331084
 Mutfak mobilyaları,7.948774075204357
-Yatak odası mobilyaları,20.43033624631989
+Yatak odası mobilyaları,20.430336246319868
 Yemek odası ve oturma odası mobilyaları,18.57370459895744
 Halı,36.87331930803697
 Ev tekstili,72.93263150075933
@@ -69,7 +69,7 @@ Diğer büyük ev aletleri (elektrikli süpürge vb.),15.835698831299094
 Elektrikli küçük ev aletleri,22.255234521365665
 "Cam, porselen, seramik vb. mutfak eşyaları",19.292299768759015
 Çatal-bıçak takımı,15.135924063745776
-"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",17.565128807598374
+"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",17.565128807598352
 "Çeşitli küçük aksesuarlar (pil, ampul vb.)",27.634144525246796
 Evle ilgili küçük bakım-tamir mal ve hizmetleri,15.53094920928415
 "Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)",20.061557573366496
@@ -80,7 +80,7 @@ Ev eşyalarının yıkanması ve temizlenmesi hizmetleri,128.3279681428688
 "Ayakta tedavi hizmetleri (muayene ücreti, muayene katkı payı vb.)",-0.2760364536690596
 Dizel otomobiller (sıfır km),23.361732861255867
 Benzinli ve elektrikli otomobiller (sıfır km),25.356563417623
-Motosikletler,17.54196207990335
+Motosikletler,17.541962079903396
 Bisikletler,35.9422114859739
 "Kişisel ulaştırma araçlarının yakıt ve yağları (benzin, motorin, motor yağı)",14.007279945452744
 Kişisel ulaştırma araçlarının bakım ve onarımı,57.51751961949323
@@ -96,24 +96,24 @@ Telefon (mobil ve sabit hat) ve internet ücretleri,20.047097443692195
 Televizyonlar,10.475401546997155
 Bilgisayar ve ekipmanları,18.58415641487867
 Müzik enstrümanları,21.201020539144032
-"Oyunlar, oyuncaklar ve hobiler",19.373749383561645
+"Oyunlar, oyuncaklar ve hobiler",19.373749383561666
 "Spor, kamp ve açık hava eğlence malzemeleri",41.64305961691574
 Evcil hayvanlar ile ilgili ürünler,7.936240961954133
 Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler,14.377686093676756
 Kitaplar,18.49961145205279
 Kırtasiye malzemeleri,31.045179446453155
-Okul öncesi eğitim ve ilköğretim,71.75721757422507
-Orta öğretim,72.53297587411677
+Okul öncesi eğitim ve ilköğretim,35.00000000000001
+Orta öğretim,63.18822471519836
 Üniversite eğitimi,98.9594419614507
 "Lokanta, pastane, kafe vb. yerlerde yenen yemekler",30.685093674796992
 "Lokanta, pastane, kafe vb. yerlerde içilen içecekler",7.759980103300279
 "Otel, pansyion vb. yerlerde konaklama hizmetleri",168.51599746209192
-Erkekler için kuaförlük hizmetleri,48.5605116095672
-Kadınlar için kuaförlük hizmetleri,42.464779451214454
+Erkekler için kuaförlük hizmetleri,70.22513856092445
+Kadınlar için kuaförlük hizmetleri,62.50752183707344
 Kişisel bakımda kullanılan elektrikli aletler,23.881093891821603
 "Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler",18.487284436779493
 "Mücevheratlar, saat ve kol saatleri",81.18361327284948
 Seyahat malzemeleri ve diğer kişisel aksesuarlar,28.12780136014128
-Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,25.64695591333843
+Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,25.646955913338388
 Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),39.953948093759315
 "Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",26.715170202755555
