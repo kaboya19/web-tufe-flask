@@ -901,6 +901,46 @@ def get_monthly_group_data_for_date(date_str, classification='eski'):
         print(f"Error in get_monthly_group_data_for_date: {e}")
         return None, None
 
+def get_yearly_group_data(classification='eski'):
+    """Get yearly group data"""
+    try:
+        # Select file based on classification
+        csv_file = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
+        df = cached_read_csv(csv_file)
+        
+        # CSV structure: Grup,2026-01-31 (or similar date)
+        # First column is 'Grup', second column is the date
+        if len(df.columns) < 2:
+            return None, None
+        
+        # Get the date column (last column)
+        date_col = df.columns[-1]
+        
+        # Get the data
+        data_pairs = []
+        for idx, row in df.iterrows():
+            group_name = row.iloc[0]  # First column is group name
+            value = row[date_col]
+            try:
+                value = float(str(value).replace(',', '.'))
+                data_pairs.append((group_name, value))
+            except:
+                continue
+                
+        # Get Turkish month name and year from date
+        try:
+            date_obj = datetime.strptime(date_col, '%Y-%m-%d')
+            month_name = f"{get_turkish_month(date_col)} {date_obj.year}"
+        except:
+            month_name = date_col
+            
+        return data_pairs, month_name
+    except Exception as e:
+        print(f"Error in get_yearly_group_data: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, None
+
 def get_available_dates(classification='eski'):
     """Get list of available dates from monthly data"""
     try:
@@ -1098,16 +1138,26 @@ def ana_sayfa():
         # Get classification parameter (default: eski)
         classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')
         
-        # Get available dates for the dropdown
-        available_dates = get_available_dates(classification)
+        # Get period parameter (default: aylik)
+        period = request.form.get('period', 'aylik') if request.method == 'POST' else request.args.get('period', 'aylik')
+        
+        # Get available dates for the dropdown (only for monthly)
+        available_dates = get_available_dates(classification) if period == 'aylik' else []
         selected_date = None
         
         # Handle POST request (date selection)
         show_contrib = False  # Katkı grafikleri kaldırıldı
         if request.method == 'POST':
             selected_date = request.form.get('selected_date')
-            if selected_date:
-                # Get data for selected date
+            if period == 'yillik':
+                # Get yearly data
+                data_pairs, month_name = get_yearly_group_data(classification)
+                if data_pairs is None:
+                    # Fallback to default data if yearly data not found
+                    data_pairs, month_name = get_google_sheets_data()
+                    flash('Yıllık veri bulunamadı, varsayılan veri gösteriliyor.', 'warning')
+            elif selected_date:
+                # Get monthly data for selected date
                 data_pairs, month_name = get_monthly_group_data_for_date(selected_date, classification)
                 if data_pairs is None:
                     # Fallback to default data if selected date not found
@@ -1117,8 +1167,13 @@ def ana_sayfa():
                 # No date selected, use default data
                 data_pairs, month_name = get_google_sheets_data()
         else:
-            # GET request, use latest available date by default
-            if available_dates:
+            # GET request, use latest available date by default (for monthly) or yearly data
+            if period == 'yillik':
+                data_pairs, month_name = get_yearly_group_data(classification)
+                if data_pairs is None:
+                    data_pairs, month_name = get_google_sheets_data()
+                selected_date = None
+            elif available_dates:
                 selected_date = available_dates[0]  # First item is the latest due to reverse sort
                 data_pairs, month_name = get_monthly_group_data_for_date(selected_date, classification)
                 if data_pairs is None:
@@ -1223,7 +1278,10 @@ def ana_sayfa():
                 hovertemplate='%{customdata}: %{x:+.2f}%<extra></extra>',
                 customdata=left_categories  # Orijinal isimleri hover için sakla
             ))
-            chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları'
+            if period == 'yillik':
+                chart_title = f'Web TÜFE {month_name} Ana Grup Yıllık Değişim Oranları'
+            else:
+                chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Artış Oranları'
             single_fig.update_layout(
                 title=dict(text=''),
                 xaxis=dict(title='Değişim (%)', gridcolor='#E9ECEF', zerolinecolor='#E9ECEF', range=single_range,
@@ -1238,33 +1296,57 @@ def ana_sayfa():
                 autosize=True
             )
             graphJSON = json.dumps(single_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            # Get monthly change data for data view (from gruplaraylık.csv or gruplaraylıkv2.csv)
+            # Get monthly or yearly change data for data view
             try:
-                csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
-                monthly_df = cached_read_csv(csv_file, index_col=0)
-                # Transpose: groups become columns, dates become rows
-                group_names = monthly_df.iloc[:, 0].tolist()
-                date_columns = monthly_df.columns[1:].tolist()
-                
-                # Create transposed dataframe
-                transposed_data = []
-                for date_col in date_columns:
-                    row_data = {'Tarih': date_col}
-                    for idx, group_name in enumerate(group_names):
-                        value = monthly_df.iloc[idx][date_col]
-                        try:
-                            value = float(str(value).replace(',', '.'))
-                        except:
-                            value = None
-                        row_data[group_name] = value
-                    transposed_data.append(row_data)
-                
-                time_series_df = pd.DataFrame(transposed_data)
-                time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
-                time_series_data = time_series_df.to_dict('records')
-                time_series_columns = time_series_df.columns.tolist()
+                if period == 'yillik':
+                    # For yearly data, create a simple structure with just one row
+                    csv_file = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
+                    yearly_df = cached_read_csv(csv_file)
+                    if len(yearly_df.columns) >= 2:
+                        date_col = yearly_df.columns[-1]
+                        group_names = yearly_df.iloc[:, 0].tolist()
+                        row_data = {'Tarih': date_col}
+                        for idx, group_name in enumerate(group_names):
+                            value = yearly_df.iloc[idx][date_col]
+                            try:
+                                value = float(str(value).replace(',', '.'))
+                            except:
+                                value = None
+                            row_data[group_name] = value
+                        time_series_data = [row_data]
+                        time_series_columns = ['Tarih'] + group_names
+                    else:
+                        time_series_data = []
+                        time_series_columns = []
+                else:
+                    # Monthly data
+                    csv_file = "gruplaraylıkv2.csv" if classification == 'yeni' else "gruplaraylık.csv"
+                    monthly_df = cached_read_csv(csv_file, index_col=0)
+                    # Transpose: groups become columns, dates become rows
+                    group_names = monthly_df.iloc[:, 0].tolist()
+                    date_columns = monthly_df.columns[1:].tolist()
+                    
+                    # Create transposed dataframe
+                    transposed_data = []
+                    for date_col in date_columns:
+                        row_data = {'Tarih': date_col}
+                        for idx, group_name in enumerate(group_names):
+                            value = monthly_df.iloc[idx][date_col]
+                            try:
+                                value = float(str(value).replace(',', '.'))
+                            except:
+                                value = None
+                            row_data[group_name] = value
+                        transposed_data.append(row_data)
+                    
+                    time_series_df = pd.DataFrame(transposed_data)
+                    time_series_df = time_series_df.sort_values('Tarih', ascending=False)  # Most recent first
+                    time_series_data = time_series_df.to_dict('records')
+                    time_series_columns = time_series_df.columns.tolist()
             except Exception as e:
-                print(f"Error loading monthly data: {e}")
+                print(f"Error loading {'yearly' if period == 'yillik' else 'monthly'} data: {e}")
+                import traceback
+                traceback.print_exc()
                 time_series_data = []
                 time_series_columns = []
             
@@ -1278,6 +1360,7 @@ def ana_sayfa():
                                  show_contrib=show_contrib,
                                  chart_title=chart_title,
                                  classification=classification,
+                                 period=period,
                                  top_risers=top_risers,
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
@@ -1327,7 +1410,7 @@ def ana_sayfa():
             x=left_values,
             orientation='h',
             marker=dict(color=left_colors, line=dict(width=0)),
-            name='Aylık değişim',
+            name='Yıllık değişim' if period == 'yillik' else 'Aylık değişim',
             text=[f'<b>{v:+.2f}%</b>' for v in left_values],
             textposition='outside',
             textfont=dict(size=15, family='Inter, sans-serif', color='#2B2D42'),
@@ -1383,7 +1466,10 @@ def ana_sayfa():
                          tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), row=1, col=2)
 
         # Layout - leave title empty to place heading in template row with controls
-        chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Aylık Değişimleri ve Katkıları'
+        if period == 'yillik':
+            chart_title = f'Web TÜFE {month_name} Ana Grup Yıllık Değişimleri ve Katkıları'
+        else:
+            chart_title = f'Web TÜFE {month_name} Ayı Ana Grup Aylık Değişimleri ve Katkıları'
         fig.update_layout(
             title=dict(text=''),
             barmode='overlay', bargap=0.25,
@@ -1417,6 +1503,7 @@ def ana_sayfa():
                              show_contrib=show_contrib,
                                  chart_title=chart_title,
                                  classification=classification,
+                                 period=period,
                                  top_risers=top_risers,
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
@@ -1465,6 +1552,8 @@ def ana_sayfa():
                              selected_date=None,
                              sorted_group_data=[],
                              show_contrib=False,
+                             classification=classification,
+                             period=period,
                              top_risers=top_risers,
                              top_fallers=top_fallers,
                              top_harcama_risers=top_harcama_risers,
