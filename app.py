@@ -950,37 +950,127 @@ def get_top_movers():
     monthly_top_risers = []
     monthly_top_fallers = []
     try:
-        maddeler_monthly = cached_read_csv('maddeleraylık.csv')
+        print("=" * 50)
+        print("DEBUG: Aylık maddeler verileri işleniyor...")
+        # Read CSV - first column is empty index, second column is 'Madde'
+        maddeler_monthly = cached_read_csv('maddeleraylık.csv', index_col=0)
+        print(f"DEBUG: CSV okundu. Shape: {maddeler_monthly.shape}, Columns: {maddeler_monthly.columns.tolist()[:5]}")
+        # Now 'Madde' should be the first column (index 0)
+        # We need to set 'Madde' as the index
         if 'Madde' in maddeler_monthly.columns:
             maddeler_monthly = maddeler_monthly.set_index('Madde')
-            # Select the last column (assuming it is the latest date)
-            # The first column in CSV is often index (Unnamed: 0), we set Madde as index, 
-            # so we should check columns carefully. 
-            # The columns will be: Unnamed: 0, Date1, Date2...
-            # We want the last column.
+            print(f"DEBUG: 'Madde' sütunu bulundu ve index olarak ayarlandı.")
+        elif len(maddeler_monthly.columns) > 0:
+            # If 'Madde' column not found, use first column as index
+            maddeler_monthly = maddeler_monthly.set_index(maddeler_monthly.columns[0])
+            print(f"DEBUG: 'Madde' sütunu bulunamadı, ilk sütun index olarak ayarlandı: {maddeler_monthly.columns[0]}")
+        
+        # Select the last column (assuming it is the latest date)
+        # After setting index, columns should only contain date columns
+        if len(maddeler_monthly.columns) > 0:
+            print(f"DEBUG: Son sütun seçiliyor. Toplam sütun sayısı: {len(maddeler_monthly.columns)}")
             monthly_changes = maddeler_monthly.iloc[:, -1]
-            monthly_changes = monthly_changes.dropna()
-            monthly_changes_sorted = monthly_changes.sort_values()
+            print(f"DEBUG: Son sütun alındı. Toplam satır: {len(monthly_changes)}, NaN olmayan: {monthly_changes.notna().sum()}")
+            # Convert to numeric first, then drop all NaN/invalid values
+            monthly_changes = pd.to_numeric(monthly_changes, errors='coerce')
+            print(f"DEBUG: Numeric'e çevrildi. NaN olmayan: {monthly_changes.notna().sum()}")
+            # Remove all NaN, None, and invalid values
+            monthly_changes = monthly_changes[monthly_changes.notna()]
+            print(f"DEBUG: NaN değerler filtrelendi. Kalan: {len(monthly_changes)}")
+            # Also filter out infinite values
+            monthly_changes = monthly_changes[np.isfinite(monthly_changes)]
+            print(f"DEBUG: Sonsuz değerler filtrelendi. Kalan: {len(monthly_changes)}")
             
-            monthly_top_fallers = [(index, value) for index, value in monthly_changes_sorted.head(20).items()]
-            monthly_top_risers = [(index, value) for index, value in monthly_changes_sorted.tail(20).iloc[::-1].items()]
+            if len(monthly_changes) > 0:
+                monthly_changes_sorted = monthly_changes.sort_values()
+                print(f"DEBUG: Sıralandı. En düşük 5: {monthly_changes_sorted.head(5).to_dict()}")
+                print(f"DEBUG: En yüksek 5: {monthly_changes_sorted.tail(5).to_dict()}")
+                
+                # Get top 20 fallers (lowest values) and risers (highest values)
+                # Only get valid numeric values (no NaN)
+                fallers_data = monthly_changes_sorted.head(20)
+                risers_data = monthly_changes_sorted.tail(20).iloc[::-1]
+                
+                # Filter out any remaining NaN values just to be safe
+                monthly_top_fallers = [(str(index), float(value)) for index, value in fallers_data.items() 
+                                      if pd.notna(value) and np.isfinite(value)]
+                monthly_top_risers = [(str(index), float(value)) for index, value in risers_data.items() 
+                                    if pd.notna(value) and np.isfinite(value)]
+                print(f"DEBUG: Fallers sayısı: {len(monthly_top_fallers)}, Risers sayısı: {len(monthly_top_risers)}")
+                print(f"DEBUG: İlk 3 faller: {monthly_top_fallers[:3]}")
+                print(f"DEBUG: İlk 3 riser: {monthly_top_risers[:3]}")
+            else:
+                print("DEBUG: Filtreleme sonrası hiç veri kalmadı!")
+        else:
+            print("DEBUG: Hiç sütun yok!")
     except Exception as e:
-        print(f"Error in get_top_movers (monthly maddeler): {e}")
+        print("=" * 50)
+        print(f"ERROR in get_top_movers (monthly maddeler): {e}")
+        print(f"ERROR Type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 50)
 
     monthly_top_harcama_risers = []
     monthly_top_harcama_fallers = []
     try:
-        harcama_monthly = cached_read_csv('harcama_gruplarıaylık.csv')
+        print("=" * 50)
+        print("DEBUG: Aylık harcama grupları verileri işleniyor...")
+        # Read CSV - first column is empty index, second column is 'Grup'
+        harcama_monthly = cached_read_csv('harcama_gruplarıaylık.csv', index_col=0)
+        print(f"DEBUG: CSV okundu. Shape: {harcama_monthly.shape}, Columns: {harcama_monthly.columns.tolist()[:5]}")
+        # Now 'Grup' should be the first column (index 0)
+        # We need to set 'Grup' as the index
         if 'Grup' in harcama_monthly.columns:
             harcama_monthly = harcama_monthly.set_index('Grup')
+            print(f"DEBUG: 'Grup' sütunu bulundu ve index olarak ayarlandı.")
+        elif len(harcama_monthly.columns) > 0:
+            # If 'Grup' column not found, use first column as index
+            harcama_monthly = harcama_monthly.set_index(harcama_monthly.columns[0])
+            print(f"DEBUG: 'Grup' sütunu bulunamadı, ilk sütun index olarak ayarlandı: {harcama_monthly.columns[0]}")
+        
+        # Select the last column (assuming it is the latest date)
+        # After setting index, columns should only contain date columns
+        if len(harcama_monthly.columns) > 0:
+            print(f"DEBUG: Son sütun seçiliyor. Toplam sütun sayısı: {len(harcama_monthly.columns)}")
             monthly_harcama_changes = harcama_monthly.iloc[:, -1]
-            monthly_harcama_changes = monthly_harcama_changes.dropna()
-            monthly_harcama_changes_sorted = monthly_harcama_changes.sort_values()
+            print(f"DEBUG: Son sütun alındı. Toplam satır: {len(monthly_harcama_changes)}, NaN olmayan: {monthly_harcama_changes.notna().sum()}")
+            # Convert to numeric first, then drop all NaN/invalid values
+            monthly_harcama_changes = pd.to_numeric(monthly_harcama_changes, errors='coerce')
+            print(f"DEBUG: Numeric'e çevrildi. NaN olmayan: {monthly_harcama_changes.notna().sum()}")
+            # Remove all NaN, None, and invalid values
+            monthly_harcama_changes = monthly_harcama_changes[monthly_harcama_changes.notna()]
+            print(f"DEBUG: NaN değerler filtrelendi. Kalan: {len(monthly_harcama_changes)}")
+            # Also filter out infinite values
+            monthly_harcama_changes = monthly_harcama_changes[np.isfinite(monthly_harcama_changes)]
+            print(f"DEBUG: Sonsuz değerler filtrelendi. Kalan: {len(monthly_harcama_changes)}")
             
-            monthly_top_harcama_fallers = [(index, value) for index, value in monthly_harcama_changes_sorted.head(20).items()]
-            monthly_top_harcama_risers = [(index, value) for index, value in monthly_harcama_changes_sorted.tail(20).iloc[::-1].items()]
+            if len(monthly_harcama_changes) > 0:
+                monthly_harcama_changes_sorted = monthly_harcama_changes.sort_values()
+                print(f"DEBUG: Sıralandı. En düşük 5: {monthly_harcama_changes_sorted.head(5).to_dict()}")
+                print(f"DEBUG: En yüksek 5: {monthly_harcama_changes_sorted.tail(5).to_dict()}")
+                
+                # Get top 20 fallers (lowest values) and risers (highest values)
+                # Only get valid numeric values (no NaN)
+                fallers_data = monthly_harcama_changes_sorted.head(20)
+                risers_data = monthly_harcama_changes_sorted.tail(20).iloc[::-1]
+                
+                # Filter out any remaining NaN values just to be safe
+                monthly_top_harcama_fallers = [(str(index), float(value)) for index, value in fallers_data.items() 
+                                              if pd.notna(value) and np.isfinite(value)]
+                monthly_top_harcama_risers = [(str(index), float(value)) for index, value in risers_data.items() 
+                                             if pd.notna(value) and np.isfinite(value)]
+                print(f"DEBUG: Harcama Fallers sayısı: {len(monthly_top_harcama_fallers)}, Risers sayısı: {len(monthly_top_harcama_risers)}")
+                print(f"DEBUG: İlk 3 harcama faller: {monthly_top_harcama_fallers[:3]}")
+                print(f"DEBUG: İlk 3 harcama riser: {monthly_top_harcama_risers[:3]}")
+            else:
+                print("DEBUG: Filtreleme sonrası hiç veri kalmadı!")
+        else:
+            print("DEBUG: Hiç sütun yok!")
     except Exception as e:
         print(f"Error in get_top_movers (monthly harcama): {e}")
+        import traceback
+        traceback.print_exc()
 
     return (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
             monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers)
@@ -990,6 +1080,19 @@ def ana_sayfa():
     # Get Top Movers
     (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
      monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers) = get_top_movers()
+    
+    # Debug: Template'e gönderilen değerleri kontrol et
+    print("=" * 50)
+    print("DEBUG: Template'e gönderilen aylık değerler:")
+    print(f"monthly_top_risers (maddeler) sayısı: {len(monthly_top_risers)}")
+    print(f"monthly_top_fallers (maddeler) sayısı: {len(monthly_top_fallers)}")
+    print(f"monthly_top_harcama_risers sayısı: {len(monthly_top_harcama_risers)}")
+    print(f"monthly_top_harcama_fallers sayısı: {len(monthly_top_harcama_fallers)}")
+    if len(monthly_top_risers) > 0:
+        print(f"İlk 3 monthly_top_risers: {monthly_top_risers[:3]}")
+    if len(monthly_top_fallers) > 0:
+        print(f"İlk 3 monthly_top_fallers: {monthly_top_fallers[:3]}")
+    print("=" * 50)
     
     try:
         # Get classification parameter (default: eski)
@@ -1179,6 +1282,10 @@ def ana_sayfa():
                                  top_fallers=top_fallers,
                                  top_harcama_risers=top_harcama_risers,
                                  top_harcama_fallers=top_harcama_fallers,
+                                 monthly_top_risers=monthly_top_risers,
+                                 monthly_top_fallers=monthly_top_fallers,
+                                 monthly_top_harcama_risers=monthly_top_harcama_risers,
+                                 monthly_top_harcama_fallers=monthly_top_harcama_fallers,
                                  time_series_data=time_series_data,
                                  time_series_columns=time_series_columns)
 
