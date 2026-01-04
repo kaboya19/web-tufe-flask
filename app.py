@@ -1146,7 +1146,11 @@ def ana_sayfa():
         selected_date = None
         
         # Handle POST request (date selection)
-        show_contrib = False  # Katkı grafikleri kaldırıldı
+        # Checkbox'tan show_contrib değerini al (default: True, ancak yeni sınıflandırma veya yıllık için False)
+        if classification == 'yeni' or period == 'yillik':
+            show_contrib = False  # Yeni sınıflandırma veya yıllık için katkı gösterilmez
+        else:
+            show_contrib = request.form.get('show_contrib') == '1' if request.method == 'POST' else (request.args.get('show_contrib') == '1' if request.method == 'GET' else True)
         if request.method == 'POST':
             selected_date = request.form.get('selected_date')
             if period == 'yillik':
