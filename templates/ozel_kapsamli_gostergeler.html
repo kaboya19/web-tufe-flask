@@ -386,6 +386,15 @@
                     <div id="line-chart" class="hidden" style="height: 400px; min-width: 0;"></div>
                 </div>
             </div>
+
+            <!-- Katkı Payları Grafiği -->
+            {% if katki_graphJSON %}
+            <div class="bg-white rounded-lg shadow-sm p-6 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <div id="katki-chart" class="w-full" style="height: 400px; min-width: 0;"></div>
+                </div>
+            </div>
+            {% endif %}
             {% elif view_type == 'table' %}
             <!-- Table View -->
             <div class="bg-white rounded-lg shadow-sm p-6">
@@ -707,9 +716,28 @@
                     }, 100);
                 });
 
+                // Katkı Payları Grafiği
+                {% if katki_graphJSON %}
+                try {
+                    var katkiGraphData = {{ katki_graphJSON | safe }};
+                    if (katkiGraphData && katkiGraphData.data && katkiGraphData.layout) {
+                        Plotly.newPlot('katki-chart', katkiGraphData.data, katkiGraphData.layout, {
+                            displayModeBar: false,
+                            responsive: true,
+                            scrollZoom: true
+                        });
+                    }
+                } catch (katkiError) {
+                    console.error('Error rendering katki chart:', katkiError);
+                }
+                {% endif %}
+
                 // Handle window resize
                 window.addEventListener('resize', function () {
                     Plotly.Plots.resize('index-chart');
+                    {% if katki_graphJSON %}
+                    Plotly.Plots.resize('katki-chart');
+                    {% endif %}
 
                     // Only resize visible chart
                     const activeChart = document.querySelector('.graph-content.active');

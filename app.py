@@ -6936,6 +6936,91 @@ def ozel_kapsamli_gostergeler():
             ozel_monthly_data = None
             ozel_monthly_columns = None
     
+    # Özel katkı payları grafiği (özelkatkı.csv'den)
+    katki_graphJSON = None
+    try:
+        df_katki = pd.read_csv('özelkatkı.csv', index_col=0)
+        df_katki.index = pd.to_datetime(df_katki.index)
+        df_katki = df_katki.sort_index()
+        
+        # Boş satırları temizle
+        df_katki = df_katki.dropna(how='all')
+        
+        # Tarihleri formatla
+        katki_dates = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in df_katki.index]
+        
+        # Kategoriler (sütun isimleri)
+        categories = list(df_katki.columns)
+        
+        # Renkler
+        colors = ['#EF476F', '#118AB2', '#06D6A0', '#FFD166', '#F77F00']
+        
+        # Stacked bar grafik oluştur
+        katki_fig = go.Figure()
+        
+        for i, category in enumerate(categories):
+            values = df_katki[category].values
+            katki_fig.add_trace(go.Bar(
+                x=katki_dates,
+                y=values,
+                name=category,
+                marker_color=colors[i % len(colors)],
+                orientation='v',
+                hovertemplate=f'{category}: %{{y:.2f}}%<extra></extra>'
+            ))
+        
+        katki_fig.update_layout(
+            barmode='stack',
+            title=dict(
+                text='Aylık Manşet Enflasyonun Katkı Payları',
+                font=dict(
+                    size=20,
+                    family='Inter, sans-serif',
+                    color='#2B2D42'
+                ),
+                y=0.95
+            ),
+            xaxis=dict(
+                title='Ay',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF',
+                tickangle=45
+            ),
+            yaxis=dict(
+                title='Katkı Payı (%)',
+                title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                gridcolor='#E9ECEF'
+            ),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='#E9ECEF',
+                borderwidth=1
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=400,
+            margin=dict(l=20, r=20, t=80, b=60),
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='white',
+                font_size=12,
+                font_family='Inter, sans-serif',
+                namelength=-1
+            ),
+            autosize=True
+        )
+        
+        katki_graphJSON = json.dumps(katki_fig, cls=plotly.utils.PlotlyJSONEncoder)
+    except Exception as e:
+        print(f"Özel katkı payları grafiği oluşturma hatası: {e}")
+        import traceback
+        traceback.print_exc()
+        katki_graphJSON = None
+    
     return render_template('ozel_kapsamli_gostergeler.html',
     graphJSON=graphJSON,
     indicator_names=indicator_names,
@@ -6961,7 +7046,8 @@ def ozel_kapsamli_gostergeler():
     ozel_endeks_data=ozel_endeks_data,
     ozel_endeks_columns=ozel_endeks_columns,
     ozel_monthly_data=ozel_monthly_data,
-    ozel_monthly_columns=ozel_monthly_columns
+    ozel_monthly_columns=ozel_monthly_columns,
+    katki_graphJSON=katki_graphJSON
 )
 
 @app.route('/download/ozel-kapsamli/csv')
