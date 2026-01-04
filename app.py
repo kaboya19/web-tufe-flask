@@ -6966,7 +6966,7 @@ def ozel_kapsamli_gostergeler():
                 name=category,
                 marker_color=colors[i % len(colors)],
                 orientation='v',
-                hovertemplate=f'{category}: %{{y:.2f}}%<extra></extra>'
+                hovertemplate=f'{category}: %{{y:.4f}}%<extra></extra>'
             ))
         
         katki_fig.update_layout(
