@@ -409,35 +409,32 @@ def get_monthly_change():
 def get_tufe_vs_tuik_bar_data():
     # Yıllık değişim için tüfeyıllık.csv dosyasından oku
     try:
-        df_tufe_yillik = pd.read_csv("tüfeyıllık.csv", quotechar='"')
-        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-        # "Web TÜFE" satırını bul
-        tufe_row = df_tufe_yillik[df_tufe_yillik.iloc[:, 0].str.strip().str.lower() == 'web tüfe']
-        
+        df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
+        # Yeni yapı: İlk sütun tarih, ikinci sütun Web TÜFE değeri
         tufe_values = []
         tufe_months = []
-        if not tufe_row.empty:
-            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-            date_columns = df_tufe_yillik.columns[1:]
-            for date_col in date_columns:
-                val = tufe_row[date_col].values[0] if date_col in tufe_row.columns else None
-                if pd.isna(val):
-                    val = None
-                else:
+        if len(df_tufe_yillik.columns) >= 2:
+            date_col_name = df_tufe_yillik.columns[0]
+            value_col_name = df_tufe_yillik.columns[1]
+            
+            # Her satırı işle
+            for idx, row in df_tufe_yillik.iterrows():
+                date_str = str(row[date_col_name])
+                value = row[value_col_name]
+                
+                # Değeri kontrol et
+                if pd.notna(value) and str(value).strip() != '':
                     try:
-                        val = float(str(val).replace(',', '.'))
+                        val = float(str(value).replace(',', '.'))
+                        tufe_values.append(val)
+                        # Tarihi YYYY-MM formatına çevir
+                        try:
+                            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                            tufe_months.append(date_obj.strftime('%Y-%m'))
+                        except:
+                            tufe_months.append(str(date_str))
                     except:
-                        val = None
-                tufe_values.append(val)
-                # Tarihi YYYY-MM formatına çevir
-                try:
-                    if isinstance(date_col, str):
-                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
-                    else:
-                        date_obj = pd.to_datetime(date_col)
-                    tufe_months.append(date_obj.strftime('%Y-%m'))
-                except:
-                    tufe_months.append(str(date_col))
+                        pass
     except FileNotFoundError:
         # Dosya yoksa eski mantığı kullan (gruplaraylık.csv)
         df=pd.read_csv("gruplaraylık.csv",index_col=0)
@@ -482,7 +479,7 @@ def get_tufe_vs_tuik_bar_data():
     for i, m in enumerate(tufe_months_fmt):
         if m >= '2025-02':
             filtered_months.append(m)
-            filtered_tufe.append(tufe_values[i])
+            filtered_tufe.append(tufe_values[i] if i < len(tufe_values) else None)
             if m in tuik_monthly_last.index:
                 val = tuik_monthly_last.loc[m, 'pct_change']
                 if pd.isna(val):
@@ -492,8 +489,10 @@ def get_tufe_vs_tuik_bar_data():
                     val_float = float(val)
                     if val_float == 0.0:
                         filtered_tuik.append(None)
+                    else:
+                        filtered_tuik.append(val_float)
             else:
-                filtered_tuik.append(val_float)
+                filtered_tuik.append(None)
         else:
             filtered_tuik.append(None)
     # TÜFE'nin olduğu tüm aylar ve değerleri
@@ -908,31 +907,54 @@ def get_yearly_group_data(classification='eski'):
         csv_file = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
         df = cached_read_csv(csv_file)
         
-        # CSV structure: Grup,2026-01-31 (or similar date)
-        # First column is 'Grup', second column is the date
+        # CSV structure: First column is dates (Tarih), other columns are group names
+        # Find the last row with data (last non-empty date in first column)
         if len(df.columns) < 2:
             return None, None
         
-        # Get the date column (last column)
-        date_col = df.columns[-1]
+        # First column is the date column
+        date_col_name = df.columns[0]
+        group_columns = df.columns[1:].tolist()  # All columns except first are group names
+        
+        # Find the last row with data (go backwards to find first non-empty row)
+        last_row_idx = None
+        for idx in range(len(df) - 1, -1, -1):
+            row = df.iloc[idx]
+            # Check if at least one group has a value (not NaN or empty)
+            has_data = False
+            for col in group_columns:
+                value = row[col]
+                if pd.notna(value) and str(value).strip() != '':
+                    has_data = True
+                    break
+            if has_data:
+                last_row_idx = idx
+                break
+        
+        if last_row_idx is None:
+            return None, None
+        
+        # Get the date from the first column
+        date_str = str(df.iloc[last_row_idx][date_col_name])
+        last_row = df.iloc[last_row_idx]
         
         # Get the data
         data_pairs = []
-        for idx, row in df.iterrows():
-            group_name = row.iloc[0]  # First column is group name
-            value = row[date_col]
+        for group_name in group_columns:
+            value = last_row[group_name]
             try:
-                value = float(str(value).replace(',', '.'))
-                data_pairs.append((group_name, value))
+                if pd.notna(value) and str(value).strip() != '':
+                    value = float(str(value).replace(',', '.'))
+                    data_pairs.append((group_name, value))
             except:
                 continue
                 
         # Get Turkish month name and year from date
         try:
-            date_obj = datetime.strptime(date_col, '%Y-%m-%d')
-            month_name = f"{get_turkish_month(date_col)} {date_obj.year}"
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            month_name = f"{get_turkish_month(date_str)} {date_obj.year}"
         except:
-            month_name = date_col
+            month_name = date_str
             
         return data_pairs, month_name
     except Exception as e:
@@ -1307,18 +1329,44 @@ def ana_sayfa():
                     csv_file = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
                     yearly_df = cached_read_csv(csv_file)
                     if len(yearly_df.columns) >= 2:
-                        date_col = yearly_df.columns[-1]
-                        group_names = yearly_df.iloc[:, 0].tolist()
-                        row_data = {'Tarih': date_col}
-                        for idx, group_name in enumerate(group_names):
-                            value = yearly_df.iloc[idx][date_col]
-                            try:
-                                value = float(str(value).replace(',', '.'))
-                            except:
-                                value = None
-                            row_data[group_name] = value
-                        time_series_data = [row_data]
-                        time_series_columns = ['Tarih'] + group_names
+                        # First column is the date column
+                        date_col_name = yearly_df.columns[0]
+                        group_names = yearly_df.columns[1:].tolist()  # All columns except first are group names
+                        
+                        # Find the last row with data (go backwards to find first non-empty row)
+                        last_row_idx = None
+                        for idx in range(len(yearly_df) - 1, -1, -1):
+                            row = yearly_df.iloc[idx]
+                            # Check if at least one group has a value (not NaN or empty)
+                            has_data = False
+                            for col in group_names:
+                                value = row[col]
+                                if pd.notna(value) and str(value).strip() != '':
+                                    has_data = True
+                                    break
+                            if has_data:
+                                last_row_idx = idx
+                                break
+                        
+                        if last_row_idx is not None:
+                            last_row = yearly_df.iloc[last_row_idx]
+                            date_str = str(last_row[date_col_name])
+                            row_data = {'Tarih': date_str}
+                            for group_name in group_names:
+                                value = last_row[group_name]
+                                try:
+                                    if pd.notna(value) and str(value).strip() != '':
+                                        value = float(str(value).replace(',', '.'))
+                                    else:
+                                        value = None
+                                except:
+                                    value = None
+                                row_data[group_name] = value
+                            time_series_data = [row_data]
+                            time_series_columns = ['Tarih'] + group_names
+                        else:
+                            time_series_data = []
+                            time_series_columns = []
                     else:
                         time_series_data = []
                         time_series_columns = []
@@ -1582,25 +1630,69 @@ def tufe():
     monthly_change, last_col_date = get_monthly_change()
     # Get Turkish month name
     month_name = get_turkish_month(last_col_date)
-    # Get yıllık değişim (bar grafiği verisinden son değer)
+    # Get yıllık değişim (tüfeyıllık.csv dosyasındaki son veriden)
     bar_months, bar_tufe, bar_tuik = get_tufe_vs_tuik_bar_data()
     # Son yıllık değişim değerini ve tarihini al
     yearly_change_date = None
-    if bar_tufe and len(bar_tufe) > 0 and len(bar_months) > 0:
-        # Son None olmayan değeri bul
-        valid_tufe_values = [v for v in bar_tufe if v is not None]
-        valid_indices = [i for i, v in enumerate(bar_tufe) if v is not None]
-        if valid_tufe_values and valid_indices:
-            change_rate = valid_tufe_values[-1]
-            # Son yıllık değişim tarihini al
-            last_valid_idx = valid_indices[-1]
-            if last_valid_idx < len(bar_months):
-                yearly_change_date = bar_months[last_valid_idx]
+    change_rate = None
+    try:
+        # tüfeyıllık.csv dosyasından son dolu veriyi al
+        df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
+        if len(df_tufe_yillik.columns) >= 2:
+            # İlk sütun tarih (başlık boş olabilir veya "Unnamed: 0"), ikinci sütun "Web TÜFE"
+            date_col_name = df_tufe_yillik.columns[0]
+            value_col_name = df_tufe_yillik.columns[1]  # "Web TÜFE"
+            
+            # Son dolu satırı bul (geriye doğru arama)
+            last_row_idx = None
+            for idx in range(len(df_tufe_yillik) - 1, -1, -1):
+                row = df_tufe_yillik.iloc[idx]
+                value = row[value_col_name]
+                # Değerin dolu olduğunu kontrol et
+                if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
+                    try:
+                        # Değeri float'a çevirmeyi dene
+                        test_val = float(str(value).replace(',', '.'))
+                        last_row_idx = idx
+                        break
+                    except:
+                        continue
+            
+            if last_row_idx is not None:
+                last_row = df_tufe_yillik.iloc[last_row_idx]
+                date_str = str(last_row[date_col_name])
+                value = last_row[value_col_name]
+                try:
+                    change_rate = float(str(value).replace(',', '.'))
+                    # Tarihi formatla
+                    try:
+                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                        yearly_change_date = f"{get_turkish_month(date_str)} {date_obj.year}"
+                    except:
+                        yearly_change_date = date_str
+                except Exception as e:
+                    change_rate = None
+    except Exception as e:
+        print(f"tüfeyıllık.csv okuma hatası: {e}")
+        import traceback
+        traceback.print_exc()
+        change_rate = None
+    
+    # Fallback: bar grafiği verisinden al (eğer CSV'den alınamazsa)
+    if change_rate is None:
+        if bar_tufe and len(bar_tufe) > 0 and len(bar_months) > 0:
+            # Son None olmayan değeri bul
+            valid_tufe_values = [v for v in bar_tufe if v is not None]
+            valid_indices = [i for i, v in enumerate(bar_tufe) if v is not None]
+            if valid_tufe_values and valid_indices:
+                change_rate = valid_tufe_values[-1]
+                # Son yıllık değişim tarihini al
+                last_valid_idx = valid_indices[-1]
+                if last_valid_idx < len(bar_months):
+                    yearly_change_date = bar_months[last_valid_idx]
         else:
-            change_rate = None
-    else:
-        # Fallback: eski mantık (yılbaşından itibaren değişim)
-        change_rate = last_value - 100
+            # Fallback: eski mantık (yılbaşından itibaren değişim)
+            change_rate = last_value - 100
     
     # Get madde names from Google Sheet
     """creds = get_google_credentials_2()
@@ -1742,8 +1834,67 @@ def tufe():
         # Convert plot to JSON
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         
-        # Prepare yıllık bar chart data
-        bar_months, bar_tufe, bar_tuik = get_tufe_vs_tuik_bar_data()
+        # Prepare yıllık bar chart data - günlük veri (tüfeyıllık.csv'den)
+        bar_months = []  # datetime objeleri
+        bar_tufe = []
+        try:
+            df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
+            if len(df_tufe_yillik.columns) >= 2:
+                date_col_name = df_tufe_yillik.columns[0]
+                value_col_name = df_tufe_yillik.columns[1]  # "Web TÜFE"
+                
+                # Her satırı işle
+                for idx, row in df_tufe_yillik.iterrows():
+                    date_str = str(row[date_col_name])
+                    value = row[value_col_name]
+                    
+                    # Değeri kontrol et
+                    if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
+                        try:
+                            val = float(str(value).replace(',', '.'))
+                            # Tarihi datetime objesi olarak al
+                            try:
+                                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                bar_months.append(date_obj)
+                                bar_tufe.append(val)
+                            except:
+                                date_obj = pd.to_datetime(date_str)
+                                bar_months.append(date_obj)
+                                bar_tufe.append(val)
+                        except:
+                            pass
+        except Exception as e:
+            print(f"tüfeyıllık.csv okuma hatası (yıllık grafik için): {e}")
+            bar_months = []
+            bar_tufe = []
+        
+        # TÜİK verisi aylık - get_tufe_vs_tuik_bar_data'dan al
+        _, _, bar_tuik_temp = get_tufe_vs_tuik_bar_data()
+        # TÜİK verisini Web TÜFE tarihleri ile eşleştir (aylık eşleştirme)
+        bar_tuik = []
+        try:
+            tuik_df = cached_read_csv('tüik.csv', index_col=0)
+            tuik_df.index = pd.to_datetime(tuik_df.index)
+            tuik_monthly_last = tuik_df.resample('M').last()
+            tuik_monthly_last['pct_change'] = tuik_monthly_last['TÜİK'].pct_change() * 100
+            tuik_monthly_last = tuik_monthly_last.iloc[1:]
+            
+            for date_obj in bar_months:
+                date_month = date_obj.strftime('%Y-%m')
+                tuik_month_idx = tuik_monthly_last.index.strftime('%Y-%m')
+                if date_month in tuik_month_idx.tolist():
+                    idx = tuik_month_idx.tolist().index(date_month)
+                    val = tuik_monthly_last.iloc[idx]['pct_change']
+                    if pd.isna(val):
+                        bar_tuik.append(None)
+                    else:
+                        val_float = float(val)
+                        bar_tuik.append(val_float if val_float != 0.0 else None)
+                else:
+                    bar_tuik.append(None)
+        except Exception as e:
+            print(f"TÜİK verisi okuma hatası (yıllık grafik için): {e}")
+            bar_tuik = [None] * len(bar_months) if len(bar_months) > 0 else []
         
         # Prepare aylık bar chart data (gruplaraylık.csv'den)
         aylik_months = []
@@ -1865,7 +2016,7 @@ def tufe():
                 y=0.95
             ),
             xaxis=dict(
-                title='Ay',
+                title='Tarih',
                 title_font=dict(
                     size=14,
                     family='Inter, sans-serif',
@@ -1877,6 +2028,7 @@ def tufe():
                     color='#2B2D42'
                 ),
                 gridcolor='#E9ECEF',
+                tickformat='%d %b %Y',
                 tickangle=45
             ),
             yaxis=dict(
@@ -2007,11 +2159,11 @@ def tufe():
                 y=0.95
             ),
             xaxis=dict(
-                title='Ay',
+                title='Tarih',
                 title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                 tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                 gridcolor='#E9ECEF',
-                tickformat='%Y-%m',
+                tickformat='%Y-%m-%d',
                 tickangle=45
             ),
             yaxis=dict(
@@ -2369,15 +2521,16 @@ def tufe():
             
             # Yıllık değişim grafiği için verileri hazırla (maddeleryıllık.csv'den)
             yillik_changes = []
-            yillik_dates = []
+            yillik_dates = []  # datetime objeleri olarak tutulacak
+            df_yillik = None
             try:
                 df_yillik = pd.read_csv("maddeleryıllık.csv", quotechar='"')
-                # Yeni yapı: İlk sütun boş, ikinci sütun "index" (tarih), sonraki sütunlar madde isimleri
-                # İkinci sütun tarih sütunu (başlık "index" ama değer tarih)
-                if len(df_yillik.columns) > 1:
-                    date_col = df_yillik.columns[1]  # İkinci sütun tarih sütunu
-                    # Madde isimleri: üçüncü sütundan itibaren (index=2'den itibaren)
-                    madde_columns = df_yillik.columns[2:] if len(df_yillik.columns) > 2 else []
+                # Yapı: İlk sütun tarih, ikinci sütundan itibaren madde isimleri
+                # İlk sütun tarih sütunu
+                if len(df_yillik.columns) > 0:
+                    date_col = df_yillik.columns[0]  # İlk sütun tarih sütunu
+                    # Madde isimleri: ikinci sütundan itibaren (index=1'den itibaren)
+                    madde_columns = df_yillik.columns[1:] if len(df_yillik.columns) > 1 else []
                     
                     # Seçili maddeyi bul (büyük küçük harf duyarsız)
                     madde_col = None
@@ -2390,23 +2543,28 @@ def tufe():
                         # Tüm satırlardan değeri al
                         for idx, row in df_yillik.iterrows():
                             val = row[madde_col]
-                            if pd.isna(val):
-                                yillik_changes.append(None)
-                            else:
-                                try:
-                                    yillik_changes.append(float(str(val).replace(',', '.')))
-                                except:
-                                    yillik_changes.append(None)
-                            # Tarihi formatla (ikinci sütundan)
+                            # Tarihi datetime objesi olarak al
                             date_str = row[date_col]
                             try:
                                 if isinstance(date_str, str):
                                     date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                                 else:
                                     date_obj = pd.to_datetime(date_str)
-                                yillik_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
+                                # Pandas Timestamp'i Python datetime'a çevir (Plotly için)
+                                if isinstance(date_obj, pd.Timestamp):
+                                    date_obj = date_obj.to_pydatetime()
+                                yillik_dates.append(date_obj)
+                                # Değeri ekle
+                                if pd.isna(val):
+                                    yillik_changes.append(None)
+                                else:
+                                    try:
+                                        yillik_changes.append(float(str(val).replace(',', '.')))
+                                    except:
+                                        yillik_changes.append(None)
                             except:
-                                yillik_dates.append(str(date_str))
+                                # Tarih parse edilemezse atla
+                                continue
             except Exception as e:
                 print(f"maddeleryıllık.csv okuma hatası: {e}")
                 yillik_changes = []
@@ -2643,73 +2801,64 @@ def tufe():
             monthly_line_graphJSON = monthly_line_fig.to_json()
             
             # Yıllık değişim grafikleri (maddeleryıllık.csv'den)
-            # Yıllık bar grafiği
+            # Yıllık bar grafiği yok - sadece line grafik
+            yearly_bar_graphJSON = None
+            
+            # Yıllık line grafiği - sadece nan olmayan değerleri göster
             if yillik_changes and yillik_dates:
-                yillik_valid_changes = [v for v in yillik_changes if v is not None]
-                yillik_bar_texts = []
-                for v in yillik_changes:
-                    if v is not None:
-                        yillik_bar_texts.append(f'<b>{v:.2f}</b>')
-                    else:
-                        yillik_bar_texts.append('')
-                yillik_y_min = min(yillik_valid_changes) if yillik_valid_changes else 0
-                yillik_y_max = max(yillik_valid_changes) if yillik_valid_changes else 0
-                yillik_y_range = yillik_y_max - yillik_y_min
-                yillik_y_margin_bottom = yillik_y_range * 0.1 if yillik_y_range != 0 else abs(yillik_y_max) * 0.1
-                yillik_y_margin_top = yillik_y_range * 0.2 if yillik_y_range != 0 else abs(yillik_y_max) * 0.2
-                yillik_y_min_with_margin = yillik_y_min - yillik_y_margin_bottom
-                yillik_y_max_with_margin = yillik_y_max + yillik_y_margin_top
-                if yillik_y_min >= 0:
-                    yillik_y_min_with_margin = max(0, yillik_y_min - yillik_y_margin_bottom)
-                if yillik_y_max <= 0:
-                    yillik_y_max_with_margin = min(0, yillik_y_max + yillik_y_margin_top)
+                # Nan olmayan değerleri filtrele - tarihler zaten datetime objeleri
+                yillik_valid_data = [(date, val) for date, val in zip(yillik_dates, yillik_changes) if val is not None and not pd.isna(val)]
                 
-                yillik_bar_fig = go.Figure(go.Bar(
-                    x=yillik_dates,
-                    y=yillik_changes,
-                    name=selected_madde,
-                    marker_color='#EF476F',
-                    text=yillik_bar_texts,
-                    textposition='outside',
-                    textfont=dict(size=16, color='#2B2D42', family='Inter, sans-serif'),
-                    width=0.6,
-                    hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>',
-                    cliponaxis=False
-                ))
-                
-                yillik_bar_fig.update_layout(
-                    title=dict(text=f'{selected_madde} Yıllık Değişimler', font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'), y=0.98, x=0.5, xanchor='center', yanchor='top'),
-                    xaxis=dict(title='Ay', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), tickformat='%Y-%m', tickangle=45),
-                    yaxis=dict(title='Değişim (%)', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), gridcolor='#E9ECEF', range=[yillik_y_min_with_margin, yillik_y_max_with_margin]),
-                    showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=450, margin=dict(l=10, r=40, t=60, b=20), hovermode='x'
-                )
-                yearly_bar_graphJSON = json.dumps(yillik_bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
-                
-                # Yıllık line grafiği
-                yillik_line_fig = go.Figure()
-                yillik_line_fig.add_trace(go.Scatter(
-                    x=yillik_dates,
-                    y=yillik_changes,
-                    mode='lines+markers+text',
-                    name=selected_madde,
-                    line=dict(color='#EF476F', width=3),
-                    marker=dict(size=8, color='#EF476F'),
-                    text=[f'{v:.2f}' if v is not None and not pd.isna(v) else '' for v in yillik_changes],
-                    textposition='top center',
-                    textfont=dict(size=12, color='#EF476F', family='Inter, sans-serif'),
-                    hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>',
-                    cliponaxis=False
-                ))
-                yillik_line_fig.update_layout(
-                    title=dict(text=f'{selected_madde} Yıllık Değişim Oranları', font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'), y=0.95),
-                    xaxis=dict(title='Ay', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), tickformat='%Y-%m', tickangle=45),
-                    yaxis=dict(title='Değişim (%)', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), gridcolor='#E9ECEF', range=[yillik_y_min_with_margin, yillik_y_max_with_margin]),
-                    showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=450, margin=dict(l=10, r=40, t=60, b=20), hovermode='x unified',
-                    hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', namelength=-1)
-                )
-                yearly_line_graphJSON = yillik_line_fig.to_json()
+                if yillik_valid_data:
+                    # Tarihlere göre sırala (datetime objeleri olduğu için direkt sıralanabilir)
+                    yillik_valid_data.sort(key=lambda x: x[0])
+                    # Tarihleri datetime objeleri olarak tut (Plotly datetime objelerini otomatik olarak işler)
+                    yillik_valid_dates = []
+                    for date, val in yillik_valid_data:
+                        # Pandas Timestamp'i Python datetime'a çevir (Plotly için)
+                        if isinstance(date, pd.Timestamp):
+                            date = date.to_pydatetime()
+                        yillik_valid_dates.append(date)
+                    yillik_valid_changes = [val for date, val in yillik_valid_data]
+                    
+                    yillik_y_min = min(yillik_valid_changes) if yillik_valid_changes else 0
+                    yillik_y_max = max(yillik_valid_changes) if yillik_valid_changes else 0
+                    yillik_y_range = yillik_y_max - yillik_y_min
+                    yillik_y_margin_bottom = yillik_y_range * 0.1 if yillik_y_range != 0 else abs(yillik_y_max) * 0.1
+                    yillik_y_margin_top = yillik_y_range * 0.2 if yillik_y_range != 0 else abs(yillik_y_max) * 0.2
+                    yillik_y_min_with_margin = yillik_y_min - yillik_y_margin_bottom
+                    yillik_y_max_with_margin = yillik_y_max + yillik_y_margin_top
+                    if yillik_y_min >= 0:
+                        yillik_y_min_with_margin = max(0, yillik_y_min - yillik_y_margin_bottom)
+                    if yillik_y_max <= 0:
+                        yillik_y_max_with_margin = min(0, yillik_y_max + yillik_y_margin_top)
+                    
+                    # Yıllık line grafiği
+                    yillik_line_fig = go.Figure()
+                    yillik_line_fig.add_trace(go.Scatter(
+                        x=yillik_valid_dates,
+                        y=yillik_valid_changes,
+                        mode='lines+markers+text',
+                        name=selected_madde,
+                        line=dict(color='#EF476F', width=3),
+                        marker=dict(size=8, color='#EF476F'),
+                        text=[f'{v:.2f}' for v in yillik_valid_changes],
+                        textposition='top center',
+                        textfont=dict(size=12, color='#EF476F', family='Inter, sans-serif'),
+                        hovertemplate='%{x}<br>Değişim: %{y:.2f}%<extra></extra>',
+                        cliponaxis=False
+                    ))
+                    yillik_line_fig.update_layout(
+                        title=dict(text=f'{selected_madde} Yıllık Değişim Oranları', font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'), y=0.95),
+                        xaxis=dict(title='Tarih', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), tickformat='%Y-%m-%d', tickangle=45),
+                        yaxis=dict(title='Değişim (%)', title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'), tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'), gridcolor='#E9ECEF', range=[yillik_y_min_with_margin, yillik_y_max_with_margin]),
+                        showlegend=False, plot_bgcolor='white', paper_bgcolor='white', height=450, margin=dict(l=10, r=40, t=60, b=20), hovermode='x unified',
+                        hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', namelength=-1)
+                    )
+                    yearly_line_graphJSON = json.dumps(yillik_line_fig, cls=plotly.utils.PlotlyJSONEncoder)
+                else:
+                    yearly_line_graphJSON = None
             else:
-                yearly_bar_graphJSON = None
                 yearly_line_graphJSON = None
             
             # Get the last month from the monthly CSV file for individual items
@@ -2915,9 +3064,40 @@ def ana_gruplar():
     total_change = values.iloc[-1] - 100
     monthly_change, last_col_date = get_ana_grup_monthly_change(selected_group, classification)
     
-    # Yıllık değişimin son gözlemini hesapla (daha sonra yearly_changes oluşturulduğunda güncellenecek)
+    # Yıllık değişimin son gözlemini hesapla (gruplaryıllık.csv veya gruplaryıllıkv2.csv dosyasından - seçilen grup için)
     yearly_change = None
     yearly_change_date = None
+    try:
+        # Yıllık değişim için gruplaryıllık.csv veya gruplaryıllıkv2.csv dosyasından oku
+        csv_file_yillik = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
+        df_yillik = cached_read_csv(csv_file_yillik)
+        if len(df_yillik.columns) >= 2 and selected_group:
+            # İlk sütun tarih, diğer sütunlar grup isimleri
+            date_col_name = df_yillik.columns[0]
+            # Seçilen grup sütununu bul
+            group_col_name = None
+            for col in df_yillik.columns:
+                if str(col).strip() == selected_group.strip():
+                    group_col_name = col
+                    break
+            
+            if group_col_name is not None:
+                # Son dolu satırı bul (geriye doğru arama)
+                for idx in range(len(df_yillik) - 1, -1, -1):
+                    row = df_yillik.iloc[idx]
+                    value = row[group_col_name]
+                    if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
+                        try:
+                            yearly_change = float(str(value).replace(',', '.'))
+                            date_str = str(row[date_col_name])
+                            yearly_change_date = date_str
+                            break
+                        except:
+                            continue
+    except Exception as e:
+        print(f"Yıllık değişim hesaplama hatası (ana gruplar): {e}")
+        yearly_change = None
+        yearly_change_date = None
     month_name = get_turkish_month(last_col_date)
     aybasi_tarihler = df['Tarih'][df['Tarih'].dt.is_month_start]
     tickvals = aybasi_tarihler
@@ -3112,42 +3292,53 @@ def ana_gruplar():
     
     # --- Yıllık değişim bar ve line grafik verileri ---
     yearly_changes = []
-    yearly_dates = []
+    yearly_dates = []  # datetime objeleri olarak tutulacak (line grafik için)
+    yearly_dates_string = []  # String formatında (bar grafik için)
     try:
         csv_file_yearly = "gruplaryıllıkv2.csv" if classification == 'yeni' else "gruplaryıllık.csv"
-        df_yearly = pd.read_csv(csv_file_yearly, quotechar='"')
-        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-        # Seçili grubu bul (büyük küçük harf duyarsız)
-        selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
-        group_row = None
-        for idx, row in df_yearly.iterrows():
-            group_name = str(row.iloc[0]).strip().lower()
-            group_name_normalized = group_name.replace(', ', ',').replace(', ', ',').strip()
-            if group_name_normalized == selected_group_normalized:
-                group_row = row
-                break
-        
-        if group_row is not None:
-            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-            date_columns = df_yearly.columns[1:]
-            for date_col in date_columns:
-                val = group_row[date_col]
-                if pd.isna(val):
-                    yearly_changes.append(None)
-                else:
-                    try:
-                        yearly_changes.append(float(str(val).replace(',', '.')))
-                    except:
-                        yearly_changes.append(None)
-                # Tarihi formatla
-                try:
-                    if isinstance(date_col, str):
-                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
+        df_yearly = cached_read_csv(csv_file_yearly)
+        # Yeni yapı: İlk sütun tarih, sonraki sütunlar grup isimleri
+        if len(df_yearly.columns) >= 2:
+            date_col_name = df_yearly.columns[0]
+            # Seçili grubu bul
+            group_col_name = None
+            for col in df_yearly.columns:
+                if str(col).strip() == selected_group.strip():
+                    group_col_name = col
+                    break
+            
+            if group_col_name is not None:
+                # Tüm satırlardan değeri al
+                for idx, row in df_yearly.iterrows():
+                    val = row[group_col_name]
+                    date_str = row[date_col_name]
+                    # Değeri kontrol et
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            yearly_changes.append(float(str(val).replace(',', '.')))
+                            # Tarihi datetime objesi olarak al (line grafik için)
+                            try:
+                                if isinstance(date_str, str):
+                                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                else:
+                                    date_obj = pd.to_datetime(date_str)
+                                # Pandas Timestamp'i Python datetime'a çevir (Plotly için)
+                                if isinstance(date_obj, pd.Timestamp):
+                                    date_obj = date_obj.to_pydatetime()
+                                yearly_dates.append(date_obj)
+                                # String formatı da ekle (bar grafik için)
+                                yearly_dates_string.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
+                            except:
+                                yearly_dates.append(None)
+                                yearly_dates_string.append(str(date_str))
+                        except:
+                            yearly_changes.append(None)
+                            yearly_dates.append(None)
+                            yearly_dates_string.append(str(date_str))
                     else:
-                        date_obj = pd.to_datetime(date_col)
-                    yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
-                except:
-                    yearly_dates.append(str(date_col))
+                        yearly_changes.append(None)
+                        yearly_dates.append(None)
+                        yearly_dates_string.append(None)
         
         # Son yıllık değişim değerini bul
         if yearly_changes:
@@ -3156,8 +3347,8 @@ def ana_gruplar():
             if valid_yearly_values and valid_yearly_indices:
                 yearly_change = valid_yearly_values[-1]
                 last_valid_idx = valid_yearly_indices[-1]
-                if last_valid_idx < len(yearly_dates):
-                    yearly_change_date = yearly_dates[last_valid_idx]
+                if last_valid_idx < len(yearly_dates_string) and yearly_dates_string[last_valid_idx]:
+                    yearly_change_date = yearly_dates_string[last_valid_idx]
     except Exception as e:
         print(f"Yıllık değişim verisi okuma hatası: {e}")
         import traceback
@@ -3398,27 +3589,36 @@ def ana_gruplar():
             tuik_yearly_pct = tuik_df_yearly[tuik_group_name].pct_change(periods=12) * 100
             tuik_yearly_pct.index = tuik_yearly_pct.index.strftime('%Y-%m')
             
-            # Yıllık değişim tarihleriyle eşleştir
-            for date in yearly_dates:
-                try:
-                    month, year = date.split()
-                    month_map = {
-                        'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                        'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                        'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                    }
-                    date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
-                    
-                    if date_str in tuik_yearly_pct.index:
-                        tuik_value = tuik_yearly_pct.loc[date_str]
-                        if pd.isna(tuik_value):
-                            yearly_tuik_changes.append(None)
+            # Yıllık değişim tarihleriyle eşleştir (datetime objelerinden YYYY-MM formatına çevir)
+            for date_obj in yearly_dates:
+                if date_obj is not None:
+                    try:
+                        if isinstance(date_obj, (datetime, pd.Timestamp)):
+                            if isinstance(date_obj, pd.Timestamp):
+                                date_obj = date_obj.to_pydatetime()
+                            date_str = date_obj.strftime('%Y-%m')
                         else:
-                            yearly_tuik_changes.append(float(tuik_value))
-                    else:
+                            # String formatından parse et
+                            month, year = str(date_obj).split()
+                            month_map = {
+                                'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                            }
+                            date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
+                        
+                        if date_str in tuik_yearly_pct.index:
+                            tuik_value = tuik_yearly_pct.loc[date_str]
+                            if pd.isna(tuik_value):
+                                yearly_tuik_changes.append(None)
+                            else:
+                                yearly_tuik_changes.append(float(tuik_value))
+                        else:
+                            yearly_tuik_changes.append(None)
+                    except Exception as e:
+                        print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
                         yearly_tuik_changes.append(None)
-                except Exception as e:
-                    print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
+                else:
                     yearly_tuik_changes.append(None)
         else:
             yearly_tuik_changes = [None] * len(yearly_dates) if len(yearly_dates) > 0 else []
@@ -3428,10 +3628,10 @@ def ana_gruplar():
         traceback.print_exc()
         yearly_tuik_changes = [None] * len(yearly_dates) if len(yearly_dates) > 0 else []
     
-    # Yıllık bar grafik
+    # Yıllık bar grafik (string formatında tarihler kullan)
     yearly_bar_fig = go.Figure()
     yearly_bar_fig.add_trace(go.Bar(
-        x=yearly_dates,
+        x=yearly_dates_string,
         y=yearly_changes,
         name='Web TÜFE',
         marker_color='#EF476F',
@@ -3442,7 +3642,7 @@ def ana_gruplar():
         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
     yearly_bar_fig.add_trace(go.Bar(
-        x=yearly_dates,
+        x=yearly_dates_string,
         y=yearly_tuik_changes,
         name='TÜİK',
         marker_color='#118AB2',
@@ -3529,12 +3729,12 @@ def ana_gruplar():
             y=0.95
         ),
         xaxis=dict(
-            title='Ay',
+            title='Tarih',
             title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
             tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF',
-            tickformat='%Y-%m',
+            tickformat='%Y-%m-%d',
             tickangle=45
         ),
         yaxis=dict(
@@ -3566,7 +3766,7 @@ def ana_gruplar():
             namelength=-1
         )
     )
-    yearly_line_graphJSON = yearly_line_fig.to_json()
+    yearly_line_graphJSON = json.dumps(yearly_line_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
     # Get gruplar_int.csv or gruplarv2.csv data for index data view
     gruplar_data = []
@@ -4172,38 +4372,33 @@ def harcama_gruplari():
                 df_yearly_main = None
             
             if df_yearly_main is not None and not df_yearly_main.empty:
-                # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-                # Seçili tarihe göre en son tarih sütununu bul (selected_date formatı YYYY-MM)
-                target_date_col = None
-                try:
-                    selected_date_obj = datetime.strptime(selected_date, '%Y-%m')
-                    # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-                    date_columns = df_yearly_main.columns[1:]
-                    # Seçili tarihe en yakın tarih sütununu bul
-                    matching_date_cols = []
-                    for date_col in date_columns:
-                        try:
-                            if isinstance(date_col, str):
-                                date_col_obj = datetime.strptime(date_col, '%Y-%m-%d')
-                            else:
-                                date_col_obj = pd.to_datetime(date_col)
-                            if date_col_obj <= selected_date_obj:
-                                matching_date_cols.append((date_col, date_col_obj))
-                        except:
-                            continue
-                    if len(matching_date_cols) > 0:
-                        # En yakın tarihi bul (en son)
-                        matching_date_cols.sort(key=lambda x: x[1])
-                        target_date_col = matching_date_cols[-1][0]
-                    else:
-                        # Eşleşen tarih yoksa ilk tarihi kullan
-                        target_date_col = date_columns[0] if len(date_columns) > 0 else None
-                except:
-                    # Hata durumunda son tarih sütununu kullan
-                    date_columns = df_yearly_main.columns[1:]
-                    target_date_col = date_columns[-1] if len(date_columns) > 0 else None
+                # Doğru yapı: İlk sütun tarih, sonraki sütunlar grup isimleri
+                # Son tarihteki veriyi al (en son satır)
+                date_col_name = df_yearly_main.columns[0]
                 
-                if target_date_col is not None:
+                # Son dolu tarih satırını bul (geriye doğru arama)
+                last_row_idx = None
+                for idx in range(len(df_yearly_main) - 1, -1, -1):
+                    row = df_yearly_main.iloc[idx]
+                    # Herhangi bir grup sütununda değer var mı kontrol et
+                    has_value = False
+                    for col in df_yearly_main.columns[1:]:
+                        val = row[col]
+                        if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                            try:
+                                test_val = float(str(val).replace(',', '.'))
+                                has_value = True
+                                break
+                            except:
+                                continue
+                    if has_value:
+                        last_row_idx = idx
+                        break
+                
+                if last_row_idx is not None:
+                    last_row = df_yearly_main.iloc[last_row_idx]
+                    last_date_str = str(last_row[date_col_name])
+                    
                     # Yıllık değişim verilerini al
                     yearly_bar_labels = []
                     yearly_bar_values = []
@@ -4213,52 +4408,37 @@ def harcama_gruplari():
                     yearly_ana_grup_value = None
                     try:
                         if classification == 'yeni':
-                            df_ana_grup_yearly = pd.read_csv("gruplaryıllıkv2.csv", quotechar='"')
+                            df_ana_grup_yearly = cached_read_csv("gruplaryıllıkv2.csv")
                         else:
-                            df_ana_grup_yearly = pd.read_csv("gruplaryıllık.csv", quotechar='"')
+                            df_ana_grup_yearly = cached_read_csv("gruplaryıllık.csv")
                         
-                        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-                        # Seçili grubu bul
+                        # Doğru yapı: İlk sütun tarih, sonraki sütunlar grup isimleri
+                        # Seçili grubu bul (sütun adından)
                         selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
-                        group_row_ana = None
-                        for idx, row in df_ana_grup_yearly.iterrows():
-                            group_name = str(row.iloc[0]).strip().lower()
-                            group_name_normalized = group_name.replace(', ', ',').replace(', ', ',').strip()
-                            if group_name_normalized == selected_group_normalized:
-                                group_row_ana = row
+                        group_col_name = None
+                        for col in df_ana_grup_yearly.columns:
+                            if str(col).strip().lower() == selected_group_normalized:
+                                group_col_name = col
                                 break
                         
-                        if group_row_ana is not None:
-                            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-                            date_columns_ana = df_ana_grup_yearly.columns[1:]
-                            # target_date_col'a en yakın tarih sütununu bul
-                            target_date_col_ana = None
-                            try:
-                                if isinstance(target_date_col, str):
-                                    target_date_obj = datetime.strptime(target_date_col, '%Y-%m-%d')
-                                else:
-                                    target_date_obj = pd.to_datetime(target_date_col)
-                                matching_date_cols_ana = []
-                                for date_col in date_columns_ana:
+                        if group_col_name is not None:
+                            # Son dolu tarih satırını bul (geriye doğru arama)
+                            date_col_name_ana = df_ana_grup_yearly.columns[0]
+                            last_row_idx_ana = None
+                            for idx in range(len(df_ana_grup_yearly) - 1, -1, -1):
+                                row = df_ana_grup_yearly.iloc[idx]
+                                val = row[group_col_name]
+                                if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
                                     try:
-                                        if isinstance(date_col, str):
-                                            date_col_obj = datetime.strptime(date_col, '%Y-%m-%d')
-                                        else:
-                                            date_col_obj = pd.to_datetime(date_col)
-                                        if date_col_obj <= target_date_obj:
-                                            matching_date_cols_ana.append((date_col, date_col_obj))
+                                        test_val = float(str(val).replace(',', '.'))
+                                        last_row_idx_ana = idx
+                                        break
                                     except:
                                         continue
-                                if len(matching_date_cols_ana) > 0:
-                                    matching_date_cols_ana.sort(key=lambda x: x[1])
-                                    target_date_col_ana = matching_date_cols_ana[-1][0]
-                                else:
-                                    target_date_col_ana = date_columns_ana[0] if len(date_columns_ana) > 0 else None
-                            except:
-                                target_date_col_ana = date_columns_ana[-1] if len(date_columns_ana) > 0 else None
                             
-                            if target_date_col_ana is not None:
-                                val = group_row_ana[target_date_col_ana]
+                            if last_row_idx_ana is not None:
+                                last_row_ana = df_ana_grup_yearly.iloc[last_row_idx_ana]
+                                val = last_row_ana[group_col_name]
                                 if pd.isna(val):
                                     yearly_ana_grup_value = None
                                 else:
@@ -4269,21 +4449,22 @@ def harcama_gruplari():
                     
                     # Breakdown items için yıllık değişim
                     import re
+                    # Sütun isimlerini normalize et (tırnak içeren isimler için)
+                    df_yearly_main_cols_normalized = {}
+                    for col in df_yearly_main.columns:
+                        col_norm = str(col).strip().lower()
+                        col_norm = re.sub(r',\s*', ',', col_norm)
+                        df_yearly_main_cols_normalized[col_norm] = col
+                    
                     for item in data_items:
                         item_norm = item.strip().lower()
                         item_norm = re.sub(r',\s*', ',', item_norm)
                         
-                        # Seçili item'ı bul
-                        item_row = None
-                        for idx, row in df_yearly_main.iterrows():
-                            item_name = str(row.iloc[0]).strip().lower()
-                            item_name_normalized = re.sub(r',\s*', ',', item_name)
-                            if item_name_normalized == item_norm:
-                                item_row = row
-                                break
+                        # Seçili item'ı bul (normalize edilmiş sütun adından)
+                        item_col_name = df_yearly_main_cols_normalized.get(item_norm)
                         
-                        if item_row is not None:
-                            val = item_row[target_date_col]
+                        if item_col_name is not None:
+                            val = last_row[item_col_name]
                             if pd.isna(val):
                                 value = None
                             else:
@@ -5309,7 +5490,8 @@ def harcama_gruplari():
                         
                         # --- Yıllık değişim grafikleri ---
                         yearly_changes = []
-                        yearly_dates = []
+                        yearly_dates = []  # datetime objeleri olarak tutulacak (line grafik için)
+                        yearly_dates_string = []  # String formatında (bar grafik için)
                         try:
                             # Yıllık değişim CSV dosyasını oku
                             if classification == 'yeni':
@@ -5325,38 +5507,52 @@ def harcama_gruplari():
                                     df_yearly = None
                             
                             if df_yearly is not None and not df_yearly.empty:
-                                # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-                                # selected_norm ile eşleşen satırı bul
+                                # Doğru yapı: İlk sütun tarih, sonraki sütunlar grup isimleri
+                                # selected_norm ile eşleşen sütunu bul
                                 import re
                                 selected_norm_normalized = selected_norm.strip().lower()
-                                group_row_yearly = None
-                                for idx, row in df_yearly.iterrows():
-                                    group_name = str(row.iloc[0]).strip().lower()
-                                    group_name_normalized = re.sub(r',\s*', ',', group_name)
-                                    if group_name_normalized == selected_norm_normalized:
-                                        group_row_yearly = row
+                                selected_norm_normalized = re.sub(r',\s*', ',', selected_norm_normalized)
+                                group_col_name = None
+                                for col in df_yearly.columns:
+                                    col_norm = str(col).strip().lower()
+                                    col_norm = re.sub(r',\s*', ',', col_norm)
+                                    if col_norm == selected_norm_normalized:
+                                        group_col_name = col
                                         break
                                 
-                                if group_row_yearly is not None:
-                                    # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-                                    date_columns_yearly = df_yearly.columns[1:]
-                                    for date_col in date_columns_yearly:
-                                        val = group_row_yearly[date_col]
-                                        if pd.isna(val):
-                                            yearly_changes.append(None)
-                                        else:
+                                if group_col_name is not None:
+                                    # Tarih sütunu (ilk sütun)
+                                    date_col_name = df_yearly.columns[0]
+                                    # Tüm satırlardan değeri al
+                                    for idx, row in df_yearly.iterrows():
+                                        val = row[group_col_name]
+                                        date_str = row[date_col_name]
+                                        # Değeri kontrol et
+                                        if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
                                             try:
                                                 yearly_changes.append(float(str(val).replace(',', '.')))
+                                                # Tarihi datetime objesi olarak al (line grafik için)
+                                                try:
+                                                    if isinstance(date_str, str):
+                                                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                                    else:
+                                                        date_obj = pd.to_datetime(date_str)
+                                                    # Pandas Timestamp'i Python datetime'a çevir (Plotly için)
+                                                    if isinstance(date_obj, pd.Timestamp):
+                                                        date_obj = date_obj.to_pydatetime()
+                                                    yearly_dates.append(date_obj)
+                                                    yearly_dates_string.append(date_str)  # String formatını da sakla
+                                                except:
+                                                    yearly_dates.append(None)
+                                                    yearly_dates_string.append(None)
                                             except:
                                                 yearly_changes.append(None)
-                                        try:
-                                            if isinstance(date_col, str):
-                                                date_obj = datetime.strptime(date_col, '%Y-%m-%d')
-                                            else:
-                                                date_obj = pd.to_datetime(date_col)
-                                            yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
-                                        except:
-                                            yearly_dates.append(str(date_col))
+                                                yearly_dates.append(None)
+                                                yearly_dates_string.append(None)
+                                        else:
+                                            yearly_changes.append(None)
+                                            yearly_dates.append(None)
+                                            yearly_dates_string.append(None)
                                 
                                 # Yıllık bar ve line grafikleri oluştur
                                 if yearly_changes and yearly_dates:
@@ -5374,37 +5570,47 @@ def harcama_gruplari():
                                             tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
                                             
                                             # Yıllık değişim hesapla (önceki yılın aynı ayına göre)
-                                            for date in yearly_dates:
-                                                try:
-                                                    month, year = date.split()
-                                                    month_map = {
-                                                        'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                                                        'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                                                        'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                                                    }
-                                                    date_str = f"{year}-{month_map[month]}"
-                                                    
-                                                    if selected_harcama_grubu_norm in tuik_df_yearly.columns and date_str in tuik_df_yearly.index:
-                                                        tuik_value = tuik_df_yearly.loc[date_str, selected_harcama_grubu_norm]
-                                                        # Yıllık değişim hesapla (önceki yılın aynı ayına göre)
-                                                        current_year_val = tuik_value
-                                                        previous_year_date_str = f"{int(year)-1}-{month_map[month]}"
-                                                        if previous_year_date_str in tuik_df_yearly.index:
-                                                            previous_year_val = tuik_df_yearly.loc[previous_year_date_str, selected_harcama_grubu_norm]
-                                                            if pd.notna(current_year_val) and pd.notna(previous_year_val) and previous_year_val != 0:
-                                                                yearly_pct_change = ((current_year_val / previous_year_val) - 1) * 100
-                                                                if yearly_pct_change == 0.0:
-                                                                    tuik_yearly_changes.append(None)
-                                                                else:
+                                            # yearly_dates artık datetime objeleri
+                                            for date_obj in yearly_dates:
+                                                if date_obj is not None:
+                                                    try:
+                                                        if isinstance(date_obj, (datetime, pd.Timestamp)):
+                                                            if isinstance(date_obj, pd.Timestamp):
+                                                                date_obj = date_obj.to_pydatetime()
+                                                            date_str = date_obj.strftime('%Y-%m')
+                                                        else:
+                                                            # String formatından parse et (fallback)
+                                                            month, year = str(date_obj).split()
+                                                            month_map = {
+                                                                'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                                                'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                                                'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                                                            }
+                                                            date_str = f"{year}-{month_map[month]}"
+                                                        
+                                                        if selected_harcama_grubu_norm in tuik_df_yearly.columns and date_str in tuik_df_yearly.index:
+                                                            tuik_value = tuik_df_yearly.loc[date_str, selected_harcama_grubu_norm]
+                                                            # Yıllık değişim hesapla (önceki yılın aynı ayına göre)
+                                                            current_year_val = tuik_value
+                                                            if isinstance(date_obj, datetime):
+                                                                previous_year_date_str = date_obj.replace(year=date_obj.year - 1).strftime('%Y-%m')
+                                                            else:
+                                                                previous_year_date_str = f"{int(date_str.split('-')[0])-1}-{date_str.split('-')[1]}"
+                                                            if previous_year_date_str in tuik_df_yearly.index:
+                                                                previous_year_val = tuik_df_yearly.loc[previous_year_date_str, selected_harcama_grubu_norm]
+                                                                if pd.notna(current_year_val) and pd.notna(previous_year_val) and previous_year_val != 0:
+                                                                    yearly_pct_change = ((current_year_val / previous_year_val) - 1) * 100
                                                                     tuik_yearly_changes.append(yearly_pct_change)
+                                                                else:
+                                                                    tuik_yearly_changes.append(None)
                                                             else:
                                                                 tuik_yearly_changes.append(None)
                                                         else:
                                                             tuik_yearly_changes.append(None)
-                                                    else:
+                                                    except Exception as e:
+                                                        print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
                                                         tuik_yearly_changes.append(None)
-                                                except Exception as e:
-                                                    print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
+                                                else:
                                                     tuik_yearly_changes.append(None)
                                         except Exception as e:
                                             print("TÜİK yıllık verisi okunamadı:", e)
@@ -5415,7 +5621,7 @@ def harcama_gruplari():
                                     # Yıllık bar graph
                                     yearly_bar_fig = go.Figure()
                                     yearly_bar_fig.add_trace(go.Bar(
-                                        x=yearly_dates,
+                                        x=yearly_dates_string,
                                         y=[v if v is not None else float('nan') for v in yearly_changes],
                                         name='Web TÜFE',
                                         marker_color='#EF476F',
@@ -5429,7 +5635,7 @@ def harcama_gruplari():
                                     # TÜİK yıllık bar ekle (sadece eski sınıflandırma için)
                                     if classification == 'eski':
                                         yearly_bar_fig.add_trace(go.Bar(
-                                            x=yearly_dates,
+                                            x=yearly_dates_string,
                                             y=[v if v is not None else float('nan') for v in tuik_yearly_changes],
                                             name='TÜİK',
                                             marker_color='#118AB2',
@@ -5528,12 +5734,12 @@ def harcama_gruplari():
                                             y=0.95
                                         ),
                                         xaxis=dict(
-                                            title='Ay',
+                                            title='Tarih',
                                             title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
                                             tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
                                             gridcolor='#E9ECEF',
                                             zerolinecolor='#E9ECEF',
-                                            tickformat='%Y-%m',
+                                            tickformat='%Y-%m-%d',
                                             tickangle=45
                                         ),
                                         yaxis=dict(
@@ -5565,7 +5771,7 @@ def harcama_gruplari():
                                             namelength=-1
                                         )
                                     )
-                                    yearly_line_graphJSON = json.dumps(yearly_line_fig, cls=plotly.utils.PlotlyJSONEncoder)
+                                    yearly_line_graphJSON = yearly_line_fig.to_json()
                                     
                                     # Son yıllık değişim değerini bul
                                     if yearly_changes:
@@ -5977,14 +6183,248 @@ def maddeler():
         hovermode='y unified',
         hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
     )
-    bar_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    monthly_bar_graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    
+    # --- Yıllık değişim grafiği ---
+    yearly_bar_graphJSON = None
+    try:
+        # maddeleryıllık.csv dosyasını oku (ilk sütun tarih, sonraki sütunlar madde isimleri)
+        df_yearly = cached_read_csv("maddeleryıllık.csv", quotechar='"')
+        if df_yearly is not None and not df_yearly.empty:
+            # Son tarihteki veriyi al (en son satır)
+            date_col_name = df_yearly.columns[0]
+            
+            # Son dolu tarih satırını bul (geriye doğru arama)
+            last_row_idx = None
+            for idx in range(len(df_yearly) - 1, -1, -1):
+                row = df_yearly.iloc[idx]
+                # Herhangi bir madde sütununda değer var mı kontrol et
+                has_value = False
+                for col in df_yearly.columns[1:]:
+                    val = row[col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            test_val = float(str(val).replace(',', '.'))
+                            has_value = True
+                            break
+                        except:
+                            continue
+                if has_value:
+                    last_row_idx = idx
+                    break
+            
+            if last_row_idx is not None:
+                last_row = df_yearly.iloc[last_row_idx]
+                last_date_str = str(last_row[date_col_name])
+                
+                # Yıllık değişim verilerini al
+                yearly_bar_labels = []
+                yearly_bar_values = []
+                yearly_bar_colors = []
+                
+                # Ana grup için yıllık değişim - gruplaryıllık.csv dosyasından oku
+                yearly_ana_grup_value = None
+                try:
+                    df_ana_grup_yearly = cached_read_csv("gruplaryıllık.csv")
+                    # Doğru yapı: İlk sütun tarih, sonraki sütunlar grup isimleri
+                    selected_group_normalized = selected_group.replace(', ', ',').replace(', ', ',').strip().lower()
+                    group_col_name = None
+                    for col in df_ana_grup_yearly.columns:
+                        if str(col).strip().lower() == selected_group_normalized:
+                            group_col_name = col
+                            break
+                    
+                    if group_col_name is not None:
+                        # Son dolu tarih satırını bul (geriye doğru arama)
+                        date_col_name_ana = df_ana_grup_yearly.columns[0]
+                        last_row_idx_ana = None
+                        for idx in range(len(df_ana_grup_yearly) - 1, -1, -1):
+                            row = df_ana_grup_yearly.iloc[idx]
+                            val = row[group_col_name]
+                            if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                                try:
+                                    test_val = float(str(val).replace(',', '.'))
+                                    last_row_idx_ana = idx
+                                    break
+                                except:
+                                    continue
+                        
+                        if last_row_idx_ana is not None:
+                            last_row_ana = df_ana_grup_yearly.iloc[last_row_idx_ana]
+                            val = last_row_ana[group_col_name]
+                            if pd.isna(val):
+                                yearly_ana_grup_value = None
+                            else:
+                                yearly_ana_grup_value = float(str(val).replace(',', '.'))
+                except Exception as e:
+                    print(f'Ana grup yıllık değişim okuma hatası: {e}')
+                    yearly_ana_grup_value = None
+                
+                # Maddeler için yıllık değişim
+                import re
+                # Sütun isimlerini normalize et (tırnak içeren isimler için)
+                df_yearly_cols_normalized = {}
+                for col in df_yearly.columns[1:]:
+                    col_norm = str(col).strip().lower()
+                    col_norm = re.sub(r',\s*', ',', col_norm)
+                    df_yearly_cols_normalized[col_norm] = col
+                
+                for madde in madde_adlari:
+                    madde_norm = madde.strip().lower()
+                    madde_norm = re.sub(r',\s*', ',', madde_norm)
+                    
+                    # Seçili madde'yi bul (normalize edilmiş sütun adından)
+                    madde_col_name = df_yearly_cols_normalized.get(madde_norm)
+                    
+                    if madde_col_name is not None:
+                        val = last_row[madde_col_name]
+                        if pd.isna(val):
+                            value = None
+                        else:
+                            value = float(str(val).replace(',', '.'))
+                        yearly_bar_labels.append(madde.title())
+                        yearly_bar_values.append(value)
+                        yearly_bar_colors.append('#118AB2')
+                
+                # Ana grup da listede yoksa ekle
+                if yearly_ana_grup_value is not None:
+                    yearly_bar_labels.append(selected_group.title())
+                    yearly_bar_values.append(yearly_ana_grup_value)
+                    yearly_bar_colors.append('#EF476F')
+                
+                # Sort bars by value descending (highest first), None değerleri en başa
+                sorted_data_yearly = sorted(zip(yearly_bar_labels, yearly_bar_values, yearly_bar_colors), 
+                                           key=lambda x: (x[1] is not None, x[1] if x[1] is not None else float('-inf')), 
+                                           reverse=False)
+                yearly_bar_labels = [x[0] for x in sorted_data_yearly]
+                yearly_bar_values = [x[1] for x in sorted_data_yearly]
+                yearly_bar_colors = [x[2] for x in sorted_data_yearly]
+                
+                # X-axis range hesapla
+                valid_yearly_values = [v for v in yearly_bar_values if v is not None]
+                x_yearly_min = min(valid_yearly_values + [0]) if valid_yearly_values else 0
+                x_yearly_max = max(valid_yearly_values + [0]) if valid_yearly_values else 0
+                
+                data_range_yearly = x_yearly_max - x_yearly_min
+                if data_range_yearly == 0:
+                    xaxis_range_yearly = [x_yearly_min - 0.1, x_yearly_max + 0.1]
+                else:
+                    margin_factor = 0.08
+                    margin_yearly = data_range_yearly * margin_factor
+                    min_margin_yearly = 0.2
+                    margin_yearly = max(margin_yearly, min_margin_yearly)
+                    
+                    if x_yearly_min < 0:
+                        left_margin_yearly = margin_yearly * 1.5
+                    else:
+                        left_margin_yearly = margin_yearly * 0.5
+                    
+                    if x_yearly_max > 0:
+                        right_margin_yearly = margin_yearly * 1.5
+                    else:
+                        right_margin_yearly = margin_yearly * 0.5
+                    
+                    x_yearly_min_with_margin = x_yearly_min - left_margin_yearly
+                    x_yearly_max_with_margin = x_yearly_max + right_margin_yearly
+                    
+                    if x_yearly_min < 0 and x_yearly_max > 0:
+                        xaxis_range_yearly = [min(x_yearly_min_with_margin, x_yearly_min), max(x_yearly_max_with_margin, x_yearly_max)]
+                    else:
+                        xaxis_range_yearly = [x_yearly_min_with_margin, x_yearly_max_with_margin]
+                
+                if xaxis_range_yearly[0] > xaxis_range_yearly[1]:
+                    xaxis_range_yearly = [xaxis_range_yearly[1], xaxis_range_yearly[0]]
+                
+                # None değerleri için x değerlerini 0 yap
+                yearly_bar_values_for_plot = [0 if v is None else v for v in yearly_bar_values]
+                
+                yearly_fig = go.Figure(go.Bar(
+                    y=yearly_bar_labels,
+                    x=yearly_bar_values_for_plot,
+                    orientation='h',
+                    marker_color=yearly_bar_colors,
+                    cliponaxis=False,
+                    hovertemplate='%{y}: %{customdata}<extra></extra>',
+                    customdata=[f'{v:.2f}%' if v is not None else '' for v in yearly_bar_values]
+                ))
+                
+                range_span_yearly = xaxis_range_yearly[1] - xaxis_range_yearly[0]
+                text_offset_yearly = range_span_yearly * 0.001
+                
+                for i, value in enumerate(yearly_bar_values):
+                    if value is None:
+                        continue
+                    if value >= 0:
+                        text_x_yearly = value + text_offset_yearly
+                        align_anchor_yearly = 'left'
+                    else:
+                        text_x_yearly = value - text_offset_yearly
+                        align_anchor_yearly = 'right'
+                    
+                    yearly_fig.add_annotation(
+                        x=text_x_yearly,
+                        y=yearly_bar_labels[i],
+                        text=f"<b>{value:.2f}%</b>",
+                        showarrow=False,
+                        font=dict(size=15, family="Inter Bold, Inter, sans-serif", color="#2B2D42"),
+                        align=align_anchor_yearly,
+                        xanchor=align_anchor_yearly,
+                        yanchor='middle'
+                    )
+                
+                try:
+                    last_date_obj = datetime.strptime(last_date_str, '%Y-%m-%d')
+                    yearly_turkish_month = get_turkish_month(last_date_str)
+                    yearly_title = f'{yearly_turkish_month} {last_date_obj.year} Yıllık Değişimleri'
+                except:
+                    yearly_title = 'Yıllık Değişimler'
+                
+                yearly_fig.update_layout(
+                    title=dict(
+                        text=yearly_title,
+                        font=dict(size=20, family='Inter, sans-serif', color='#2B2D42'),
+                        y=0.999,
+                        x=0.5,
+                        xanchor='center',
+                        yanchor='top'
+                    ),
+                    xaxis=dict(
+                        title='Değişim (%)',
+                        title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                        tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                        gridcolor='#E9ECEF',
+                        zerolinecolor='#E9ECEF',
+                        range=xaxis_range_yearly
+                    ),
+                    yaxis=dict(
+                        title='Madde',
+                        title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                        tickfont=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
+                        gridcolor='#E9ECEF'
+                    ),
+                    showlegend=False,
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    height=max(min(len(yearly_bar_labels) * 70, 3000), 500),
+                    margin=dict(l=10, r=10, t=40, b=20),
+                    hovermode='y unified',
+                    hoverlabel=dict(bgcolor='white', font_size=12, font_family='Inter, sans-serif', font_color='#2B2D42')
+                )
+                yearly_bar_graphJSON = json.dumps(yearly_fig, cls=plotly.utils.PlotlyJSONEncoder)
+    except Exception as e:
+        print(f'Yıllık değişim grafiği oluşturma hatası: {e}')
+        import traceback
+        traceback.print_exc()
+        yearly_bar_graphJSON = None
+    
     return render_template('maddeler.html',
         grup_adlari=grup_adlari,
         selected_group=selected_group,
         madde_adlari=madde_adlari,
         date_options=formatted_date_options,
         selected_date=selected_date,
-        bar_graphJSON=bar_graphJSON,
+        monthly_bar_graphJSON=monthly_bar_graphJSON,
+        yearly_bar_graphJSON=yearly_bar_graphJSON,
         active_page='maddeler'
     )
 
@@ -6416,27 +6856,64 @@ def ozel_kapsamli_gostergeler():
     
     # --- Yıllık değişim verileri ---
     # özelgöstergeleryıllık.csv dosyasından oku
+    # Yapı: İlk sütun tarih, sonraki sütunlar gösterge isimleri
     yearly_changes = []
     yearly_dates = []
+    yearly_dates_datetime = []  # Günlük format için datetime objeleri
     yearly_change = None
     yearly_change_date = None
     try:
-        df_yearly = pd.read_csv("özelgöstergeleryıllık.csv", quotechar='"')
-        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-        # Seçili göstergeyi bul (büyük küçük harf duyarsız)
-        selected_indicator_norm = selected_indicator.strip().lower()
-        indicator_row = None
-        for idx, row in df_yearly.iterrows():
-            indicator_name = str(row.iloc[0]).strip().lower()
-            if indicator_name == selected_indicator_norm:
-                indicator_row = row
-                break
+        df_yearly = cached_read_csv("özelgöstergeleryıllık.csv", quotechar='"')
+        # Doğru yapı: İlk sütun tarih, sonraki sütunlar gösterge isimleri
+        date_col_name = df_yearly.columns[0]
         
-        if indicator_row is not None:
-            # Tarih sütunlarını al (ilk sütun "Grup" hariç)
-            date_columns = df_yearly.columns[1:]
-            for date_col in date_columns:
-                val = indicator_row[date_col]
+        # Seçili göstergeyi bul (normalize edilmiş sütun adından)
+        selected_indicator_norm = selected_indicator.strip().lower()
+        import re
+        selected_indicator_norm = re.sub(r',\s*', ',', selected_indicator_norm)
+        
+        indicator_col_name = None
+        # Sütun isimlerini normalize et
+        df_yearly_cols_normalized = {}
+        for col in df_yearly.columns[1:]:  # Skip date column
+            col_norm = str(col).strip().lower()
+            col_norm = re.sub(r',\s*', ',', col_norm)
+            df_yearly_cols_normalized[col_norm] = col
+        
+        indicator_col_name = df_yearly_cols_normalized.get(selected_indicator_norm)
+        
+        if indicator_col_name is not None:
+            # Son dolu tarih satırını bul (geriye doğru arama)
+            last_row_idx = None
+            for idx in range(len(df_yearly) - 1, -1, -1):
+                row = df_yearly.iloc[idx]
+                val = row[indicator_col_name]
+                if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                    try:
+                        test_val = float(str(val).replace(',', '.'))
+                        last_row_idx = idx
+                        break
+                    except:
+                        continue
+            
+            if last_row_idx is not None:
+                # Son yıllık değişim değerini al
+                last_row = df_yearly.iloc[last_row_idx]
+                val = last_row[indicator_col_name]
+                if pd.notna(val):
+                    yearly_change = float(str(val).replace(',', '.'))
+                    last_date_str = str(last_row[date_col_name])
+                    try:
+                        last_date_obj = datetime.strptime(last_date_str, '%Y-%m-%d')
+                        yearly_change_date = last_date_obj.strftime('%Y-%m-%d')
+                    except:
+                        yearly_change_date = last_date_str
+            
+            # Tüm satırlardan değerleri al (günlük format için)
+            for idx, row in df_yearly.iterrows():
+                val = row[indicator_col_name]
+                date_str = str(row[date_col_name])
+                
                 if pd.isna(val):
                     yearly_changes.append(None)
                 else:
@@ -6444,24 +6921,14 @@ def ozel_kapsamli_gostergeler():
                         yearly_changes.append(float(str(val).replace(',', '.')))
                     except:
                         yearly_changes.append(None)
+                
                 try:
-                    if isinstance(date_col, str):
-                        date_obj = datetime.strptime(date_col, '%Y-%m-%d')
-                    else:
-                        date_obj = pd.to_datetime(date_col)
-                    yearly_dates.append(f"{get_turkish_month(date_obj.strftime('%Y-%m-%d'))} {date_obj.year}")
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    yearly_dates_datetime.append(date_obj)
+                    yearly_dates.append(date_obj.strftime('%Y-%m-%d'))  # Günlük format için
                 except:
-                    yearly_dates.append(str(date_col))
-        
-        # Son yıllık değişim değerini bul
-        if yearly_changes:
-            valid_yearly_values = [v for v in yearly_changes if v is not None]
-            valid_yearly_indices = [i for i, v in enumerate(yearly_changes) if v is not None]
-            if valid_yearly_values and valid_yearly_indices:
-                yearly_change = valid_yearly_values[-1]
-                last_valid_idx = valid_yearly_indices[-1]
-                if last_valid_idx < len(yearly_dates):
-                    yearly_change_date = yearly_dates[last_valid_idx]
+                    yearly_dates.append(date_str)
+                    yearly_dates_datetime.append(None)
     except FileNotFoundError:
         yearly_change = None
         yearly_change_date = None
@@ -6521,16 +6988,22 @@ def ozel_kapsamli_gostergeler():
             tuik_yearly_pct = tuik_values_series.pct_change(periods=12) * 100
             tuik_yearly_pct.index = tuik_yearly_pct.index.strftime('%Y-%m')
             
-            # Yıllık değişim tarihleriyle eşleştir
+            # Yıllık değişim tarihleriyle eşleştir (günlük format: YYYY-MM-DD)
             for date in yearly_dates:
                 try:
-                    month, year = date.split()
-                    month_map = {
-                        'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                        'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                        'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                    }
-                    date_str = f"{year}-{month_map[month]}"
+                    # Günlük format kontrolü
+                    if len(date) == 10 and date.count('-') == 2:
+                        # YYYY-MM-DD formatından YYYY-MM formatına çevir
+                        date_str = date[:7]  # İlk 7 karakter (YYYY-MM)
+                    else:
+                        # Eski format (ay adı + yıl)
+                        month, year = date.split()
+                        month_map = {
+                            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                        }
+                        date_str = f"{year}-{month_map[month]}"
                     
                     if date_str in tuik_yearly_pct.index:
                         tuik_value = tuik_yearly_pct.loc[date_str]
@@ -6622,26 +7095,70 @@ def ozel_kapsamli_gostergeler():
     )
     yearly_bar_graphJSON = json.dumps(yearly_bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # Yıllık line grafik
+    # Yıllık line grafik - günlük format için datetime objeleri kullan
     yearly_line_fig = go.Figure()
+    
+    # NaN olmayan değerleri filtrele
+    filtered_yearly_dates = []
+    filtered_yearly_changes = []
+    filtered_yearly_tuik_changes = []
+    
+    for i, (date_dt, val) in enumerate(zip(yearly_dates_datetime, yearly_changes)):
+        if date_dt is not None and val is not None:
+            filtered_yearly_dates.append(date_dt)
+            filtered_yearly_changes.append(val)
+            if i < len(yearly_tuik_changes):
+                filtered_yearly_tuik_changes.append(yearly_tuik_changes[i])
+            else:
+                filtered_yearly_tuik_changes.append(None)
+    
     yearly_line_fig.add_trace(go.Scatter(
-        x=yearly_dates,
-        y=yearly_changes,
+        x=filtered_yearly_dates,
+        y=filtered_yearly_changes,
         mode='lines+markers',
         name='Web TÜFE',
         line=dict(color='#EF476F', width=3),
         marker=dict(size=8, color='#EF476F'),
-        hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
+        hovertemplate='%{x|%Y-%m-%d}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
-    yearly_line_fig.add_trace(go.Scatter(
-        x=yearly_dates,
-        y=yearly_tuik_changes,
-        mode='lines+markers',
-        name='TÜİK',
-        line=dict(color='#118AB2', width=3),
-        marker=dict(size=8, color='#118AB2'),
-        hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-    ))
+    
+    # TÜİK verilerini eşleştir (günlük tarihlerle)
+    if yearly_tuik_changes:
+        # TÜİK verilerini günlük tarihlerle eşleştirmek için aylık verilerden eşleştirme yap
+        filtered_yearly_tuik_changes_matched = []
+        try:
+            if tuik_endeks_df is not None and selected_indicator in tuik_endeks_df.columns:
+                tuik_values_series = tuik_endeks_df[selected_indicator].copy()
+                tuik_yearly_pct = tuik_values_series.pct_change(periods=12) * 100
+                
+                for date_dt in filtered_yearly_dates:
+                    # TÜİK verisini bu tarihe en yakın aylık veriyle eşleştir
+                    date_str = date_dt.strftime('%Y-%m')
+                    if date_str in tuik_yearly_pct.index:
+                        tuik_value = tuik_yearly_pct.loc[date_str]
+                        if pd.notna(tuik_value):
+                            filtered_yearly_tuik_changes_matched.append(float(tuik_value))
+                        else:
+                            filtered_yearly_tuik_changes_matched.append(None)
+                    else:
+                        filtered_yearly_tuik_changes_matched.append(None)
+            else:
+                filtered_yearly_tuik_changes_matched = [None] * len(filtered_yearly_dates)
+        except Exception as e:
+            print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
+            filtered_yearly_tuik_changes_matched = [None] * len(filtered_yearly_dates)
+        
+        if filtered_yearly_tuik_changes_matched:
+            yearly_line_fig.add_trace(go.Scatter(
+                x=filtered_yearly_dates,
+                y=filtered_yearly_tuik_changes_matched,
+                mode='lines+markers',
+                name='TÜİK',
+                line=dict(color='#118AB2', width=3),
+                marker=dict(size=8, color='#118AB2'),
+                hovertemplate='%{x|%Y-%m-%d}<br>TÜİK: %{y:.2f}%<extra></extra>'
+            ))
+    
     yearly_line_fig.update_layout(
         title=dict(
             text=f'{selected_indicator} Yıllık Değişim Oranları',
@@ -6649,12 +7166,12 @@ def ozel_kapsamli_gostergeler():
             y=0.95
         ),
         xaxis=dict(
-            title='Ay',
+            title='Tarih',
             title_font=dict(size=14, family='Inter, sans-serif', color='#2B2D42'),
             tickfont=dict(size=12, family='Inter, sans-serif', color='#2B2D42'),
             gridcolor='#E9ECEF',
             zerolinecolor='#E9ECEF',
-            tickformat='%Y-%m',
+            tickformat='%Y-%m-%d',
             tickangle=45
         ),
         yaxis=dict(

@@ -373,7 +373,7 @@
                                 Yıllık
                             </button>
                         </div>
-                        <div class="btn-group flex gap-3 justify-end">
+                        <div id="bar-line-btn-group" class="btn-group flex gap-3 justify-end">
                             <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">
                                 Bar Grafik
                             </button>
@@ -656,11 +656,19 @@
                         lineData = yearlyLineGraph;
                     }
 
-                    if (barData && chartType === 'bar' && barData.data && barData.layout) {
-                        Plotly.react('bar-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-                    }
-                    if (lineData && chartType === 'line' && lineData.data && lineData.layout) {
-                        Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                    // Yıllık seçildiğinde sadece line grafiği güncelle
+                    if (viewType === 'yearly') {
+                        if (lineData && lineData.data && lineData.layout) {
+                            Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                        }
+                    } else {
+                        // Aylık seçildiğinde bar veya line grafiği güncelle
+                        if (barData && chartType === 'bar' && barData.data && barData.layout) {
+                            Plotly.react('bar-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                        }
+                        if (lineData && chartType === 'line' && lineData.data && lineData.layout) {
+                            Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                        }
                     }
                 }
 
@@ -701,10 +709,40 @@
                     }, 100);
                 });
 
+                const barLineBtnGroup = document.getElementById('bar-line-btn-group');
+                
                 ozelYearlyBtn.addEventListener('click', function() {
                     currentViewType = 'yearly';
                     window.ozelCurrentViewType = 'yearly';
                     setOzelActive(ozelYearlyBtn);
+                    // Bar/Line butonlarını gizle
+                    if (barLineBtnGroup) {
+                        barLineBtnGroup.style.display = 'none';
+                    }
+                    // Sadece line grafiği göster
+                    const barChart = document.getElementById('bar-chart');
+                    const lineChart = document.getElementById('line-chart');
+                    if (barChart) barChart.classList.add('hidden');
+                    if (lineChart) {
+                        lineChart.classList.remove('hidden');
+                        lineChart.classList.add('block');
+                    }
+                    currentChartType = 'line';
+                    window.ozelCurrentChartType = 'line';
+                    updateCharts();
+                    setTimeout(function() {
+                        Plotly.Plots.resize('line-chart');
+                    }, 100);
+                });
+                
+                ozelMonthlyBtn.addEventListener('click', function() {
+                    currentViewType = 'monthly';
+                    window.ozelCurrentViewType = 'monthly';
+                    setOzelActive(ozelMonthlyBtn);
+                    // Bar/Line butonlarını göster
+                    if (barLineBtnGroup) {
+                        barLineBtnGroup.style.display = 'flex';
+                    }
                     updateCharts();
                     setTimeout(function() {
                         var chartType = window.ozelCurrentChartType || currentChartType;

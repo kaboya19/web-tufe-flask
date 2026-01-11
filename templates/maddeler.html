@@ -187,8 +187,19 @@
                         {% endfor %}
                     </select>
                 </form>
+                <div class="mb-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <button id="maddeler-monthly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
+                            Aylık
+                        </button>
+                        <button id="maddeler-yearly-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm">
+                            Yıllık
+                        </button>
+                    </div>
+                </div>
                 <div class="mt-8">
-                    <div id="bar-chart" class="w-full" style="min-height: 600px;"></div>
+                    <div id="monthly-bar-chart" class="w-full" style="min-height: 600px;"></div>
+                    <div id="yearly-bar-chart" class="w-full hidden" style="min-height: 600px;"></div>
                 </div>
             </div>
         </main>
@@ -202,10 +213,67 @@
         </footer>
     </div>
     <script>
-        var barGraphs = {{ bar_graphJSON | safe }};
-        Plotly.newPlot('bar-chart', barGraphs.data, barGraphs.layout, {
+        var currentViewType = 'monthly'; // 'monthly' or 'yearly'
+        
+        const maddelerMonthlyBtn = document.getElementById('maddeler-monthly-btn');
+        const maddelerYearlyBtn = document.getElementById('maddeler-yearly-btn');
+        const monthlyBarChart = document.getElementById('monthly-bar-chart');
+        const yearlyBarChart = document.getElementById('yearly-bar-chart');
+        
+        function setMaddelerActive(btn) {
+            maddelerMonthlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            maddelerMonthlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            maddelerYearlyBtn.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+            maddelerYearlyBtn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50', 'hover:text-indigo-600', 'shadow-sm');
+            btn.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-purple-500', 'text-white', 'shadow-md', 'active');
+        }
+        
+        function updateMaddelerCharts() {
+            if (currentViewType === 'monthly') {
+                monthlyBarChart.classList.remove('hidden');
+                yearlyBarChart.classList.add('hidden');
+            } else {
+                monthlyBarChart.classList.add('hidden');
+                yearlyBarChart.classList.remove('hidden');
+            }
+            
+            setTimeout(function() {
+                if (currentViewType === 'monthly' && typeof monthlyBarGraphs !== 'undefined') {
+                    Plotly.Plots.resize('monthly-bar-chart');
+                } else if (currentViewType === 'yearly' && typeof yearlyBarGraphs !== 'undefined') {
+                    Plotly.Plots.resize('yearly-bar-chart');
+                }
+            }, 100);
+        }
+        
+        {% if monthly_bar_graphJSON %}
+        var monthlyBarGraphs = {{ monthly_bar_graphJSON | safe }};
+        Plotly.newPlot('monthly-bar-chart', monthlyBarGraphs.data, monthlyBarGraphs.layout, {
             displayModeBar: false,
             responsive: true
+        });
+        {% endif %}
+        
+        {% if yearly_bar_graphJSON %}
+        var yearlyBarGraphs = {{ yearly_bar_graphJSON | safe }};
+        Plotly.newPlot('yearly-bar-chart', yearlyBarGraphs.data, yearlyBarGraphs.layout, {
+            displayModeBar: false,
+            responsive: true
+        });
+        {% endif %}
+        
+        maddelerMonthlyBtn.addEventListener('click', function() {
+            currentViewType = 'monthly';
+            setMaddelerActive(maddelerMonthlyBtn);
+            updateMaddelerCharts();
+        });
+        
+        maddelerYearlyBtn.addEventListener('click', function() {
+            currentViewType = 'yearly';
+            setMaddelerActive(maddelerYearlyBtn);
+            updateMaddelerCharts();
         });
     </script>
 </body>

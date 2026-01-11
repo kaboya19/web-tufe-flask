@@ -190,7 +190,7 @@
                                     Yıllık
                                 </button>
                             </div>
-                    <div class="btn-group flex gap-3 justify-end">
+                    <div id="bar-line-btn-group" class="btn-group flex gap-3 justify-end">
                         <button id="bar-btn" class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-1" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor" stroke-width="2">
@@ -459,6 +459,7 @@
         // Toggle logic for comparison chart
         const barBtn = document.getElementById('bar-btn');
         const lineBtn = document.getElementById('line-btn');
+        const barLineBtnGroup = document.getElementById('bar-line-btn-group');
         const barChart = document.getElementById('bar-compare-chart');
         const lineChart = document.getElementById('line-compare-chart');
         const tufeMonthlyBtn = document.getElementById('tufe-monthly-btn');
@@ -498,17 +499,29 @@
                 lineData = yearlyLineGraphs;
             }
             
-            if (barData) {
-                Plotly.react('bar-compare-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-            }
-            if (lineData) {
-                Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+            // Aylık seçildiğinde her iki grafiği de güncelle
+            if (currentViewType === 'monthly') {
+                if (barData && barData.data && barData.layout) {
+                    Plotly.react('bar-compare-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                }
+                if (lineData && lineData.data && lineData.layout) {
+                    Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                }
+            } else {
+                // Yıllık seçildiğinde sadece line grafiğini güncelle
+                if (lineData && lineData.data && lineData.layout) {
+                    Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                }
             }
         }
         
         tufeMonthlyBtn.addEventListener('click', function() {
             currentViewType = 'monthly';
             setActiveChartType(tufeMonthlyBtn);
+            // Bar/Line butonlarını göster
+            if (barLineBtnGroup) {
+                barLineBtnGroup.style.display = 'flex';
+            }
             updateCharts();
             setTimeout(function() {
                 if (!lineChart.classList.contains('hidden')) {
@@ -523,13 +536,18 @@
         tufeYearlyBtn.addEventListener('click', function() {
             currentViewType = 'yearly';
             setActiveChartType(tufeYearlyBtn);
+            // Bar/Line butonlarını gizle
+            if (barLineBtnGroup) {
+                barLineBtnGroup.style.display = 'none';
+            }
+            // Yıllık seçildiğinde otomatik olarak line grafiğini göster
+            lineChart.classList.remove('hidden');
+            barChart.classList.add('hidden');
+            setActiveChart(lineBtn);
             updateCharts();
             setTimeout(function() {
                 if (!lineChart.classList.contains('hidden')) {
                     Plotly.Plots.resize('line-compare-chart');
-                }
-                if (!barChart.classList.contains('hidden')) {
-                    Plotly.Plots.resize('bar-compare-chart');
                 }
             }, 100);
         });

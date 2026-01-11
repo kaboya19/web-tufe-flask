@@ -93,7 +93,7 @@
                                     Yıllık
                                 </button>
                             </div>
-                            <div class="flex gap-4">
+                            <div id="bar-line-btn-group" class="flex gap-4">
                                 <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md active" onclick="showGraph('bar', this)">Bar Grafik</button>
                                 <button class="px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-indigo-600 shadow-sm" onclick="showGraph('line', this)">Line Grafik</button>
                             </div>
@@ -227,11 +227,19 @@
                                 lineData = yearlyLineGraph;
                             }
                             
-                            if (barData && currentChartType === 'bar') {
-                                Plotly.react('bar-graph', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-                            }
-                            if (lineData && currentChartType === 'line') {
-                                Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                            // Aylık seçildiğinde her iki grafiği de güncelle
+                            if (currentViewType === 'monthly') {
+                                if (barData && currentChartType === 'bar') {
+                                    Plotly.react('bar-graph', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                                }
+                                if (lineData && currentChartType === 'line') {
+                                    Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                                }
+                            } else {
+                                // Yıllık seçildiğinde sadece line grafiğini güncelle
+                                if (lineData && lineData.data && lineData.layout) {
+                                    Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
+                                }
                             }
                         }
                         
@@ -264,6 +272,11 @@
                         anaGruplarMonthlyBtn.addEventListener('click', function() {
                             currentViewType = 'monthly';
                             setAnaGruplarActive(anaGruplarMonthlyBtn);
+                            // Bar/Line butonlarını göster
+                            const barLineBtnGroup = document.getElementById('bar-line-btn-group');
+                            if (barLineBtnGroup) {
+                                barLineBtnGroup.style.display = 'flex';
+                            }
                             updateCharts();
                             setTimeout(function() {
                                 if (currentChartType === 'bar') {
@@ -277,13 +290,20 @@
                         anaGruplarYearlyBtn.addEventListener('click', function() {
                             currentViewType = 'yearly';
                             setAnaGruplarActive(anaGruplarYearlyBtn);
+                            // Bar/Line butonlarını gizle
+                            const barLineBtnGroup = document.getElementById('bar-line-btn-group');
+                            if (barLineBtnGroup) {
+                                barLineBtnGroup.style.display = 'none';
+                            }
+                            // Yıllık seçildiğinde otomatik olarak line grafiğini göster
+                            document.getElementById('line-graph').classList.remove('hidden');
+                            document.getElementById('line-graph').classList.add('block');
+                            document.getElementById('bar-graph').classList.remove('block');
+                            document.getElementById('bar-graph').classList.add('hidden');
+                            currentChartType = 'line';
                             updateCharts();
                             setTimeout(function() {
-                                if (currentChartType === 'bar') {
-                                    Plotly.Plots.resize('bar-graph');
-                                } else {
-                                    Plotly.Plots.resize('line-graph');
-                                }
+                                Plotly.Plots.resize('line-graph');
                             }, 100);
                         });
                     }
