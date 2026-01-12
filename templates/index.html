@@ -789,8 +789,23 @@
             const mainContent = document.getElementById('main-content-wrapper');
             
             if (banner && continueBtn && mainContent) {
-                // Banner başlangıçta gizli (sadece küçük widget gösteriliyor)
-                banner.classList.remove('show');
+                const bannerDismissed = sessionStorage.getItem('yearly-widget-dismissed');
+                
+                if (bannerDismissed === 'true') {
+                    // Daha önce kapatılmışsa banner'ı gizle, küçük widget'ı göster
+                    banner.classList.remove('show');
+                    mainContent.classList.remove('main-content-hidden');
+                    if (compactWidgetCard) {
+                        compactWidgetCard.style.display = 'flex';
+                    }
+                } else {
+                    // İlk açılışta banner'ı göster
+                    banner.classList.add('show');
+                    mainContent.classList.add('main-content-hidden');
+                    if (compactWidgetCard) {
+                        compactWidgetCard.style.display = 'none';
+                    }
+                }
                 
                 // Küçük widget kartına tıklayınca banner'ı aç
                 if (compactWidgetCard) {
@@ -799,6 +814,8 @@
                         banner.style.transition = 'opacity 0.3s ease-out';
                         banner.classList.add('show');
                         mainContent.classList.add('main-content-hidden');
+                        compactWidgetCard.style.display = 'none';
+                        sessionStorage.removeItem('yearly-widget-dismissed');
                     });
                 }
                 
@@ -810,8 +827,12 @@
                     setTimeout(function() {
                         banner.classList.remove('show');
                         mainContent.classList.remove('main-content-hidden');
+                        if (compactWidgetCard) {
+                            compactWidgetCard.style.display = 'flex';
+                        }
                         // Sayfayı yumuşak bir şekilde en üste kaydır
                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                        sessionStorage.setItem('yearly-widget-dismissed', 'true');
                     }, 300);
                 });
             }
