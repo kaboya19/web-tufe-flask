@@ -448,12 +448,12 @@
             });
         }
         
-        // Varsayılan olarak yıllık grafikleri göster
-        if (yearlyBarGraphs) {
-            Plotly.newPlot('bar-compare-chart', yearlyBarGraphs.data, yearlyBarGraphs.layout, { displayModeBar: false, responsive: true });
+        // Başlangıçta aylık grafikleri çiz (varsayılan mod)
+        if (monthlyBarGraphs && monthlyBarGraphs.data && monthlyBarGraphs.layout) {
+            Plotly.newPlot('bar-compare-chart', monthlyBarGraphs.data, monthlyBarGraphs.layout, { displayModeBar: false, responsive: true });
         }
-        if (yearlyLineGraphs) {
-            Plotly.newPlot('line-compare-chart', yearlyLineGraphs.data, yearlyLineGraphs.layout, { displayModeBar: false, responsive: true });
+        if (monthlyLineGraphs && monthlyLineGraphs.data && monthlyLineGraphs.layout) {
+            Plotly.newPlot('line-compare-chart', monthlyLineGraphs.data, monthlyLineGraphs.layout, { displayModeBar: false, responsive: true });
         }
 
         // Toggle logic for comparison chart
@@ -541,15 +541,18 @@
                 barLineBtnGroup.style.display = 'none';
             }
             // Yıllık seçildiğinde otomatik olarak line grafiğini göster
-            lineChart.classList.remove('hidden');
             barChart.classList.add('hidden');
+            lineChart.classList.remove('hidden');
             setActiveChart(lineBtn);
-            updateCharts();
+            // Container görünür olduktan sonra grafiği yeniden çiz (newPlot kullan)
             setTimeout(function() {
-                if (!lineChart.classList.contains('hidden')) {
-                    Plotly.Plots.resize('line-compare-chart');
+                if (yearlyLineGraphs && yearlyLineGraphs.data && yearlyLineGraphs.layout) {
+                    // Önce mevcut grafiği temizle
+                    Plotly.purge('line-compare-chart');
+                    // Yeni grafiği çiz
+                    Plotly.newPlot('line-compare-chart', yearlyLineGraphs.data, yearlyLineGraphs.layout, { displayModeBar: false, responsive: true });
                 }
-            }, 100);
+            }, 50);
         });
 
         barBtn.addEventListener('click', function () {
@@ -570,10 +573,9 @@
             }, 100);
         });
 
-        // Varsayılan olarak aylık ve bar aktif
+        // Varsayılan olarak aylık ve bar aktif (grafikler zaten başlangıçta çizildi)
         setActiveChartType(tufeMonthlyBtn);
         setActiveChart(barBtn);
-        updateCharts(); // İlk yüklemede aylık grafiği göster
 
         // Window resize event to ensure charts fill the container
         window.addEventListener('resize', function () {

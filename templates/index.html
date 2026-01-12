@@ -225,6 +225,221 @@
                     </div>
                     {% endif %}
 
+                    <!-- Yıllık ve Aylık Değişim Widget Banner -->
+                    {% if widget_data or monthly_widget_data %}
+                    <div id="yearly-widget-banner" class="yearly-widget-banner">
+                        <div class="yearly-widget-banner-container">
+                            <div class="widgets-grid">
+                                <!-- Yıllık Widget -->
+                                {% if widget_data %}
+                                <div class="yearly-widget-card">
+                                <div class="yearly-widget-header">
+                                    <div class="yearly-widget-title-container">
+                                        <div class="yearly-widget-icon">
+                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 class="yearly-widget-title">Web TÜFE Yıllık Enflasyon</h2>
+                                            <p class="yearly-widget-subtitle">WebTÜFE-Yıllık</p>
+                                        </div>
+                                    </div>
+                                    {% if widget_data.update_date %}
+                                    <p class="yearly-widget-update">Güncellendi {{ widget_data.update_date }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="yearly-widget-content">
+                                    <div class="yearly-widget-status">
+                                        <span class="yearly-widget-status-dot"></span>
+                                        <span class="yearly-widget-status-text">Yıllık değişim günlük güncelleniyor</span>
+                                    </div>
+                                    
+                                    <div class="yearly-widget-main-value">
+                                        {% if widget_data.current_value is not none %}
+                                        {{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }}%
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if widget_data.change_from_previous is not none %}
+                                    <div class="yearly-widget-change {% if widget_data.change_from_previous < 0 %}yearly-widget-change-down{% else %}yearly-widget-change-up{% endif %}">
+                                        <svg class="yearly-widget-change-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            {% if widget_data.change_from_previous < 0 %}
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            {% else %}
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                            {% endif %}
+                                        </svg>
+                                        <span>{{ "%.2f"|format(widget_data.change_from_previous)|replace(".", ",") }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if widget_data.tuik_rate is not none %}
+                                <div class="yearly-widget-comparison">
+                                    <div class="yearly-widget-comparison-label">TÜİK SON VERİ:</div>
+                                    <div class="yearly-widget-comparison-value">{{ "%.2f"|format(widget_data.tuik_rate)|replace(".", ",") }}%</div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if widget_data.ytd_low is not none and widget_data.ytd_high is not none and widget_data.current_value is not none %}
+                                <div class="yearly-widget-range">
+                                    <div class="yearly-widget-range-labels">
+                                        <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_low)|replace(".", ",") }}% YIL İÇİ DÜŞÜK</span>
+                                        <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_high)|replace(".", ",") }}% YIL İÇİ YÜKSEK</span>
+                                    </div>
+                                    <div class="yearly-widget-slider">
+                                        <div class="yearly-widget-slider-track">
+                                            {% set range = widget_data.ytd_high - widget_data.ytd_low %}
+                                            {% if range > 0 %}
+                                                {% set position = ((widget_data.current_value - widget_data.ytd_low) / range) * 100 %}
+                                            {% else %}
+                                                {% set position = 50 %}
+                                            {% endif %}
+                                            <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Aylık Widget -->
+                                {% if monthly_widget_data %}
+                                <div class="yearly-widget-card monthly-widget-card">
+                                    <div class="yearly-widget-header">
+                                        <div class="yearly-widget-title-container">
+                                            <div class="yearly-widget-icon">
+                                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h2 class="yearly-widget-title">Web TÜFE Aylık Enflasyon</h2>
+                                                <p class="yearly-widget-subtitle">WebTÜFE-Aylık</p>
+                                            </div>
+                                        </div>
+                                        {% if monthly_widget_data.update_date %}
+                                        <p class="yearly-widget-update">Güncellendi {{ monthly_widget_data.update_date }}</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="yearly-widget-content">
+                                        <div class="yearly-widget-status">
+                                            <span class="yearly-widget-status-dot"></span>
+                                            <span class="yearly-widget-status-text">Aylık değişim günlük güncelleniyor</span>
+                                        </div>
+                                        
+                                        <div class="yearly-widget-main-value">
+                                            {% if monthly_widget_data.current_value is not none %}
+                                            {{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }}%
+                                            {% else %}
+                                            N/A
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if monthly_widget_data.change_from_previous is not none %}
+                                        <div class="yearly-widget-change {% if monthly_widget_data.change_from_previous < 0 %}yearly-widget-change-down{% else %}yearly-widget-change-up{% endif %}">
+                                            <svg class="yearly-widget-change-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                {% if monthly_widget_data.change_from_previous < 0 %}
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                {% else %}
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                {% endif %}
+                                            </svg>
+                                            <span>{{ "%.2f"|format(monthly_widget_data.change_from_previous)|replace(".", ",") }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if monthly_widget_data.month_low is not none and monthly_widget_data.month_high is not none and monthly_widget_data.current_value is not none %}
+                                    <div class="yearly-widget-range">
+                                        <div class="yearly-widget-range-labels">
+                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_low)|replace(".", ",") }}% AY İÇİ DÜŞÜK</span>
+                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_high)|replace(".", ",") }}% AY İÇİ YÜKSEK</span>
+                                        </div>
+                                        <div class="yearly-widget-slider">
+                                            <div class="yearly-widget-slider-track">
+                                                {% set range = monthly_widget_data.month_high - monthly_widget_data.month_low %}
+                                                {% if range > 0 %}
+                                                    {% set position = ((monthly_widget_data.current_value - monthly_widget_data.month_low) / range) * 100 %}
+                                                {% else %}
+                                                    {% set position = 50 %}
+                                                {% endif %}
+                                                <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="yearly-widget-continue-btn-container">
+                                <button id="yearly-widget-continue-btn" class="yearly-widget-continue-btn">
+                                    <span>Siteye Devam Et</span>
+                                    <svg class="yearly-widget-continue-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Ana İçerik -->
+                    <div id="main-content-wrapper">
+                    {% if widget_data or monthly_widget_data %}
+                    <!-- Küçük Widget Kartı -->
+                    <div id="compact-widget-card" class="compact-widget-card mb-6">
+                        <div class="compact-widget-header">
+                            <svg class="compact-widget-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            <span>Widget'ı Göster</span>
+                        </div>
+                        <div class="compact-widget-grid">
+                            {% if widget_data %}
+                            <div class="compact-widget-item">
+                                <div class="compact-widget-label">Yıllık</div>
+                                <div class="compact-widget-value">
+                                    {% if widget_data.current_value is not none %}
+                                    {{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }}%
+                                    {% if widget_data.change_from_previous is not none %}
+                                    <span class="compact-widget-change {% if widget_data.change_from_previous < 0 %}compact-widget-change-down{% else %}compact-widget-change-up{% endif %}">
+                                        ({{ "%.2f"|format(widget_data.change_from_previous)|replace(".", ",") }})
+                                    </span>
+                                    {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if monthly_widget_data %}
+                            <div class="compact-widget-item">
+                                <div class="compact-widget-label">Aylık</div>
+                                <div class="compact-widget-value">
+                                    {% if monthly_widget_data.current_value is not none %}
+                                    {{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }}%
+                                    {% if monthly_widget_data.change_from_previous is not none %}
+                                    <span class="compact-widget-change {% if monthly_widget_data.change_from_previous < 0 %}compact-widget-change-down{% else %}compact-widget-change-up{% endif %}">
+                                        ({{ "%.2f"|format(monthly_widget_data.change_from_previous)|replace(".", ",") }})
+                                    </span>
+                                    {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="card-modern p-8 mb-6">
                         <div class="flex items-center mb-4">
                             <div class="flex-shrink-0 mr-4">
@@ -558,12 +773,50 @@
                 </div>
             </div>
         </div>
+                    </div>
 
     </main>
     </div>
 {% endblock %}
 
 {% block scripts %}
+    <script>
+        // Yıllık Widget Banner Kontrolü
+        (function() {
+            const banner = document.getElementById('yearly-widget-banner');
+            const continueBtn = document.getElementById('yearly-widget-continue-btn');
+            const compactWidgetCard = document.getElementById('compact-widget-card');
+            const mainContent = document.getElementById('main-content-wrapper');
+            
+            if (banner && continueBtn && mainContent) {
+                // Banner başlangıçta gizli (sadece küçük widget gösteriliyor)
+                banner.classList.remove('show');
+                
+                // Küçük widget kartına tıklayınca banner'ı aç
+                if (compactWidgetCard) {
+                    compactWidgetCard.addEventListener('click', function() {
+                        banner.style.opacity = '1';
+                        banner.style.transition = 'opacity 0.3s ease-out';
+                        banner.classList.add('show');
+                        mainContent.classList.add('main-content-hidden');
+                    });
+                }
+                
+                continueBtn.addEventListener('click', function() {
+                    // Banner'ı gizle
+                    banner.style.opacity = '0';
+                    banner.style.transition = 'opacity 0.3s ease-out';
+                    
+                    setTimeout(function() {
+                        banner.classList.remove('show');
+                        mainContent.classList.remove('main-content-hidden');
+                        // Sayfayı yumuşak bir şekilde en üste kaydır
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 300);
+                });
+            }
+        })();
+    </script>
     <script id="graphs-data" type="application/json">{{ graphJSON | safe }}</script>
     <script>
         var graphs = JSON.parse(document.getElementById('graphs-data').textContent);

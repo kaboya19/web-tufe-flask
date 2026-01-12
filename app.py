@@ -511,6 +511,175 @@ def safe_get_turkish_month(m):
     else:
         return m
 
+def get_yearly_widget_data():
+    """Widget için yıllık değişim verilerini hesapla"""
+    try:
+        # tüfeyıllık.csv'den verileri oku
+        df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
+        
+        if len(df_tufe_yillik.columns) < 2:
+            return None
+        
+        date_col_name = df_tufe_yillik.columns[0]
+        value_col_name = df_tufe_yillik.columns[1]  # "Web TÜFE"
+        
+        # Tüm geçerli değerleri ve tarihleri topla
+        valid_values = []
+        valid_dates = []
+        for idx, row in df_tufe_yillik.iterrows():
+            date_str = str(row[date_col_name])
+            value = row[value_col_name]
+            if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
+                try:
+                    val = float(str(value).replace(',', '.'))
+                    valid_values.append(val)
+                    try:
+                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                        valid_dates.append(date_obj)
+                    except:
+                        valid_dates.append(None)
+                except:
+                    continue
+        
+        if not valid_values:
+            return None
+        
+        # Mevcut yılın verilerini filtrele (YTD için)
+        current_year = datetime.now().year
+        current_year_values = []
+        current_year_dates = []
+        for i, date_obj in enumerate(valid_dates):
+            if date_obj and date_obj.year == current_year:
+                current_year_values.append(valid_values[i])
+                current_year_dates.append(date_obj)
+        
+        # Son değer (mevcut yıllık değişim)
+        current_value = valid_values[-1] if valid_values else None
+        current_date = valid_dates[-1] if valid_dates else None
+        
+        # Önceki değer (bir önceki geçerli değer)
+        previous_value = valid_values[-2] if len(valid_values) >= 2 else None
+        change_from_previous = current_value - previous_value if (current_value is not None and previous_value is not None) else None
+        
+        # YTD LOW ve HIGH
+        ytd_low = min(current_year_values) if current_year_values else None
+        ytd_high = max(current_year_values) if current_year_values else None
+        
+        # TÜİK yıllık değişim oranını hesapla
+        tuik_yearly_rate = None
+        try:
+            tuik_df = cached_read_csv('tüik.csv', index_col=0)
+            tuik_df.index = pd.to_datetime(tuik_df.index)
+            tuik_df = tuik_df.sort_index()
+            
+            if 'TÜİK' in tuik_df.columns:
+                # Son tarih için yıllık değişim hesapla (12 ay öncesi ile karşılaştırma)
+                last_date = tuik_df.index[-1]
+                if len(tuik_df) > 12:
+                    # 12 ay öncesini bul
+                    from dateutil.relativedelta import relativedelta
+                    date_12_months_ago = last_date - relativedelta(months=12)
+                    # En yakın tarihi bul
+                    closest_date = tuik_df.index[tuik_df.index <= date_12_months_ago]
+                    if len(closest_date) > 0:
+                        value_12_months_ago = tuik_df.loc[closest_date[-1], 'TÜİK']
+                        current_tuik_value = tuik_df.loc[last_date, 'TÜİK']
+                        if pd.notna(value_12_months_ago) and pd.notna(current_tuik_value) and value_12_months_ago != 0:
+                            tuik_yearly_rate = ((current_tuik_value / value_12_months_ago) - 1) * 100
+        except Exception as e:
+            print(f"TÜİK yıllık değişim hesaplama hatası: {e}")
+        
+        # Son güncelleme tarihini time.txt dosyasından oku
+        update_date_str = get_last_update_date()
+        
+        return {
+            'current_value': current_value,
+            'change_from_previous': change_from_previous,
+            'ytd_low': ytd_low,
+            'ytd_high': ytd_high,
+            'tuik_rate': tuik_yearly_rate,
+            'update_date': update_date_str
+        }
+    except Exception as e:
+        print(f"Yıllık widget verisi hesaplama hatası: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def get_monthly_widget_data():
+    """Widget için aylık değişim verilerini hesapla"""
+    try:
+        # tüfeaylıkgünlük.csv'den verileri oku
+        df_tufe_monthly = cached_read_csv("tüfeaylıkgünlük.csv")
+        
+        if len(df_tufe_monthly.columns) < 2:
+            return None
+        
+        date_col_name = df_tufe_monthly.columns[0]
+        value_col_name = df_tufe_monthly.columns[1]  # "Web TÜFE"
+        
+        # Tüm geçerli değerleri ve tarihleri topla
+        valid_values = []
+        valid_dates = []
+        for idx, row in df_tufe_monthly.iterrows():
+            date_str = str(row[date_col_name])
+            value = row[value_col_name]
+            if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
+                try:
+                    val = float(str(value).replace(',', '.'))
+                    try:
+                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                        valid_values.append(val)
+                        valid_dates.append(date_obj)
+                    except:
+                        continue
+                except:
+                    continue
+        
+        if not valid_values:
+            return None
+        
+        # Mevcut ayın verilerini filtrele
+        current_date = datetime.now()
+        current_month = current_date.month
+        current_year = current_date.year
+        
+        current_month_values = []
+        current_month_dates = []
+        for i, date_obj in enumerate(valid_dates):
+            if date_obj and date_obj.year == current_year and date_obj.month == current_month:
+                current_month_values.append(valid_values[i])
+                current_month_dates.append(date_obj)
+        
+        # Son değer (mevcut aylık değişim)
+        current_value = valid_values[-1] if valid_values else None
+        current_date_obj = valid_dates[-1] if valid_dates else None
+        
+        # Önceki değer (bir önceki geçerli değer)
+        previous_value = valid_values[-2] if len(valid_values) >= 2 else None
+        change_from_previous = current_value - previous_value if (current_value is not None and previous_value is not None) else None
+        
+        # Ay içi LOW ve HIGH
+        month_low = min(current_month_values) if current_month_values else None
+        month_high = max(current_month_values) if current_month_values else None
+        
+        # Son güncelleme tarihini time.txt dosyasından oku
+        update_date_str = get_last_update_date()
+        
+        return {
+            'current_value': current_value,
+            'change_from_previous': change_from_previous,
+            'month_low': month_low,
+            'month_high': month_high,
+            'update_date': update_date_str,
+            'daily_data': list(zip([d.strftime('%Y-%m-%d') for d in current_month_dates], current_month_values)) if current_month_dates else []
+        }
+    except Exception as e:
+        print(f"Aylık widget verisi hesaplama hatası: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 def get_ana_gruplar_data(classification='eski'):
     # Google Sheets API setup
     """creds = get_google_credentials_2()
@@ -1251,6 +1420,10 @@ def ana_sayfa():
         # Get last update date
         last_update = get_last_update_date()
         
+        # Get yearly and monthly widget data
+        widget_data = get_yearly_widget_data()
+        monthly_widget_data = get_monthly_widget_data()
+        
         # Prepare left (monthly change) data
         left_categories = [pair[0] for pair in data_pairs_sorted]
         left_categories_display = [truncate_group_name(cat) for cat in left_categories]
@@ -1422,7 +1595,9 @@ def ana_sayfa():
                                  monthly_top_harcama_risers=monthly_top_harcama_risers,
                                  monthly_top_harcama_fallers=monthly_top_harcama_fallers,
                                  time_series_data=time_series_data,
-                                 time_series_columns=time_series_columns)
+                                 time_series_columns=time_series_columns,
+                                 widget_data=widget_data,
+                                 monthly_widget_data=monthly_widget_data)
 
         # Build contribution series from katkıpayları.csv or katkıpaylarıv2.csv (right side)
         contribGraphJSON = None
@@ -1565,7 +1740,9 @@ def ana_sayfa():
                                  monthly_top_harcama_risers=monthly_top_harcama_risers,
                                  monthly_top_harcama_fallers=monthly_top_harcama_fallers,
                                  time_series_data=time_series_data,
-                                 time_series_columns=time_series_columns)
+                                 time_series_columns=time_series_columns,
+                                 widget_data=widget_data,
+                                 monthly_widget_data=monthly_widget_data)
     except Exception as e:
         flash(f'Bir hata oluştu: {str(e)}', 'error')
         classification = request.form.get('classification', 'eski') if request.method == 'POST' else request.args.get('classification', 'eski')

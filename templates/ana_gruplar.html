@@ -301,10 +301,15 @@
                             document.getElementById('bar-graph').classList.remove('block');
                             document.getElementById('bar-graph').classList.add('hidden');
                             currentChartType = 'line';
-                            updateCharts();
+                            // Container görünür olduktan sonra grafiği yeniden çiz (newPlot kullan)
                             setTimeout(function() {
-                                Plotly.Plots.resize('line-graph');
-                            }, 100);
+                                if (yearlyLineGraph && yearlyLineGraph.data && yearlyLineGraph.layout) {
+                                    // Önce mevcut grafiği temizle
+                                    Plotly.purge('line-graph');
+                                    // Yeni grafiği çiz
+                                    Plotly.newPlot('line-graph', yearlyLineGraph.data, yearlyLineGraph.layout, { displayModeBar: false, responsive: true });
+                                }
+                            }, 50);
                         });
                     }
 
