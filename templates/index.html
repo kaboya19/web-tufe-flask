@@ -816,6 +816,14 @@
                         mainContent.classList.add('main-content-hidden');
                         compactWidgetCard.style.display = 'none';
                         sessionStorage.removeItem('yearly-widget-dismissed');
+                        
+                        // Grafikleri yeniden boyutlandır (widget açıldığında)
+                        setTimeout(function() {
+                            const chartElement = document.getElementById('chart');
+                            if (chartElement) {
+                                Plotly.Plots.resize('chart');
+                            }
+                        }, 100);
                     });
                 }
                 
@@ -833,6 +841,14 @@
                         // Sayfayı yumuşak bir şekilde en üste kaydır
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         sessionStorage.setItem('yearly-widget-dismissed', 'true');
+                        
+                        // Grafikleri yeniden boyutlandır
+                        setTimeout(function() {
+                            const chartElement = document.getElementById('chart');
+                            if (chartElement) {
+                                Plotly.Plots.resize('chart');
+                            }
+                        }, 100);
                     }, 300);
                 });
             }

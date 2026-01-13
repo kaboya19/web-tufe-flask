@@ -368,5 +368,24 @@
         const form = document.getElementById('ana-gruplar-form');
         if (form) form.submit();
     }
+    
+    // Sayfa boyutu değiştiğinde grafikleri yeniden boyutlandır
+    window.addEventListener('resize', function() {
+        if (isGraphView) {
+            const mainGraphElement = document.getElementById('main-graph');
+            const barGraphElement = document.getElementById('bar-graph');
+            const lineGraphElement = document.getElementById('line-graph');
+            
+            if (mainGraphElement) {
+                Plotly.Plots.resize('main-graph');
+            }
+            if (barGraphElement && !barGraphElement.classList.contains('hidden')) {
+                Plotly.Plots.resize('bar-graph');
+            }
+            if (lineGraphElement && !lineGraphElement.classList.contains('hidden')) {
+                Plotly.Plots.resize('line-graph');
+            }
+        }
+    });
                 </script>
 {% endblock %}
