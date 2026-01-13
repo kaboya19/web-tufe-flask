@@ -7407,32 +7407,88 @@ def ozel_kapsamli_gostergeler():
             return None
     
     def get_yearly_value(series_name):
-        # Yıllık değişim için özelgöstergeleryıllık.csv dosyasından oku
+        # Yıllık değişim için özelgöstergeleryıllık.csv dosyasından oku (hem sütun bazlı hem satır bazlı formatları destekle)
         try:
             df_yearly_table = pd.read_csv("özelgöstergeleryıllık.csv", quotechar='"')
-            # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
             series_name_norm = series_name.strip().lower()
-            series_row = None
-            for idx, row in df_yearly_table.iterrows():
-                series_name_in_csv = str(row.iloc[0]).strip().lower()
-                if series_name_in_csv == series_name_norm:
-                    series_row = row
-                    break
-            
-            if series_row is not None:
-                # Son tarih sütunundan değeri al
-                date_columns = df_yearly_table.columns[1:]
-                if len(date_columns) > 0:
-                    last_date_col = date_columns[-1]
-                    val = series_row[last_date_col]
-                    if pd.isna(val):
-                        return None
-                    else:
-                        return float(str(val).replace(',', '.'))
+
+            # Eğer dosya zaman serisi formatındaysa (ilk sütun tarih, sonraki sütunlar gösterge isimleri)
+            try:
+                # Test amaçlı son satırdaki ilk sütun değeri tarih olarak parse edilebiliyorsa zaman serisi formatı varsay
+                test_val = df_yearly_table.iloc[-1, 0]
+                pd.to_datetime(str(test_val))
+                is_time_series = True
+            except Exception:
+                is_time_series = False
+
+            if is_time_series:
+                # Sütun isimleri arasında eşleşme ara
+                matched_col = None
+                for col in df_yearly_table.columns[1:]:
+                    if str(col).strip().lower() == series_name_norm:
+                        matched_col = col
+                        break
+                if matched_col is not None:
+                    # Sondan başlayarak ilk dolu değeri bul
+                    for idx in range(len(df_yearly_table) - 1, -1, -1):
+                        val = df_yearly_table.iloc[idx][matched_col]
+                        if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
+                            try:
+                                return float(str(val).replace(',', '.'))
+                            except:
+                                break
+            else:
+                # Eski format: ilk sütun gösterge ismi, sonraki sütunlar tarihler
+                series_row = None
+                for idx, row in df_yearly_table.iterrows():
+                    series_name_in_csv = str(row.iloc[0]).strip().lower()
+                    if series_name_in_csv == series_name_norm:
+                        series_row = row
+                        break
+                if series_row is not None:
+                    date_columns = df_yearly_table.columns[1:]
+                    for col in reversed(date_columns):
+                        val = series_row[col]
+                        if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
+                            try:
+                                return float(str(val).replace(',', '.'))
+                            except:
+                                continue
         except Exception as e:
             print(f"Yıllık değişim okuma hatası ({series_name}): {e}")
-        
-        # Fallback: eski mantık (yılbaşından itibaren değişim)
+
+        # Özel durum: Web TÜFE için tüfeyıllık.csv denenecek (aşağıdaki genel denemeye düşecek)
+        # (Burada özel bir okuma yapmaya gerek yok, genel okuma kısmı yeterli)
+
+        # Genel deneme: tüfeyıllık.csv zaman serisi ya da satır bazlı olabilir
+        try:
+            df_tufe_yearly = pd.read_csv("tüfeyıllık.csv", quotechar='"')
+            cols = df_tufe_yearly.columns.tolist()
+            if len(cols) >= 2:
+                # Eğer ikinci sütun varsa (date + value), sondan ilk dolu değeri al
+                val_col = cols[1]
+                for idx in range(len(df_tufe_yearly) - 1, -1, -1):
+                    val = df_tufe_yearly.iloc[idx][val_col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
+                        try:
+                            return float(str(val).replace(',', '.'))
+                        except:
+                            break
+            # Eğer satır bazlı format ise (ilk sütun 'Grup'), ara
+            for idx, row in df_tufe_yearly.iterrows():
+                if str(row.iloc[0]).strip().lower() == 'web tüfe':
+                    date_columns = df_tufe_yearly.columns[1:]
+                    for col in reversed(date_columns):
+                        val = row[col]
+                        if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
+                            try:
+                                return float(str(val).replace(',', '.'))
+                            except:
+                                continue
+        except Exception as e:
+            print(f"Web TÜFE yıllık okuma hatası: {e}")
+
+        # Fallback: eski mantık (yılbaşından itibaren değişim) veya tuik_endeks_df
         try:
             if series_name in df.columns:
                 return float(df[series_name].iloc[-1]) - 100
@@ -7511,20 +7567,36 @@ def ozel_kapsamli_gostergeler():
                             current_value_tufe = parse_numeric(val)
                         except Exception:
                             pass
-                    # Yıllık değişim değerini tüfeyıllık.csv'den al
+                    # Yıllık değişim değerini tüfeyıllık.csv'den al (hem satır bazlı hem zaman serisi formatlarını destekle)
                     ytd_value_tufe = None
                     try:
                         df_tufe_yearly = pd.read_csv("tüfeyıllık.csv", quotechar='"')
-                        # Yeni yapı: İlk sütun "Grup", sonraki sütunlar tarihler
-                        web_tufe_row_yearly = df_tufe_yearly[df_tufe_yearly.iloc[:, 0].str.strip().str.lower() == 'web tüfe']
-                        if not web_tufe_row_yearly.empty:
-                            # Son tarih sütunundan değeri al
-                            date_columns_tufe = df_tufe_yearly.columns[1:]
-                            if len(date_columns_tufe) > 0:
-                                last_date_col_tufe = date_columns_tufe[-1]
-                                val = web_tufe_row_yearly[last_date_col_tufe].values[0]
-                                if pd.notna(val):
-                                    ytd_value_tufe = float(str(val).replace(',', '.'))
+                        # Önce satır-bazlı formatı dene: ilk sütun 'Grup'
+                        try:
+                            web_tufe_row_yearly = df_tufe_yearly[df_tufe_yearly.iloc[:, 0].astype(str).str.strip().str.lower() == 'web tüfe']
+                            if not web_tufe_row_yearly.empty:
+                                date_columns_tufe = df_tufe_yearly.columns[1:]
+                                if len(date_columns_tufe) > 0:
+                                    last_date_col_tufe = date_columns_tufe[-1]
+                                    val = web_tufe_row_yearly[last_date_col_tufe].values[0]
+                                    if pd.notna(val):
+                                        ytd_value_tufe = float(str(val).replace(',', '.'))
+                        except Exception:
+                            pass
+
+                        # Eğer hala yoksa zaman serisi formatını dene (date + Web TÜFE sütunu)
+                        if ytd_value_tufe is None:
+                            cols = df_tufe_yearly.columns.tolist()
+                            if len(cols) >= 2:
+                                val_col = cols[1]
+                                for idx in range(len(df_tufe_yearly) - 1, -1, -1):
+                                    val = df_tufe_yearly.iloc[idx][val_col]
+                                    if pd.notna(val) and str(val).strip() != '':
+                                        try:
+                                            ytd_value_tufe = float(str(val).replace(',', '.'))
+                                            break
+                                        except:
+                                            continue
                     except Exception as e:
                         print(f"Web TÜFE yıllık değişim değeri okunamadı: {e}")
                         # Fallback: eski mantık (yılbaşından itibaren değişim)
