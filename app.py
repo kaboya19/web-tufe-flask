@@ -459,7 +459,7 @@ def get_tufe_vs_tuik_bar_data():
     tuik_df = cached_read_csv('tüik.csv', index_col=0)
     tuik_df.index = pd.to_datetime(tuik_df.index)
     # Her ayın son günündeki değeri al
-    tuik_monthly_last = tuik_df.resample('M').last()
+    tuik_monthly_last = tuik_df.resample('ME').last()
     tuik_monthly_last['pct_change'] = tuik_monthly_last['TÜİK'].pct_change() * 100
     tuik_monthly_last = tuik_monthly_last.iloc[1:]  # İlk ayın değişimi NaN olur, atla
     tuik_monthly_last.index = tuik_monthly_last.index.strftime('%Y-%m')
@@ -2052,7 +2052,7 @@ def tufe():
         try:
             tuik_df = cached_read_csv('tüik.csv', index_col=0)
             tuik_df.index = pd.to_datetime(tuik_df.index)
-            tuik_monthly_last = tuik_df.resample('M').last()
+            tuik_monthly_last = tuik_df.resample('ME').last()
             tuik_monthly_last['pct_change'] = tuik_monthly_last['TÜİK'].pct_change() * 100
             tuik_monthly_last = tuik_monthly_last.iloc[1:]
             
@@ -2106,7 +2106,7 @@ def tufe():
                 tuik_df = cached_read_csv('tüik.csv', index_col=0)
                 tuik_df.index = pd.to_datetime(tuik_df.index)
                 # Her ayın son günündeki değeri al
-                tuik_monthly_last = tuik_df.resample('M').last()
+                tuik_monthly_last = tuik_df.resample('ME').last()
                 tuik_monthly_last['pct_change'] = tuik_monthly_last['TÜİK'].pct_change() * 100
                 tuik_monthly_last = tuik_monthly_last.iloc[1:]  # İlk ayın değişimi NaN olur, atla
                 tuik_monthly_last.index = tuik_monthly_last.index.strftime('%Y-%m')  # YYYY-MM formatına çevir
