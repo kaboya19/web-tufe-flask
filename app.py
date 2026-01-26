@@ -10,6 +10,7 @@ import plotly.utils
 from datetime import datetime
 import csv
 from dateutil.parser import parse
+import calendar
 import os
 import io
 from gspread.exceptions import APIError, SpreadsheetNotFound
@@ -591,6 +592,19 @@ def get_yearly_widget_data():
         
         # Son güncelleme tarihini time.txt dosyasından oku
         update_date_str = get_last_update_date()
+        update_datetime = get_last_update_datetime()
+        
+        # Mevcut ayın Türkçe adını al
+        current_month_name = None
+        show_finalized_message = False
+        if current_date:
+            current_month_name = get_turkish_month(current_date.strftime('%Y-%m-%d'))
+            # Ayın 24'ünden son gününe kadar olan kısımda "xx arttı" mesajını göster
+            if update_datetime.year == current_date.year and update_datetime.month == current_date.month:
+                # Ayın son gününü hesapla
+                last_day_of_month = calendar.monthrange(update_datetime.year, update_datetime.month)[1]
+                if update_datetime.day >= 24 and update_datetime.day <= last_day_of_month:
+                    show_finalized_message = True
         
         return {
             'current_value': current_value,
@@ -598,7 +612,9 @@ def get_yearly_widget_data():
             'ytd_low': ytd_low,
             'ytd_high': ytd_high,
             'tuik_rate': tuik_yearly_rate,
-            'update_date': update_date_str
+            'update_date': update_date_str,
+            'current_month_name': current_month_name,
+            'show_finalized_message': show_finalized_message
         }
     except Exception as e:
         print(f"Yıllık widget verisi hesaplama hatası: {e}")
@@ -665,6 +681,30 @@ def get_monthly_widget_data():
         
         # Son güncelleme tarihini time.txt dosyasından oku
         update_date_str = get_last_update_date()
+        update_datetime = get_last_update_datetime()
+        
+        # Kesinleşme kontrolü: Ayın 24'ünden sonra ise ve mevcut ayın verisi varsa kesinleşmiş sayılır
+        is_finalized = False
+        finalized_value = None
+        finalized_month_name = None
+        current_month_name = None
+        show_finalized_message = False
+        if current_date_obj:
+            # Mevcut ayın Türkçe adını al
+            current_month_name = get_turkish_month(current_date_obj.strftime('%Y-%m-%d'))
+            # Son verinin tarihini kontrol et
+            if current_date_obj.day >= 24:
+                # Ayın 24'ü veya sonrası ise kesinleşmiş sayılır
+                is_finalized = True
+                finalized_value = current_value
+                finalized_month_name = current_month_name
+            
+            # Ayın 24'ünden son gününe kadar olan kısımda "xx arttı" mesajını göster
+            if update_datetime.year == current_date_obj.year and update_datetime.month == current_date_obj.month:
+                # Ayın son gününü hesapla
+                last_day_of_month = calendar.monthrange(update_datetime.year, update_datetime.month)[1]
+                if update_datetime.day >= 24 and update_datetime.day <= last_day_of_month:
+                    show_finalized_message = True
         
         return {
             'current_value': current_value,
@@ -672,6 +712,11 @@ def get_monthly_widget_data():
             'month_low': month_low,
             'month_high': month_high,
             'update_date': update_date_str,
+            'is_finalized': is_finalized,
+            'finalized_value': finalized_value,
+            'finalized_month_name': finalized_month_name,
+            'current_month_name': current_month_name,
+            'show_finalized_message': show_finalized_message,
             'daily_data': list(zip([d.strftime('%Y-%m-%d') for d in current_month_dates], current_month_values)) if current_month_dates else []
         }
     except Exception as e:
@@ -776,6 +821,16 @@ def get_last_update_date():
             return date_obj.strftime('%d.%m.%Y %H:%M')
     except Exception as e:
         return "Bilgi mevcut değil"
+
+def get_last_update_datetime():
+    """time.txt'den tarih objesi döndürür"""
+    try:
+        with open('time.txt', 'r') as f:
+            date_str = f.read().strip()
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+            return date_obj
+    except Exception as e:
+        return datetime.now()  # Hata durumunda şu anki tarihi döndür
 
 def create_monthly_graph(tufe_data):
     try:

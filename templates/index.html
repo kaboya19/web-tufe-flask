@@ -232,7 +232,11 @@
                                 <div class="yearly-widget-content">
                                     <div class="yearly-widget-status">
                                         <span class="yearly-widget-status-dot"></span>
+                                        {% if widget_data.show_finalized_message and widget_data.current_value is not none and widget_data.current_month_name %}
+                                        <span class="yearly-widget-status-text">{{ widget_data.current_month_name }} ayında yıllık %{{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }} {% if widget_data.current_value >= 0 %}arttı{% else %}azaldı{% endif %}</span>
+                                        {% else %}
                                         <span class="yearly-widget-status-text">Yıllık değişim günlük güncelleniyor</span>
+                                        {% endif %}
                                     </div>
                                     
                                     <div class="yearly-widget-main-value">
@@ -264,25 +268,36 @@
                                 </div>
                                 {% endif %}
                                 
-                                {% if widget_data.ytd_low is not none and widget_data.ytd_high is not none and widget_data.current_value is not none %}
-                                <div class="yearly-widget-range">
-                                    <div class="yearly-widget-range-labels">
-                                        <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_low)|replace(".", ",") }}% YIL İÇİ DÜŞÜK</span>
-                                        <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_high)|replace(".", ",") }}% YIL İÇİ YÜKSEK</span>
-                                    </div>
-                                    <div class="yearly-widget-slider">
-                                        <div class="yearly-widget-slider-track">
-                                            {% set range = widget_data.ytd_high - widget_data.ytd_low %}
-                                            {% if range > 0 %}
-                                                {% set position = ((widget_data.current_value - widget_data.ytd_low) / range) * 100 %}
-                                            {% else %}
-                                                {% set position = 50 %}
-                                            {% endif %}
-                                            <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                <div style="margin-top: auto;">
+                                    {% if widget_data.ytd_low is not none and widget_data.ytd_high is not none and widget_data.current_value is not none %}
+                                    <div class="yearly-widget-range">
+                                        <div class="yearly-widget-range-labels">
+                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_low)|replace(".", ",") }}% YIL İÇİ DÜŞÜK</span>
+                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(widget_data.ytd_high)|replace(".", ",") }}% YIL İÇİ YÜKSEK</span>
+                                        </div>
+                                        <div class="yearly-widget-slider">
+                                            <div class="yearly-widget-slider-track">
+                                                {% set range = widget_data.ytd_high - widget_data.ytd_low %}
+                                                {% if range > 0 %}
+                                                    {% set position = ((widget_data.current_value - widget_data.ytd_low) / range) * 100 %}
+                                                {% else %}
+                                                    {% set position = 50 %}
+                                                {% endif %}
+                                                <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                            </div>
                                         </div>
                                     </div>
+                                    {% endif %}
+                                    
+                                    <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 4px;">
+                                        <p style="margin: 0; font-size: 11px; color: #92400E; line-height: 1.4;">
+                                            <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Aylık ve yıllık artış verisi her ayın 24.gününde kesinleştirilmektedir.
+                                        </p>
+                                    </div>
                                 </div>
-                                {% endif %}
                                 </div>
                                 {% endif %}
                                 
@@ -309,7 +324,11 @@
                                     <div class="yearly-widget-content">
                                         <div class="yearly-widget-status">
                                             <span class="yearly-widget-status-dot"></span>
+                                            {% if monthly_widget_data.show_finalized_message and monthly_widget_data.current_value is not none and monthly_widget_data.current_month_name %}
+                                            <span class="yearly-widget-status-text">{{ monthly_widget_data.current_month_name }} ayında %{{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }} {% if monthly_widget_data.current_value >= 0 %}arttı{% else %}azaldı{% endif %}</span>
+                                            {% else %}
                                             <span class="yearly-widget-status-text">Aylık değişim günlük güncelleniyor</span>
+                                            {% endif %}
                                         </div>
                                         
                                         <div class="yearly-widget-main-value">
@@ -334,25 +353,36 @@
                                         {% endif %}
                                     </div>
                                     
-                                    {% if monthly_widget_data.month_low is not none and monthly_widget_data.month_high is not none and monthly_widget_data.current_value is not none %}
-                                    <div class="yearly-widget-range">
-                                        <div class="yearly-widget-range-labels">
-                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_low)|replace(".", ",") }}% AY İÇİ DÜŞÜK</span>
-                                            <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_high)|replace(".", ",") }}% AY İÇİ YÜKSEK</span>
-                                        </div>
-                                        <div class="yearly-widget-slider">
-                                            <div class="yearly-widget-slider-track">
-                                                {% set range = monthly_widget_data.month_high - monthly_widget_data.month_low %}
-                                                {% if range > 0 %}
-                                                    {% set position = ((monthly_widget_data.current_value - monthly_widget_data.month_low) / range) * 100 %}
-                                                {% else %}
-                                                    {% set position = 50 %}
-                                                {% endif %}
-                                                <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                    <div style="margin-top: auto;">
+                                        {% if monthly_widget_data.month_low is not none and monthly_widget_data.month_high is not none and monthly_widget_data.current_value is not none %}
+                                        <div class="yearly-widget-range">
+                                            <div class="yearly-widget-range-labels">
+                                                <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_low)|replace(".", ",") }}% AY İÇİ DÜŞÜK</span>
+                                                <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_high)|replace(".", ",") }}% AY İÇİ YÜKSEK</span>
+                                            </div>
+                                            <div class="yearly-widget-slider">
+                                                <div class="yearly-widget-slider-track">
+                                                    {% set range = monthly_widget_data.month_high - monthly_widget_data.month_low %}
+                                                    {% if range > 0 %}
+                                                        {% set position = ((monthly_widget_data.current_value - monthly_widget_data.month_low) / range) * 100 %}
+                                                    {% else %}
+                                                        {% set position = 50 %}
+                                                    {% endif %}
+                                                    <div class="yearly-widget-slider-thumb" style="left: {{ position }}%"></div>
+                                                </div>
                                             </div>
                                         </div>
+                                        {% endif %}
+                                        
+                                        <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 4px;">
+                                            <p style="margin: 0; font-size: 11px; color: #92400E; line-height: 1.4;">
+                                                <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                </svg>
+                                                Aylık ve yıllık artış verisi her ayın 24.gününde kesinleştirilmektedir.
+                                            </p>
+                                        </div>
                                     </div>
-                                    {% endif %}
                                 </div>
                                 {% endif %}
                             </div>
