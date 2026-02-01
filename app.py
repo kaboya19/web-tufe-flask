@@ -515,54 +515,55 @@ def safe_get_turkish_month(m):
 def get_yearly_widget_data():
     """Widget için yıllık değişim verilerini hesapla"""
     try:
-        # tüfeyıllık.csv'den verileri oku
-        df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
+        # tüfeyıllıkgünlük.csv'den verileri oku (CSV'de zaten yıllık değişimler yazıyor)
+        df_tufe_yillik = cached_read_csv("tüfeyıllıkgünlük.csv")
         
         if len(df_tufe_yillik.columns) < 2:
             return None
         
         date_col_name = df_tufe_yillik.columns[0]
-        value_col_name = df_tufe_yillik.columns[1]  # "Web TÜFE"
+        value_col_name = df_tufe_yillik.columns[1]  # "Web TÜFE" - yıllık değişim değerleri
         
-        # Tüm geçerli değerleri ve tarihleri topla
+        # Tarih sütununu datetime'a çevir
+        df_tufe_yillik[date_col_name] = pd.to_datetime(df_tufe_yillik[date_col_name])
+        # Boş olmayan satırları filtrele
+        df_tufe_yillik = df_tufe_yillik.dropna(subset=[date_col_name])
+        # Tarihe göre sırala
+        df_tufe_yillik = df_tufe_yillik.sort_values(by=date_col_name)
+        
+        # Tüm geçerli değerleri ve tarihleri topla (CSV'deki değerler zaten yıllık değişim)
         valid_values = []
         valid_dates = []
         for idx, row in df_tufe_yillik.iterrows():
-            date_str = str(row[date_col_name])
+            date_obj = row[date_col_name]
             value = row[value_col_name]
             if pd.notna(value) and str(value).strip() != '' and str(value).strip() != 'nan':
                 try:
                     val = float(str(value).replace(',', '.'))
                     valid_values.append(val)
-                    try:
-                        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-                        valid_dates.append(date_obj)
-                    except:
-                        valid_dates.append(None)
+                    valid_dates.append(date_obj)
                 except:
                     continue
         
         if not valid_values:
             return None
         
-        # Mevcut yılın verilerini filtrele (YTD için)
-        current_year = datetime.now().year
-        current_year_values = []
-        current_year_dates = []
-        for i, date_obj in enumerate(valid_dates):
-            if date_obj and date_obj.year == current_year:
-                current_year_values.append(valid_values[i])
-                current_year_dates.append(date_obj)
-        
-        # Son değer (mevcut yıllık değişim)
+        # En son değer (CSV'deki yıllık değişim)
         current_value = valid_values[-1] if valid_values else None
         current_date = valid_dates[-1] if valid_dates else None
         
-        # Önceki değer (bir önceki geçerli değer)
+        # Önceki günün yıllık değişimi (değişim için)
         previous_value = valid_values[-2] if len(valid_values) >= 2 else None
         change_from_previous = current_value - previous_value if (current_value is not None and previous_value is not None) else None
         
-        # YTD LOW ve HIGH
+        # Mevcut yılın verilerini filtrele (YTD için)
+        current_year = datetime.now().year
+        current_year_values = []
+        for i, date_obj in enumerate(valid_dates):
+            if date_obj and date_obj.year == current_year:
+                current_year_values.append(valid_values[i])
+        
+        # YTD LOW ve HIGH (bu yılın değerlerinden)
         ytd_low = min(current_year_values) if current_year_values else None
         ytd_high = max(current_year_values) if current_year_values else None
         
@@ -596,9 +597,12 @@ def get_yearly_widget_data():
         
         # Mevcut ayın Türkçe adını al
         current_month_name = None
+        current_month_year_label = None
         show_finalized_message = False
         if current_date:
             current_month_name = get_turkish_month(current_date.strftime('%Y-%m-%d'))
+            # Widget başlığı için: "Şubat 2026" formatı
+            current_month_year_label = f"{current_month_name} {current_date.year}"
             # Ayın 24'ünden son gününe kadar olan kısımda "xx arttı" mesajını göster
             if update_datetime.year == current_date.year and update_datetime.month == current_date.month:
                 # Ayın son gününü hesapla
@@ -614,6 +618,7 @@ def get_yearly_widget_data():
             'tuik_rate': tuik_yearly_rate,
             'update_date': update_date_str,
             'current_month_name': current_month_name,
+            'current_month_year_label': current_month_year_label,
             'show_finalized_message': show_finalized_message
         }
     except Exception as e:
@@ -706,6 +711,11 @@ def get_monthly_widget_data():
                 if update_datetime.day >= 24 and update_datetime.day <= last_day_of_month:
                     show_finalized_message = True
         
+        # Widget başlığı için ay bilgisi
+        current_month_year_label = None
+        if current_date_obj:
+            current_month_year_label = f"{current_month_name} {current_date_obj.year}"
+        
         return {
             'current_value': current_value,
             'change_from_previous': change_from_previous,
@@ -716,6 +726,7 @@ def get_monthly_widget_data():
             'finalized_value': finalized_value,
             'finalized_month_name': finalized_month_name,
             'current_month_name': current_month_name,
+            'current_month_year_label': current_month_year_label,
             'show_finalized_message': show_finalized_message,
             'daily_data': list(zip([d.strftime('%Y-%m-%d') for d in current_month_dates], current_month_values)) if current_month_dates else []
         }

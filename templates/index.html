@@ -220,7 +220,7 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <h2 class="yearly-widget-title">Web TÜFE Yıllık Enflasyon</h2>
+                                            <h2 class="yearly-widget-title">Web TÜFE Yıllık Enflasyon{% if widget_data.current_month_year_label %} - {{ widget_data.current_month_year_label }}{% endif %}</h2>
                                             <p class="yearly-widget-subtitle">WebTÜFE-Yıllık</p>
                                         </div>
                                     </div>
@@ -312,7 +312,7 @@
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h2 class="yearly-widget-title">Web TÜFE Aylık Enflasyon</h2>
+                                                <h2 class="yearly-widget-title">Web TÜFE Aylık Enflasyon{% if monthly_widget_data.current_month_year_label %} - {{ monthly_widget_data.current_month_year_label }}{% endif %}</h2>
                                                 <p class="yearly-widget-subtitle">WebTÜFE-Aylık</p>
                                             </div>
                                         </div>
