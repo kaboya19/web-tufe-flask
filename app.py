@@ -566,14 +566,14 @@ def get_yearly_widget_data():
         ytd_low = min(current_year_values) if current_year_values else None
         ytd_high = max(current_year_values) if current_year_values else None
         
-        # TÜİK yıllık değişim oranını hesapla
+        # TÜİK yıllık değişim oranını hesapla (tuikytd.csv'den Genel sütunundan)
         tuik_yearly_rate = None
         try:
-            tuik_df = cached_read_csv('tüik.csv', index_col=0)
+            tuik_df = cached_read_csv('tuikytd.csv', index_col=0)
             tuik_df.index = pd.to_datetime(tuik_df.index)
             tuik_df = tuik_df.sort_index()
             
-            if 'TÜİK' in tuik_df.columns:
+            if 'Genel' in tuik_df.columns:
                 # Son tarih için yıllık değişim hesapla (12 ay öncesi ile karşılaştırma)
                 last_date = tuik_df.index[-1]
                 if len(tuik_df) > 12:
@@ -583,8 +583,8 @@ def get_yearly_widget_data():
                     # En yakın tarihi bul
                     closest_date = tuik_df.index[tuik_df.index <= date_12_months_ago]
                     if len(closest_date) > 0:
-                        value_12_months_ago = tuik_df.loc[closest_date[-1], 'TÜİK']
-                        current_tuik_value = tuik_df.loc[last_date, 'TÜİK']
+                        value_12_months_ago = tuik_df.loc[closest_date[-1], 'Genel']
+                        current_tuik_value = tuik_df.loc[last_date, 'Genel']
                         if pd.notna(value_12_months_ago) and pd.notna(current_tuik_value) and value_12_months_ago != 0:
                             tuik_yearly_rate = ((current_tuik_value / value_12_months_ago) - 1) * 100
         except Exception as e:
