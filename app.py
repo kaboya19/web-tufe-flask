@@ -7966,68 +7966,68 @@ def ozel_kapsamli_gostergeler():
                         except Exception as e2:
                             print(f"Web TÜFE fallback değeri okunamadı: {e2}")
                     
-                    # Web TÜFE için yıllık değişim verilerini oku (özelgöstergeleryıllık.csv'den TÜFE sütununu kullan)
+                    # Web TÜFE için yıllık değişim verilerini tüfeyıllık.csv'den oku
                     web_tufe_current_yearly = None
                     web_tufe_previous_yearly = None
                     try:
-                        df_yearly_table_tufe = pd.read_csv("özelgöstergeleryıllık.csv", quotechar='"')
-                        if len(df_yearly_table_tufe.columns) >= 2:
-                            date_col_name = df_yearly_table_tufe.columns[0]
-                            # TÜFE sütununu bul
-                            tufe_col_name = None
-                            for col in df_yearly_table_tufe.columns[1:]:
-                                if str(col).strip().lower() == 'tüfe':
-                                    tufe_col_name = col
-                                    break
-                            
-                            if tufe_col_name is not None:
-                                # Tarih sütununu datetime'a çevir
-                                df_yearly_table_tufe[date_col_name] = pd.to_datetime(df_yearly_table_tufe[date_col_name])
-                                # Boş olmayan satırları filtrele
-                                df_yearly_table_tufe = df_yearly_table_tufe.dropna(subset=[date_col_name])
-                                # Tarihe göre sırala
-                                df_yearly_table_tufe = df_yearly_table_tufe.sort_values(by=date_col_name)
-                                
-                                # Son 2 satırı bul (verisi dolu olan)
-                                last_two_rows_tufe = []
-                                for idx in range(len(df_yearly_table_tufe) - 1, -1, -1):
-                                    row = df_yearly_table_tufe.iloc[idx]
-                                    val = row[tufe_col_name]
-                                    if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
-                                        try:
-                                            float(str(val).replace(',', '.'))
-                                            last_two_rows_tufe.append(row)
-                                            if len(last_two_rows_tufe) >= 2:
-                                                break
-                                        except:
-                                            pass
-                                
-                                # Son 2 satırı ters çevir (en eski önce, en yeni son)
-                                last_two_rows_tufe = list(reversed(last_two_rows_tufe))
-                                
-                                # Bu ayın yıllık değişimini direkt oku (son satır)
-                                if len(last_two_rows_tufe) >= 1:
+                        df_tufe_yearly_detail = pd.read_csv("tüfeyıllık.csv", quotechar='"')
+                        if len(df_tufe_yearly_detail.columns) >= 2:
+                            date_col_name = df_tufe_yearly_detail.columns[0]
+                            value_col_name = df_tufe_yearly_detail.columns[1]
+
+                            # Tarih sütununu datetime'a çevir ve sırala
+                            df_tufe_yearly_detail[date_col_name] = pd.to_datetime(
+                                df_tufe_yearly_detail[date_col_name], errors="coerce"
+                            )
+                            df_tufe_yearly_detail = df_tufe_yearly_detail.dropna(
+                                subset=[date_col_name, value_col_name]
+                            )
+                            df_tufe_yearly_detail = df_tufe_yearly_detail.sort_values(by=date_col_name)
+
+                            # Son 2 dolu satırı bul
+                            last_two_rows_tufe = []
+                            for idx in range(len(df_tufe_yearly_detail) - 1, -1, -1):
+                                row = df_tufe_yearly_detail.iloc[idx]
+                                val = row[value_col_name]
+                                if pd.notna(val) and str(val).strip() != '' and str(val).strip().lower() != 'nan':
                                     try:
-                                        current_row = last_two_rows_tufe[-1]
-                                        current_val = current_row[tufe_col_name]
-                                        if pd.notna(current_val) and str(current_val).strip() != '' and str(current_val).strip().lower() != 'nan':
-                                            web_tufe_current_yearly = float(str(current_val).replace(',', '.'))
-                                    except Exception as e:
-                                        print(f"Web TÜFE bu ayın yıllık değişimi okuma hatası: {e}")
-                                    
-                                    # Bir önceki ayın yıllık değişimini direkt oku (son bir önceki satır)
-                                    if len(last_two_rows_tufe) >= 2:
-                                        try:
-                                            previous_row = last_two_rows_tufe[-2]
-                                            previous_val = previous_row[tufe_col_name]
-                                            if pd.notna(previous_val) and str(previous_val).strip() != '' and str(previous_val).strip().lower() != 'nan':
-                                                web_tufe_previous_yearly = float(str(previous_val).replace(',', '.'))
-                                        except Exception as e:
-                                            print(f"Web TÜFE bir önceki ayın yıllık değişimi okuma hatası: {e}")
+                                        float(str(val).replace(',', '.'))
+                                        last_two_rows_tufe.append(row)
+                                        if len(last_two_rows_tufe) >= 2:
+                                            break
+                                    except:
+                                        pass
+
+                            # Son 2 satırı ters çevir (en eski önce, en yeni son)
+                            last_two_rows_tufe = list(reversed(last_two_rows_tufe))
+
+                            # Bu ayın yıllık değişimini direkt oku (son satır)
+                            if len(last_two_rows_tufe) >= 1:
+                                try:
+                                    current_val = last_two_rows_tufe[-1][value_col_name]
+                                    if (
+                                        pd.notna(current_val)
+                                        and str(current_val).strip() != ''
+                                        and str(current_val).strip().lower() != 'nan'
+                                    ):
+                                        web_tufe_current_yearly = float(str(current_val).replace(',', '.'))
+                                except Exception as e:
+                                    print(f"Web TÜFE bu ayın yıllık değişimi (tüfeyıllık.csv) okuma hatası: {e}")
+
+                            # Bir önceki ayın yıllık değişimini direkt oku (son bir önceki satır)
+                            if len(last_two_rows_tufe) >= 2:
+                                try:
+                                    previous_val = last_two_rows_tufe[-2][value_col_name]
+                                    if (
+                                        pd.notna(previous_val)
+                                        and str(previous_val).strip() != ''
+                                        and str(previous_val).strip().lower() != 'nan'
+                                    ):
+                                        web_tufe_previous_yearly = float(str(previous_val).replace(',', '.'))
+                                except Exception as e:
+                                    print(f"Web TÜFE bir önceki ayın yıllık değişimi (tüfeyıllık.csv) okuma hatası: {e}")
                     except Exception as e:
-                        print(f"Web TÜFE yıllık değişim okuma hatası: {e}")
-                        import traceback
-                        traceback.print_exc()
+                        print(f"Web TÜFE yıllık değişim okuma hatası (tüfeyıllık.csv): {e}")
                     
                     table_values['Web TÜFE'] = {
                         'year_ago': year_ago_value_tufe,
