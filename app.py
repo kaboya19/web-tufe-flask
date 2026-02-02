@@ -38,6 +38,16 @@ app.secret_key = os.urandom(24).hex()  # Güvenli, rastgele bir secret key oluş
 # Compression configuration - Compress responses to reduce bandwidth
 Compress(app)
 
+# Bakım Modu Kontrolü
+# Bakım modunu aktifleştirmek için aşağıdaki değeri True yapın
+MAINTENANCE_MODE = True
+
+@app.before_request
+def check_maintenance_mode():
+    """Bakım modu aktifse tüm istekleri engelle (health check hariç)"""
+    if MAINTENANCE_MODE and request.path != '/health' and not request.path.startswith('/static'):
+        return render_template('maintenance.html'), 503
+
 # Global error handlers
 @app.errorhandler(500)
 def internal_error(error):
