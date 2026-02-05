@@ -622,19 +622,27 @@
         {% endif %}
         
         function downloadBarChart() {
-            // Get the actual size from the chart's layout
-            var chartElement = document.getElementById('bar-chart');
-            var containerWidth = chartElement.offsetWidth || chartElement.clientWidth;
-            
-            // Get height from layout (which is calculated based on number of bars)
-            var chartHeight = barGraphs.layout.height;
-            
-            // Use container width and layout height to match the displayed size
-            Plotly.downloadImage('bar-chart', {
+            // Aktif görünüm (aylık / yıllık) durumuna göre doğru grafiği indir
+            var isYearlyActive = (typeof currentMainViewType !== 'undefined' && currentMainViewType === 'yearly');
+
+            // Hangi grafiğin indirileceğini seç
+            var targetId = isYearlyActive ? 'yearly-bar-chart-main' : 'bar-chart';
+
+            var chartElement = document.getElementById(targetId);
+            if (!chartElement) {
+                return;
+            }
+
+            // Ekranda gördüğümüz gerçek boyutu kullan (aylık ve yıllık için birebir aynı görünüm)
+            var rect = chartElement.getBoundingClientRect();
+            var containerWidth = rect.width || chartElement.offsetWidth || chartElement.clientWidth || 800;
+            var containerHeight = rect.height || chartElement.offsetHeight || chartElement.clientHeight || 640;
+
+            Plotly.downloadImage(targetId, {
                 format: 'png',
                 width: containerWidth,
-                height: chartHeight,
-                filename: 'harcama-gruplari-grafik'
+                height: containerHeight,
+                filename: isYearlyActive ? 'harcama-gruplari-grafik-yillik' : 'harcama-gruplari-grafik-aylik'
             });
         }
     </script>

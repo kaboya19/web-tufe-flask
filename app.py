@@ -631,14 +631,15 @@ def get_yearly_widget_data():
         ytd_low = min(current_year_values) if current_year_values else None
         ytd_high = max(current_year_values) if current_year_values else None
         
-        # TÜİK yıllık değişim oranını hesapla (tuikytd.csv'den Genel sütunundan)
+        # TÜİK yıllık değişim oranını hesapla (tuikytd.csv'deki "TÜFE" sütunundan, yıllık değişim)
         tuik_yearly_rate = None
         try:
             tuik_df = cached_read_csv('tuikytd.csv', index_col=0)
             tuik_df.index = pd.to_datetime(tuik_df.index)
             tuik_df = tuik_df.sort_index()
             
-            if 'Genel' in tuik_df.columns:
+            # "TÜFE" sütununu kullan (genel TÜFE için)
+            if 'TÜFE' in tuik_df.columns:
                 # Son tarih için yıllık değişim hesapla (12 ay öncesi ile karşılaştırma)
                 last_date = tuik_df.index[-1]
                 if len(tuik_df) > 12:
@@ -648,8 +649,8 @@ def get_yearly_widget_data():
                     # En yakın tarihi bul
                     closest_date = tuik_df.index[tuik_df.index <= date_12_months_ago]
                     if len(closest_date) > 0:
-                        value_12_months_ago = tuik_df.loc[closest_date[-1], 'Genel']
-                        current_tuik_value = tuik_df.loc[last_date, 'Genel']
+                        value_12_months_ago = tuik_df.loc[closest_date[-1], 'TÜFE']
+                        current_tuik_value = tuik_df.loc[last_date, 'TÜFE']
                         if pd.notna(value_12_months_ago) and pd.notna(current_tuik_value) and value_12_months_ago != 0:
                             tuik_yearly_rate = ((current_tuik_value / value_12_months_ago) - 1) * 100
         except Exception as e:
@@ -1937,11 +1938,11 @@ def tufe():
     monthly_change, last_col_date = get_monthly_change()
     # Get Turkish month name
     month_name = get_turkish_month(last_col_date)
-    # Get yıllık değişim (tüfeyıllık.csv dosyasındaki son veriden)
+    # Get yıllık Web TÜFE değişim (tüfeyıllık.csv dosyasındaki son veriden)
     bar_months, bar_tufe, bar_tuik = get_tufe_vs_tuik_bar_data()
     # Son yıllık değişim değerini ve tarihini al
     yearly_change_date = None
-    change_rate = None
+    change_rate = None  # Web TÜFE yıllık değişim
     try:
         # tüfeyıllık.csv dosyasından son dolu veriyi al
         df_tufe_yillik = cached_read_csv("tüfeyıllık.csv")
@@ -2000,6 +2001,24 @@ def tufe():
         else:
             # Fallback: eski mantık (yılbaşından itibaren değişim)
             change_rate = last_value - 100
+
+    # TÜİK yıllık değişimini hesapla (tuikytd.csv'deki TÜFE endeksinden, tam 12 ay önceki değere göre)
+    tuik_yearly_change = None
+    tuik_yearly_change_date = None
+    try:
+        tuik_df_ytd = cached_read_csv('tuikytd.csv', index_col=0)
+        tuik_df_ytd.index = pd.to_datetime(tuik_df_ytd.index)
+        tuik_df_ytd = tuik_df_ytd.sort_index()
+        if 'TÜFE' in tuik_df_ytd.columns and len(tuik_df_ytd) > 12:
+            # Son gözlem ile 12 ay önceki gözlem arasındaki oransal değişimi hesapla
+            last_date_tuik = tuik_df_ytd.index[-1]
+            current_val = float(tuik_df_ytd.iloc[-1]['TÜFE'])
+            prev_year_val = float(tuik_df_ytd.iloc[-13]['TÜFE'])  # tam 12 ay önceki satır
+            if pd.notna(prev_year_val) and pd.notna(current_val) and prev_year_val != 0:
+                tuik_yearly_change = ((current_val / prev_year_val) - 1.0) * 100.0
+                tuik_yearly_change_date = f"{get_turkish_month(last_date_tuik.strftime('%Y-%m-%d'))} {last_date_tuik.year}"
+    except Exception as e:
+        print(f"TÜİK yıllık değişim hesaplama hatası (TÜFE sayfası): {e}")
     
     # Get madde names from Google Sheet
     """creds = get_google_credentials_2()
@@ -2021,7 +2040,7 @@ def tufe():
         df['month'] = df['Tarih'].dt.to_period('M')
         first_days = df.groupby('month').first()
         
-        # Read TÜİK data from tuikytd.csv
+        # Read TÜİK data from tuikytd.csv (TÜFE sütunundan)
         tuik_df = None
         try:
             tuik_df = pd.read_csv('tuikytd.csv', index_col=0)
@@ -2047,8 +2066,8 @@ def tufe():
             customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(df['Tarih'], df['Web TÜFE'])]
         ))
         
-        # Add TÜİK TÜFE line if data is available
-        if tuik_df is not None and 'Genel' in tuik_df.columns:
+        # Add TÜİK TÜFE line if data is available (TÜFE sütunu)
+        if tuik_df is not None and 'TÜFE' in tuik_df.columns:
             # Filter TÜİK data to match Web TÜFE date range
             tuik_filtered = tuik_df[tuik_df.index >= df['Tarih'].min()]
             tuik_filtered = tuik_filtered[tuik_filtered.index <= df['Tarih'].max()]
@@ -2056,7 +2075,7 @@ def tufe():
             if not tuik_filtered.empty:
                 fig.add_trace(go.Scatter(
                     x=tuik_filtered.index,
-                    y=tuik_filtered['Genel'],
+                    y=tuik_filtered['TÜFE'],
                     mode='lines',
                     name='TÜİK TÜFE',
                     line=dict(
@@ -2065,7 +2084,7 @@ def tufe():
                         shape='hv'  # Step grafik
                     ),
                     hovertemplate='%{customdata[0]}<br>TÜİK TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
-                    customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(tuik_filtered.index, tuik_filtered['Genel'])]
+                    customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(tuik_filtered.index, tuik_filtered['TÜFE'])]
                 ))
         
         # Update layout with modern theme
@@ -2187,32 +2206,32 @@ def tufe():
             bar_months = []
             bar_tufe = []
         
-        # TÜİK verisi aylık - get_tufe_vs_tuik_bar_data'dan al
-        _, _, bar_tuik_temp = get_tufe_vs_tuik_bar_data()
-        # TÜİK verisini Web TÜFE tarihleri ile eşleştir (aylık eşleştirme)
+        # TÜİK yıllık değişim verisini tuikytd.csv'den al (TÜFE sütunu, 12 ay öncesine göre oransal değişim)
         bar_tuik = []
         try:
-            tuik_df = cached_read_csv('tüik.csv', index_col=0)
-            tuik_df.index = pd.to_datetime(tuik_df.index)
-            tuik_monthly_last = tuik_df.resample('ME').last()
-            tuik_monthly_last['pct_change'] = tuik_monthly_last['TÜİK'].pct_change() * 100
-            tuik_monthly_last = tuik_monthly_last.iloc[1:]
-            
-            for date_obj in bar_months:
-                date_month = date_obj.strftime('%Y-%m')
-                tuik_month_idx = tuik_monthly_last.index.strftime('%Y-%m')
-                if date_month in tuik_month_idx.tolist():
-                    idx = tuik_month_idx.tolist().index(date_month)
-                    val = tuik_monthly_last.iloc[idx]['pct_change']
-                    if pd.isna(val):
+            tuik_df_ytd = cached_read_csv('tuikytd.csv', index_col=0)
+            tuik_df_ytd.index = pd.to_datetime(tuik_df_ytd.index)
+            tuik_df_ytd = tuik_df_ytd.sort_index()
+            if 'TÜFE' in tuik_df_ytd.columns:
+                tuik_series = tuik_df_ytd['TÜFE'].astype(float)
+                tuik_yoy = tuik_series.pct_change(periods=12) * 100
+                # Harita: YYYY-MM -> yıllık değişim
+                yoy_map = {}
+                for idx, val in tuik_yoy.items():
+                    if pd.notna(val):
+                        key = idx.strftime('%Y-%m')
+                        yoy_map[key] = float(val)
+                for date_obj in bar_months:
+                    month_key = date_obj.strftime('%Y-%m')
+                    val = yoy_map.get(month_key)
+                    if val is None or val == 0.0:
                         bar_tuik.append(None)
                     else:
-                        val_float = float(val)
-                        bar_tuik.append(val_float if val_float != 0.0 else None)
-                else:
-                    bar_tuik.append(None)
+                        bar_tuik.append(val)
+            else:
+                bar_tuik = [None] * len(bar_months) if len(bar_months) > 0 else []
         except Exception as e:
-            print(f"TÜİK verisi okuma hatası (yıllık grafik için): {e}")
+            print(f"TÜİK verisi okuma hatası (yıllık grafik için - tuikytd.csv): {e}")
             bar_tuik = [None] * len(bar_months) if len(bar_months) > 0 else []
         
         # Prepare aylık bar chart data (gruplaraylık.csv'den)
@@ -2680,7 +2699,9 @@ def tufe():
             endeks_columns=endeks_columns,
             maddeler_monthly_data=maddeler_monthly_data,
             maddeler_monthly_columns=maddeler_monthly_columns,
-            view_type=view_type
+            view_type=view_type,
+            tuik_yearly_change=tuik_yearly_change,
+            tuik_yearly_change_date=tuik_yearly_change_date
         )
     else:
         bar_labels=[]
@@ -3455,41 +3476,42 @@ def ana_gruplar():
     tickvals = aybasi_tarihler
     ticktext = [f"{get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in aybasi_tarihler]
     
-    # Read TÜİK data from tuikytd.csv or tüik_anagruplarv2.csv based on classification
+    # Read TÜİK data only for yeni sınıflandırma
     tuik_df = None
     tuik_column_name = None
-    try:
-        tuik_file = "tüik_anagruplarv2.csv" if classification == 'yeni' else "tuikytd.csv"
-        tuik_df = cached_read_csv(tuik_file, index_col=0, quotechar='"')
-        tuik_df.index = pd.to_datetime(tuik_df.index)
-        tuik_df = tuik_df.sort_index()
-        
-        # Sütun isimlerini normalize et (lowercase + virgüllerden sonra boşluk kaldır + kelime sonlarındaki boşlukları kaldır)
-        import re
-        tuik_df.columns = tuik_df.columns.astype(str).str.strip().str.lower()
-        # Virgüllerden sonraki boşlukları kaldır
-        tuik_df.columns = tuik_df.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
-        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
-        tuik_df.columns = tuik_df.columns.map(lambda x: re.sub(r'\s+', ' ', x).strip() if pd.notna(x) else x)
-        
-        # selected_group'u normalize et
-        selected_group_norm = str(selected_group).strip().lower() if selected_group else ""
-        # Virgüllerden sonraki boşlukları kaldır
-        selected_group_norm = re.sub(r',\s*', ',', selected_group_norm)
-        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
-        selected_group_norm = re.sub(r'\s+', ' ', selected_group_norm).strip()
-        
-        # Özel eşleştirmeler (Web TÜFE -> TÜİK)
-        special_mapping = {
-            'eğlence,spor ve kültür': 'eğlence,dinlence,spor ve kültür',
-        }
-        tuik_column_name = special_mapping.get(selected_group_norm, selected_group_norm)
-        # Eğer özel mapping'de yoksa, normalize edilmiş grup adıyla eşleştir
-        if tuik_column_name not in tuik_df.columns:
-            tuik_column_name = selected_group_norm if selected_group_norm in tuik_df.columns else None
-        
-    except Exception as e:
-        print(f"TÜİK verisi okunamadı: {e}")
+    if classification == 'yeni':
+        try:
+            tuik_file = "tüik_anagruplarv2.csv"
+            tuik_df = cached_read_csv(tuik_file, index_col=0, quotechar='"')
+            tuik_df.index = pd.to_datetime(tuik_df.index)
+            tuik_df = tuik_df.sort_index()
+            
+            # Sütun isimlerini normalize et (lowercase + virgüllerden sonraki boşlukları kaldır + kelime sonlarındaki boşlukları kaldır)
+            import re
+            tuik_df.columns = tuik_df.columns.astype(str).str.strip().str.lower()
+            # Virgüllerden sonraki boşlukları kaldır
+            tuik_df.columns = tuik_df.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+            # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
+            tuik_df.columns = tuik_df.columns.map(lambda x: re.sub(r'\s+', ' ', x).strip() if pd.notna(x) else x)
+            
+            # selected_group'u normalize et
+            selected_group_norm = str(selected_group).strip().lower() if selected_group else ""
+            # Virgüllerden sonraki boşlukları kaldır
+            selected_group_norm = re.sub(r',\s*', ',', selected_group_norm)
+            # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
+            selected_group_norm = re.sub(r'\s+', ' ', selected_group_norm).strip()
+            
+            # Özel eşleştirmeler (Web TÜFE -> TÜİK)
+            special_mapping = {
+                'eğlence,spor ve kültür': 'eğlence,dinlence,spor ve kültür',
+            }
+            tuik_column_name = special_mapping.get(selected_group_norm, selected_group_norm)
+            # Eğer özel mapping'de yoksa, normalize edilmiş grup adıyla eşleştir
+            if tuik_column_name not in tuik_df.columns:
+                tuik_column_name = selected_group_norm if selected_group_norm in tuik_df.columns else None
+            
+        except Exception as e:
+            print(f"TÜİK verisi okunamadı: {e}")
     
     fig = go.Figure()
     customdata = [f"{d.day} {get_turkish_month(d.strftime('%Y-%m-%d'))} {d.year}" for d in tarih]
@@ -3505,8 +3527,8 @@ def ana_gruplar():
         hovertemplate='<b>%{customdata}</b><br>' + f'Web TÜFE - {selected_group}: ' + '%{y:.2f}<extra></extra>'
     ))
     
-    # Add TÜİK line if data is available
-    if tuik_df is not None and tuik_column_name and tuik_column_name in tuik_df.columns:
+    # Add TÜİK line only for yeni sınıflandırma and if data is available
+    if classification == 'yeni' and tuik_df is not None and tuik_column_name and tuik_column_name in tuik_df.columns:
         # Filter TÜİK data to match Web TÜFE date range
         tuik_filtered = tuik_df[tuik_df.index >= tarih.min()]
         tuik_filtered = tuik_filtered[tuik_filtered.index <= tarih.max()]
@@ -3766,19 +3788,22 @@ def ana_gruplar():
     except Exception as e:
         print("TÜİK verisi okunamadı:", e)
         tuik_changes = [None] * len(monthly_dates)
-    # TÜİK
-    bar_fig.add_trace(go.Bar(
-        x=monthly_dates,
-        y=tuik_changes,
-        name='TÜİK',
-        marker_color='#118AB2',
-        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
-        textposition='outside',
-        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
-        width=0.35,
-        hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-    ))
-    combined_values = monthly_changes + tuik_changes
+    # TÜİK (sadece yeni sınıflandırma için göster)
+    if classification == 'yeni':
+        bar_fig.add_trace(go.Bar(
+            x=monthly_dates,
+            y=tuik_changes,
+            name='TÜİK',
+            marker_color='#118AB2',
+            text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in tuik_changes],
+            textposition='outside',
+            textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
+            width=0.35,
+            hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+        ))
+        combined_values = monthly_changes + tuik_changes
+    else:
+        combined_values = monthly_changes
     valid_values = [v for v in combined_values if v is not None]
 
     # Varsayılan değerler
@@ -3861,16 +3886,17 @@ def ana_gruplar():
         marker=dict(size=8, color='#EF476F'),
         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
-    # TÜİK
-    line_fig.add_trace(go.Scatter(
-        x=monthly_dates,
-        y=tuik_changes,
-        mode='lines+markers',
-        name='TÜİK',
-        line=dict(color='#118AB2', width=3),
-        marker=dict(size=8, color='#118AB2'),
-        hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-    ))
+    # TÜİK (sadece yeni sınıflandırma için göster)
+    if classification == 'yeni':
+        line_fig.add_trace(go.Scatter(
+            x=monthly_dates,
+            y=tuik_changes,
+            mode='lines+markers',
+            name='TÜİK',
+            line=dict(color='#118AB2', width=3),
+            marker=dict(size=8, color='#118AB2'),
+            hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+        ))
     line_fig.update_layout(
         height=400,
         title=dict(
@@ -3919,79 +3945,80 @@ def ana_gruplar():
     monthly_line_graphJSON = line_fig.to_json()
     
     # --- Yıllık değişim grafikleri ---
-    # TÜİK yıllık verilerini oku (tuikytd.csv'den yılbaşından itibaren değişim kullanılacak, yıllık değişim için 12 ay öncesi ile karşılaştırma yapılacak)
+    # TÜİK yıllık verilerini oku (sadece yeni sınıflandırma için)
     yearly_tuik_changes = []
-    try:
-        # TÜİK yıllık verileri için tuikytd.csv veya tüik_anagruplarv2.csv kullan (yılbaşından itibaren değişim)
-        tuik_file_yearly = "tüik_anagruplarv2.csv" if classification == 'yeni' else "tuikytd.csv"
-        tuik_df_yearly = cached_read_csv(tuik_file_yearly, index_col=0, quotechar='"')
-        tuik_df_yearly.index = pd.to_datetime(tuik_df_yearly.index)
-        tuik_df_yearly = tuik_df_yearly.sort_index()
-        
-        # Sütun isimlerini normalize et (lowercase + virgüllerden sonra boşluk kaldır + kelime sonlarındaki boşlukları kaldır)
-        import re
-        tuik_df_yearly.columns = tuik_df_yearly.columns.astype(str).str.strip().str.lower()
-        # Virgüllerden sonraki boşlukları kaldır
-        tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
-        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
-        tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r'\s+', ' ', x).strip() if pd.notna(x) else x)
-        
-        # selected_group'u normalize et
-        selected_group_norm_yearly = str(selected_group).strip().lower() if selected_group else ""
-        # Virgüllerden sonraki boşlukları kaldır
-        selected_group_norm_yearly = re.sub(r',\s*', ',', selected_group_norm_yearly)
-        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
-        selected_group_norm_yearly = re.sub(r'\s+', ' ', selected_group_norm_yearly).strip()
-        
-        # Özel eşleştirmeler (Web TÜFE -> TÜİK)
-        special_mapping_yearly = {
-            'eğlence,spor ve kültür': 'eğlence,dinlence,spor ve kültür',
-        }
-        tuik_group_name_yearly = special_mapping_yearly.get(selected_group_norm_yearly, selected_group_norm_yearly)
-        
-        if tuik_group_name_yearly and tuik_group_name_yearly in tuik_df_yearly.columns:
-            # Yıllık değişim hesapla (her ayın değeri - 12 ay önceki değer) / 12 ay önceki değer * 100
-            tuik_yearly_pct = tuik_df_yearly[tuik_group_name_yearly].pct_change(periods=12) * 100
-            tuik_yearly_pct.index = tuik_yearly_pct.index.strftime('%Y-%m')
+    if classification == 'yeni':
+        try:
+            # TÜİK yıllık verileri için tüik_anagruplarv2.csv kullan (yılbaşından itibaren değişim)
+            tuik_file_yearly = "tüik_anagruplarv2.csv"
+            tuik_df_yearly = cached_read_csv(tuik_file_yearly, index_col=0, quotechar='"')
+            tuik_df_yearly.index = pd.to_datetime(tuik_df_yearly.index)
+            tuik_df_yearly = tuik_df_yearly.sort_index()
             
-            # Yıllık değişim tarihleriyle eşleştir (datetime objelerinden YYYY-MM formatına çevir)
-            for date_obj in yearly_dates:
-                if date_obj is not None:
-                    try:
-                        if isinstance(date_obj, (datetime, pd.Timestamp)):
-                            if isinstance(date_obj, pd.Timestamp):
-                                date_obj = date_obj.to_pydatetime()
-                            date_str = date_obj.strftime('%Y-%m')
-                        else:
-                            # String formatından parse et
-                            month, year = str(date_obj).split()
-                            month_map = {
-                                'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                                'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                                'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                            }
-                            date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
-                        
-                        if date_str in tuik_yearly_pct.index:
-                            tuik_value = tuik_yearly_pct.loc[date_str]
-                            if pd.isna(tuik_value):
-                                yearly_tuik_changes.append(None)
+            # Sütun isimlerini normalize et (lowercase + virgüllerden sonraki boşlukları kaldır + kelime sonlarındaki boşlukları kaldır)
+            import re
+            tuik_df_yearly.columns = tuik_df_yearly.columns.astype(str).str.strip().str.lower()
+            # Virgüllerden sonraki boşlukları kaldır
+            tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
+            # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
+            tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r'\s+', ' ', x).strip() if pd.notna(x) else x)
+            
+            # selected_group'u normalize et
+            selected_group_norm_yearly = str(selected_group).strip().lower() if selected_group else ""
+            # Virgüllerden sonraki boşlukları kaldır
+            selected_group_norm_yearly = re.sub(r',\s*', ',', selected_group_norm_yearly)
+            # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
+            selected_group_norm_yearly = re.sub(r'\s+', ' ', selected_group_norm_yearly).strip()
+            
+            # Özel eşleştirmeler (Web TÜFE -> TÜİK)
+            special_mapping_yearly = {
+                'eğlence,spor ve kültür': 'eğlence,dinlence,spor ve kültür',
+            }
+            tuik_group_name_yearly = special_mapping_yearly.get(selected_group_norm_yearly, selected_group_norm_yearly)
+            
+            if tuik_group_name_yearly and tuik_group_name_yearly in tuik_df_yearly.columns:
+                # Yıllık değişim hesapla (her ayın değeri - 12 ay önceki değer) / 12 ay önceki değer * 100
+                tuik_yearly_pct = tuik_df_yearly[tuik_group_name_yearly].pct_change(periods=12) * 100
+                tuik_yearly_pct.index = tuik_yearly_pct.index.strftime('%Y-%m')
+                
+                # Yıllık değişim tarihleriyle eşleştir (datetime objelerinden YYYY-MM formatına çevir)
+                for date_obj in yearly_dates:
+                    if date_obj is not None:
+                        try:
+                            if isinstance(date_obj, (datetime, pd.Timestamp)):
+                                if isinstance(date_obj, pd.Timestamp):
+                                    date_obj = date_obj.to_pydatetime()
+                                date_str = date_obj.strftime('%Y-%m')
                             else:
-                                yearly_tuik_changes.append(float(tuik_value))
-                        else:
+                                # String formatından parse et
+                                month, year = str(date_obj).split()
+                                month_map = {
+                                    'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                    'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                    'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                                }
+                                date_str = f"{year}-{month_map[month]}"  # YYYY-MM formatı
+                            
+                            if date_str in tuik_yearly_pct.index:
+                                tuik_value = tuik_yearly_pct.loc[date_str]
+                                if pd.isna(tuik_value):
+                                    yearly_tuik_changes.append(None)
+                                else:
+                                    yearly_tuik_changes.append(float(tuik_value))
+                            else:
+                                yearly_tuik_changes.append(None)
+                        except Exception as e:
+                            print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
                             yearly_tuik_changes.append(None)
-                    except Exception as e:
-                        print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
+                    else:
                         yearly_tuik_changes.append(None)
-                else:
-                    yearly_tuik_changes.append(None)
-        else:
+            else:
+                yearly_tuik_changes = [None] * len(yearly_dates) if len(yearly_dates) > 0 else []
+        except Exception as e:
+            print(f"TÜİK yıllık verisi okunamadı: {e}")
+            import traceback
+            traceback.print_exc()
             yearly_tuik_changes = [None] * len(yearly_dates) if len(yearly_dates) > 0 else []
-    except Exception as e:
-        print(f"TÜİK yıllık verisi okunamadı: {e}")
-        import traceback
-        traceback.print_exc()
-        yearly_tuik_changes = [None] * len(yearly_dates) if len(yearly_dates) > 0 else []
     
     # Yıllık bar grafik (string formatında tarihler kullan)
     yearly_bar_fig = go.Figure()
@@ -4006,18 +4033,21 @@ def ana_gruplar():
         width=0.35,
         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
     ))
-    yearly_bar_fig.add_trace(go.Bar(
-        x=yearly_dates_string,
-        y=yearly_tuik_changes,
-        name='TÜİK',
-        marker_color='#118AB2',
-        text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in yearly_tuik_changes],
-        textposition='outside',
-        textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
-        width=0.35,
-        hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-    ))
-    yearly_combined_values = yearly_changes + yearly_tuik_changes
+    if classification == 'yeni':
+        yearly_bar_fig.add_trace(go.Bar(
+            x=yearly_dates_string,
+            y=yearly_tuik_changes,
+            name='TÜİK',
+            marker_color='#118AB2',
+            text = [f'<b>{v:.2f}</b>' if v is not None else '' for v in yearly_tuik_changes],
+            textposition='outside',
+            textfont=dict(size=14, color='#118AB2', family='Inter, sans-serif'),
+            width=0.35,
+            hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+        ))
+        yearly_combined_values = yearly_changes + yearly_tuik_changes
+    else:
+        yearly_combined_values = yearly_changes
     yearly_valid_values = [v for v in yearly_combined_values if v is not None]
     
     yearly_y_min_with_margin = -10
