@@ -6078,63 +6078,53 @@ def harcama_gruplari():
                                         tuik_df_yearly.index = pd.to_datetime(tuik_df_yearly.index)
                                         tuik_df_yearly = tuik_df_yearly.sort_index()
                                         
-                                        # Sütun isimlerini normalize et (lowercase + virgüllerden sonra boşluk kaldır + kelime sonlarındaki boşlukları kaldır)
+                                        # Sütun isimlerini normalize et (lowercase + virgüllerden sonraki boşlukları kaldır + kelime sonlarındaki boşlukları kaldır)
                                         tuik_df_yearly.columns = tuik_df_yearly.columns.astype(str).str.strip().str.lower()
-                                        # Virgüllerden sonraki boşlukları kaldır
                                         tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r',\s*', ',', x) if pd.notna(x) else x)
-                                        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
                                         tuik_df_yearly.columns = tuik_df_yearly.columns.map(lambda x: re.sub(r'\s+', ' ', x).strip() if pd.notna(x) else x)
                                         
                                         # selected_harcama_grubu'nu normalize et (yıllık veri için)
                                         selected_harcama_grubu_norm_yearly = str(selected_harcama_grubu).strip().lower() if selected_harcama_grubu else ""
-                                        # Virgüllerden sonraki boşlukları kaldır
                                         selected_harcama_grubu_norm_yearly = re.sub(r',\s*', ',', selected_harcama_grubu_norm_yearly)
-                                        # Kelime sonlarındaki boşlukları kaldır (birden fazla boşluk varsa tek boşluğa indir)
                                         selected_harcama_grubu_norm_yearly = re.sub(r'\s+', ' ', selected_harcama_grubu_norm_yearly).strip()
                                         
-                                        # Yıllık değişim hesapla (önceki yılın aynı ayına göre)
-                                        # yearly_dates artık datetime objeleri
-                                        for date_obj in yearly_dates:
-                                            if date_obj is not None:
-                                                try:
-                                                    if isinstance(date_obj, (datetime, pd.Timestamp)):
-                                                        if isinstance(date_obj, pd.Timestamp):
-                                                            date_obj = date_obj.to_pydatetime()
-                                                        date_str = date_obj.strftime('%Y-%m')
-                                                    else:
-                                                        # String formatından parse et (fallback)
-                                                        month, year = str(date_obj).split()
-                                                        month_map = {
-                                                            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-                                                            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-                                                            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-                                                        }
-                                                        date_str = f"{year}-{month_map[month]}"
-                                                    
-                                                    if selected_harcama_grubu_norm_yearly in tuik_df_yearly.columns and date_str in tuik_df_yearly.index:
-                                                        tuik_value = tuik_df_yearly.loc[date_str, selected_harcama_grubu_norm_yearly]
-                                                        # Yıllık değişim hesapla (önceki yılın aynı ayına göre)
-                                                        current_year_val = tuik_value
-                                                        if isinstance(date_obj, datetime):
-                                                            previous_year_date_str = date_obj.replace(year=date_obj.year - 1).strftime('%Y-%m')
+                                        if selected_harcama_grubu_norm_yearly in tuik_df_yearly.columns:
+                                            # Aylık endeks serisini al ve YYYY-MM bazında yeniden indexle
+                                            tuik_series = tuik_df_yearly[selected_harcama_grubu_norm_yearly].astype(float)
+                                            tuik_series_month = tuik_series.copy()
+                                            tuik_series_month.index = tuik_series_month.index.to_period('M').astype(str)
+                                            # 12 ay öncesine göre yıllık değişim
+                                            tuik_yoy = tuik_series_month.pct_change(periods=12) * 100
+                                            
+                                            for date_obj in yearly_dates:
+                                                if date_obj is not None:
+                                                    try:
+                                                        if isinstance(date_obj, (datetime, pd.Timestamp)):
+                                                            if isinstance(date_obj, pd.Timestamp):
+                                                                date_obj = date_obj.to_pydatetime()
+                                                            date_key = date_obj.strftime('%Y-%m')
                                                         else:
-                                                            previous_year_date_str = f"{int(date_str.split('-')[0])-1}-{date_str.split('-')[1]}"
-                                                        if previous_year_date_str in tuik_df_yearly.index:
-                                                            previous_year_val = tuik_df_yearly.loc[previous_year_date_str, selected_harcama_grubu_norm_yearly]
-                                                            if pd.notna(current_year_val) and pd.notna(previous_year_val) and previous_year_val != 0:
-                                                                yearly_pct_change = ((current_year_val / previous_year_val) - 1) * 100
-                                                                tuik_yearly_changes.append(yearly_pct_change)
-                                                            else:
-                                                                tuik_yearly_changes.append(None)
+                                                            # String formatından parse et (fallback)
+                                                            month, year = str(date_obj).split()
+                                                            month_map = {
+                                                                'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+                                                                'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+                                                                'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+                                                            }
+                                                            date_key = f"{year}-{month_map[month]}"
+                                                        
+                                                        if date_key in tuik_yoy.index:
+                                                            val = tuik_yoy.loc[date_key]
+                                                            tuik_yearly_changes.append(float(val) if pd.notna(val) else None)
                                                         else:
                                                             tuik_yearly_changes.append(None)
-                                                    else:
+                                                    except Exception as e:
+                                                        print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
                                                         tuik_yearly_changes.append(None)
-                                                except Exception as e:
-                                                    print(f"TÜİK yıllık verisi eşleştirme hatası: {e}")
+                                                else:
                                                     tuik_yearly_changes.append(None)
-                                            else:
-                                                tuik_yearly_changes.append(None)
+                                        else:
+                                            tuik_yearly_changes = [None] * len(yearly_dates)
                                     except Exception as e:
                                         print("TÜİK yıllık verisi okunamadı:", e)
                                         import traceback
@@ -6244,17 +6234,16 @@ def harcama_gruplari():
                                         hovertemplate='%{x}<br>Web TÜFE: %{y:.2f}%<extra></extra>'
                                     ))
                                     
-                                    # TÜİK yıllık line ekle (sadece eski sınıflandırma için)
-                                    if classification == 'eski':
-                                        yearly_line_fig.add_trace(go.Scatter(
-                                            x=yearly_dates,
-                                            y=[v if v is not None else float('nan') for v in tuik_yearly_changes],
-                                            mode='lines+markers',
-                                            name='TÜİK',
-                                            line=dict(color='#118AB2', width=3),
-                                            marker=dict(size=8, color='#118AB2'),
-                                            hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
-                                        ))
+                                    # TÜİK yıllık line ekle (hem eski hem yeni sınıflandırma için)
+                                    yearly_line_fig.add_trace(go.Scatter(
+                                        x=yearly_dates,
+                                        y=[v if v is not None else float('nan') for v in tuik_yearly_changes],
+                                        mode='lines+markers',
+                                        name='TÜİK',
+                                        line=dict(color='#118AB2', width=3),
+                                        marker=dict(size=8, color='#118AB2'),
+                                        hovertemplate='%{x}<br>TÜİK: %{y:.2f}%<extra></extra>'
+                                    ))
                                     
                                     # X ekseni için benzersiz ayları hazırla (line chart için)
                                     yearly_line_unique_months = []
