@@ -5,11 +5,11 @@
 {% block content %}
 <!-- PDF Viewer -->
 <div class="pdf-container" style="height: calc(100vh - 120px);">
-    <iframe src="/bultenler/pdf-direct/{{ filename }}" 
+    <iframe src="{% if active_page == 'bultenler' %}/bultenler/pdf-direct/{{ filename }}{% else %}/metodoloji/pdf-direct{% endif %}" 
             class="w-full h-full border-0" 
             title="PDF Viewer">
         <p>PDF görüntüleyici tarayıcınız tarafından desteklenmiyorsa, 
-            <a href="/bultenler/pdf-direct/{{ filename }}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">buraya tıklayarak</a> 
+            <a href="{% if active_page == 'bultenler' %}/bultenler/pdf-direct/{{ filename }}{% else %}/metodoloji/pdf-direct{% endif %}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">buraya tıklayarak</a> 
             dosyayı indirebilirsiniz.</p>
     </iframe>
 </div>

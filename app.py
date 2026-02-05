@@ -9062,7 +9062,11 @@ def download_fiyatlar():
 
 @app.route('/metodoloji/pdf')
 def serve_metodoloji_pdf():
-    import os
+    # PDF viewer sayfası (bültenlerdeki akışa benzer)
+    return render_template('pdf_viewer.html', filename='Metodoloji.pdf', active_page='metodoloji')
+
+@app.route('/metodoloji/pdf-direct')
+def serve_metodoloji_pdf_direct():
     metodoloji_dir = os.path.join(os.path.dirname(__file__), 'metodoloji')
     return send_file(os.path.join(metodoloji_dir, 'Metodoloji.pdf'))
 

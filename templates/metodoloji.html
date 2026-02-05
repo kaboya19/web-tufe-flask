@@ -143,12 +143,12 @@
                         <h1 class="text-4xl md:text-5xl font-bold mb-4">Web TÜFE Metodolojisi</h1>
                         <p class="text-xl text-indigo-100 mb-6">Günlük Tüketici Fiyat Endeksi Hesaplama Yöntemi</p>
                         
-                        <!-- PDF Download Button -->
-                        <a href="/metodoloji/pdf" download="Web_TUFE_Metodoloji.pdf" class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                        <!-- PDF View Button -->
+                        <a href="/metodoloji/pdf" class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-2xl">
                             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <span>Metodoloji PDF'ini İndir</span>
+                            <span>Metodoloji PDF'ini Görüntüle</span>
                             <svg class="w-5 h-5 ml-2" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/>
                                 <text x="7.5" y="17" font-size="6" fill="currentColor" font-family="Arial">PDF</text>
@@ -181,7 +181,8 @@
                             </div>
                             <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
                                 <p class="text-purple-900">
-                                    <strong>🔍 Kapsam:</strong> TÜİK'in TÜFE sepetindeki 337 farklı ürün kategorisini takip ederek, 
+                                    <strong>🔍 Kapsam:</strong> TÜİK'in COICOP-2018 sınıflamasına göre tanımlanan ve ulusal hesaplar temelli
+                                    tüketim harcamalarına dayanan 382 maddelik güncel tüketim sepetini takip ederek, 
                                     Türkiye ekonomisinin gerçek zamanlı nabzını tutma.
                                 </p>
                             </div>
@@ -229,11 +230,11 @@
                             <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
                                 <div class="flex items-center mb-3">
                                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                                        337
+                                        382
                                     </div>
                                     <h3 class="text-xl font-semibold text-gray-900">Ürün Sayısı</h3>
                                 </div>
-                                <p class="text-gray-700">TÜİK sepetinde yer alan 337 adet farklı ürün kategorisinde fiyat takibi yapılmaktadır.</p>
+                                <p class="text-gray-700">COICOP-2018 <strong>yedili (7 haneli)</strong> en alt kırılım düzeyinde tanımlanmış 382 madde için fiyat takibi yapılmaktadır.</p>
                             </div>
                         </div>
 
@@ -423,12 +424,12 @@
                                 <div class="flex-1">
                                     <h3 class="text-2xl font-semibold text-gray-900 mb-3">Ağırlıklandırma</h3>
                                     <p class="text-gray-700 leading-relaxed mb-3">
-                                        Her ürün kategorisinde TÜİK'in ağırlıkları bulunduktan sonra sepette 337 madde bulunduğundan ağırlıkların toplamının 100 olması için normalize edilir. 
+                                        Her ürün kategorisinde TÜİK'in ağırlıkları bulunduktan sonra sepette 382 madde bulunduğundan ağırlıkların toplamının 100 olması için normalize edilir. 
                                         Bu ağırlıklar hanehalkı tüketim harcamalarındaki payları temsil eder.
                                     </p>
                                     <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-4 border border-red-200 mb-6">
                                         <p class="text-gray-700">
-                                            <strong>Örnek:</strong> Gıda ürünleri sepette ~%28 ağırlığa sahipken, sağlık ~%2 
+                                            <strong>Örnek:</strong> Gıda ve alkolsüz içecekler ana grubu sepette yaklaşık %25,8 ağırlığa sahipken, sağlık harcamalarının payı yaklaşık %3,2 düzeyindedir.
                                             civarında ağırlığa sahiptir.
                                         </p>
                                     </div>
@@ -437,135 +438,146 @@
                                     <div class="bg-white rounded-xl border-2 border-pink-200 p-6 shadow-sm">
                                         <h4 class="font-bold text-gray-900 mb-4 text-center text-lg">Ana Grup Ağırlıkları (%)</h4>
                                         <div class="space-y-3">
-                                            <!-- Gıda ve alkolsüz içecekler -->
+                                            <!-- 1. Gıda ve alkolsüz içecekler -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
                                                     <span class="text-sm font-medium text-gray-700">Gıda ve alkolsüz içecekler</span>
-                                                    <span class="text-sm font-bold text-indigo-600">28,18%</span>
+                                                    <span class="text-sm font-bold text-indigo-600">25,78%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 28.18%"></div>
+                                                    <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 25.78%"></div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Konut -->
+
+                                            <!-- 2. Alkollü içecekler, tütün ve tütün ürünleri -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Konut</span>
-                                                    <span class="text-sm font-bold text-purple-600">16,05%</span>
+                                                    <span class="text-sm font-medium text-gray-700">Alkollü içecekler, tütün ve tütün ürünleri</span>
+                                                    <span class="text-sm font-bold text-emerald-600">2,87%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 16.05%"></div>
+                                                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500" style="width: 2.87%"></div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Ulaştırma -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Ulaştırma</span>
-                                                    <span class="text-sm font-bold text-pink-600">13,43%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-pink-500 to-pink-600 h-3 rounded-full transition-all duration-500" style="width: 13.43%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Lokanta ve oteller -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Lokanta ve oteller</span>
-                                                    <span class="text-sm font-bold text-red-600">8,77%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-500" style="width: 8.77%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Ev eşyası -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Ev eşyası</span>
-                                                    <span class="text-sm font-bold text-orange-600">8,16%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500" style="width: 8.16%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Giyim ve ayakkabı -->
+
+                                            <!-- 3. Giyim ve ayakkabı -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
                                                     <span class="text-sm font-medium text-gray-700">Giyim ve ayakkabı</span>
-                                                    <span class="text-sm font-bold text-cyan-600">7,99%</span>
+                                                    <span class="text-sm font-bold text-cyan-600">8,06%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 h-3 rounded-full transition-all duration-500" style="width: 7.99%"></div>
+                                                    <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 h-3 rounded-full transition-all duration-500" style="width: 8.06%"></div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Alkollü içecekler ve tütün -->
+
+                                            <!-- 4. Konut, su, elektrik, gaz ve diğer yakıtlar -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Alkollü içecekler ve tütün</span>
-                                                    <span class="text-sm font-bold text-emerald-600">3,98%</span>
+                                                    <span class="text-sm font-medium text-gray-700">Konut, su, elektrik, gaz ve diğer yakıtlar</span>
+                                                    <span class="text-sm font-bold text-purple-600">10,59%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500" style="width: 3.98%"></div>
+                                                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500" style="width: 10.59%"></div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Haberleşme -->
+
+                                            <!-- 5. Mobilya, mefruşat ve evde kullanılan ekipmanlar ile rutin ev bakım ve onarımı -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Haberleşme</span>
-                                                    <span class="text-sm font-bold text-teal-600">3,89%</span>
+                                                    <span class="text-sm font-medium text-gray-700">Mobilya, mefruşat ve evde kullanılan ekipmanlar ile rutin ev bakım ve onarımı</span>
+                                                    <span class="text-sm font-bold text-orange-600">8,21%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-teal-500 to-teal-600 h-3 rounded-full transition-all duration-500" style="width: 3.89%"></div>
+                                                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500" style="width: 8.21%"></div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Çeşitli mal ve hizmetler -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Çeşitli mal ve hizmetler</span>
-                                                    <span class="text-sm font-bold text-blue-600">3,70%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" style="width: 3.70%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Eğitim -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Eğitim</span>
-                                                    <span class="text-sm font-bold text-violet-600">2,26%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-violet-500 to-violet-600 h-3 rounded-full transition-all duration-500" style="width: 2.26%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Eğlence ve kültür -->
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="text-sm font-medium text-gray-700">Eğlence ve kültür</span>
-                                                    <span class="text-sm font-bold text-fuchsia-600">2,05%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 h-3 rounded-full transition-all duration-500" style="width: 2.05%"></div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Sağlık -->
+
+                                            <!-- 6. Sağlık -->
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
                                                     <span class="text-sm font-medium text-gray-700">Sağlık</span>
-                                                    <span class="text-sm font-bold text-rose-600">1,53%</span>
+                                                    <span class="text-sm font-bold text-rose-600">3,16%</span>
                                                 </div>
                                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-rose-500 to-rose-600 h-3 rounded-full transition-all duration-500" style="width: 1.53%"></div>
+                                                    <div class="bg-gradient-to-r from-rose-500 to-rose-600 h-3 rounded-full transition-all duration-500" style="width: 3.16%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 7. Ulaştırma -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Ulaştırma</span>
+                                                    <span class="text-sm font-bold text-pink-600">16,49%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-pink-500 to-pink-600 h-3 rounded-full transition-all duration-500" style="width: 16.49%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 8. Bilgi ve iletişim -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Bilgi ve iletişim</span>
+                                                    <span class="text-sm font-bold text-teal-600">2,43%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-teal-500 to-teal-600 h-3 rounded-full transition-all duration-500" style="width: 2.43%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 9. Eğlence, spor ve kültür -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Eğlence, spor ve kültür</span>
+                                                    <span class="text-sm font-bold text-fuchsia-600">4,28%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 h-3 rounded-full transition-all duration-500" style="width: 4.28%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 10. Eğitim hizmetleri -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Eğitim hizmetleri</span>
+                                                    <span class="text-sm font-bold text-violet-600">1,86%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-violet-500 to-violet-600 h-3 rounded-full transition-all duration-500" style="width: 1.86%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 11. Lokantalar ve konaklama hizmetleri -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Lokantalar ve konaklama hizmetleri</span>
+                                                    <span class="text-sm font-bold text-red-600">11,05%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-500" style="width: 11.05%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 12. Sigorta ve finansal hizmetler -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Sigorta ve finansal hizmetler</span>
+                                                    <span class="text-sm font-bold text-sky-600">0,62%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-sky-500 to-sky-600 h-3 rounded-full transition-all duration-500" style="width: 0.62%"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 13. Kişisel bakım, sosyal koruma ve çeşitli mal ve hizmetler -->
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-sm font-medium text-gray-700">Kişisel bakım, sosyal koruma ve çeşitli mal ve hizmetler</span>
+                                                    <span class="text-sm font-bold text-blue-600">4,60%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" style="width: 4.60%"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1020,13 +1032,13 @@
                         
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
                             <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border-2 border-orange-300">
-                                <h3 class="font-bold text-orange-900 text-lg mb-3">📅 Mevcut Baz Dönem</h3>
+                                <h3 class="font-bold text-orange-900 text-lg mb-3">📅 Mevcut Baz Yıl</h3>
                                 <div class="bg-white rounded-lg p-4 mb-3">
-                                    <p class="text-3xl font-bold text-orange-600 text-center">31 Aralık 2024 = 100</p>
+                                    <p class="text-3xl font-bold text-orange-600 text-center">2025 = 100</p>
                                 </div>
                                 <p class="text-sm text-gray-700 leading-relaxed">
-                                    Web TÜFE'nin baz dönemi <strong>31 Aralık 2024</strong> olarak belirlenmiştir. Bu dönemdeki ortalama fiyatlar 
-                                    100 puanlık referans değeri oluşturur ve sonraki tüm dönemlerdeki endeks değerleri bu baz döneme göre hesaplanır.
+                                    Web TÜFE'nin baz yılı <strong>2025</strong> olarak belirlenmiştir. 2025 yılı için hesaplanan ortalama fiyat düzeyi 
+                                    100 puanlık referans değeri oluşturur ve sonraki tüm dönemlerdeki endeks değerleri bu baz yıla göre yorumlanır.
                                 </p>
                             </div>
                             
@@ -1043,7 +1055,7 @@
                                     </div>
                                     <div class="flex items-start">
                                         <span class="text-amber-600 font-bold mr-2">•</span>
-                                        <span><strong>Baz Dönem:</strong>31 Aralık 2024 = 100 olarak sabit tutulur.</span>
+                                        <span><strong>Baz Yıl:</strong> 2025 = 100 olacak şekilde belirlenmiş ve seriler bu baz yıla taşınmıştır.</span>
                                     </div>
                                     <div class="flex items-start">
                                         <span class="text-amber-600 font-bold mr-2">•</span>
