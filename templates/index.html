@@ -584,6 +584,7 @@
                     <div class="flex bg-gray-100 rounded-lg p-1">
                         <button onclick="toggleMovers('daily', 'maddeler')" id="btn-daily-maddeler" class="px-3 py-1 rounded-md text-sm font-medium bg-white shadow-sm text-gray-900 transition-all">Günlük</button>
                         <button onclick="toggleMovers('monthly', 'maddeler')" id="btn-monthly-maddeler" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Aylık</button>
+                        <button onclick="toggleMovers('yearly', 'maddeler')" id="btn-yearly-maddeler" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Yıllık</button>
                     </div>
                 </div>
                 
@@ -672,6 +673,49 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Yearly Content (Hidden by default) -->
+                <div id="content-yearly-maddeler" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if yearly_top_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in yearly_top_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if yearly_top_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in yearly_top_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             <!-- Harcama Grupları -->
@@ -681,6 +725,7 @@
                     <div class="flex bg-gray-100 rounded-lg p-1">
                         <button onclick="toggleMovers('daily', 'harcama')" id="btn-daily-harcama" class="px-3 py-1 rounded-md text-sm font-medium bg-white shadow-sm text-gray-900 transition-all">Günlük</button>
                         <button onclick="toggleMovers('monthly', 'harcama')" id="btn-monthly-harcama" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Aylık</button>
+                        <button onclick="toggleMovers('yearly', 'harcama')" id="btn-yearly-harcama" class="px-3 py-1 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Yıllık</button>
                     </div>
                 </div>
                 
@@ -758,6 +803,49 @@
                         {% if monthly_top_harcama_fallers %}
                         <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
                             {% for name, value in monthly_top_harcama_fallers %}
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Yearly Content (Hidden by default) -->
+                <div id="content-yearly-harcama" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <!-- Artanlar -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            En Çok Artanlar
+                        </h3>
+                        {% if yearly_top_harcama_risers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in yearly_top_harcama_risers %}
+                            <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
+                                <span class="text-sm font-bold text-red-600 whitespace-nowrap">+{{ "%.2f"|format(value) }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Veri bulunamadı</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Düşenler -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            En Çok Düşenler
+                        </h3>
+                        {% if yearly_top_harcama_fallers %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {% for name, value in yearly_top_harcama_fallers %}
                             <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
                                 <span class="text-sm font-medium text-gray-700 truncate mr-2" title="{{ name }}">{{ name }}</span>
                                 <span class="text-sm font-bold text-green-600 whitespace-nowrap">{{ "%.2f"|format(value) }}%</span>
@@ -915,25 +1003,51 @@
     function toggleMovers(type, category) {
         const dailyBtn = document.getElementById(`btn-daily-${category}`);
         const monthlyBtn = document.getElementById(`btn-monthly-${category}`);
+        const yearlyBtn = document.getElementById(`btn-yearly-${category}`);
         const dailyContent = document.getElementById(`content-daily-${category}`);
         const monthlyContent = document.getElementById(`content-monthly-${category}`);
+        const yearlyContent = document.getElementById(`content-yearly-${category}`);
 
+        // Reset all buttons
+        [dailyBtn, monthlyBtn, yearlyBtn].forEach(btn => {
+            if (btn) {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+                btn.classList.add('text-gray-500', 'hover:text-gray-900');
+            }
+        });
+
+        // Hide all content
+        [dailyContent, monthlyContent, yearlyContent].forEach(content => {
+            if (content) {
+                content.classList.add('hidden');
+            }
+        });
+
+        // Show selected type
         if (type === 'daily') {
-            dailyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
-            dailyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
-            monthlyBtn.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
-            monthlyBtn.classList.add('text-gray-500', 'hover:text-gray-900');
-            
-            dailyContent.classList.remove('hidden');
-            monthlyContent.classList.add('hidden');
-        } else {
-            monthlyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
-            monthlyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
-            dailyBtn.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
-            dailyBtn.classList.add('text-gray-500', 'hover:text-gray-900');
-            
-            monthlyContent.classList.remove('hidden');
-            dailyContent.classList.add('hidden');
+            if (dailyBtn) {
+                dailyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
+                dailyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+            }
+            if (dailyContent) {
+                dailyContent.classList.remove('hidden');
+            }
+        } else if (type === 'monthly') {
+            if (monthlyBtn) {
+                monthlyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
+                monthlyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+            }
+            if (monthlyContent) {
+                monthlyContent.classList.remove('hidden');
+            }
+        } else if (type === 'yearly') {
+            if (yearlyBtn) {
+                yearlyBtn.classList.remove('text-gray-500', 'hover:text-gray-900');
+                yearlyBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+            }
+            if (yearlyContent) {
+                yearlyContent.classList.remove('hidden');
+            }
         }
     }
 

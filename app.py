@@ -1434,14 +1434,164 @@ def get_top_movers():
         import traceback
         traceback.print_exc()
 
+    # Yearly Data (maddeleryıllık.csv)
+    yearly_top_risers = []
+    yearly_top_fallers = []
+    try:
+        print("=" * 50)
+        print("DEBUG: Yıllık maddeler verileri işleniyor...")
+        # Read CSV - first column is date, other columns are madde names
+        df_yearly = cached_read_csv("maddeleryıllık.csv", quotechar='"')
+        if df_yearly is not None and not df_yearly.empty:
+            date_col_name = df_yearly.columns[0]
+            
+            # Son dolu tarih satırını bul (geriye doğru arama)
+            last_row_idx = None
+            for idx in range(len(df_yearly) - 1, -1, -1):
+                row = df_yearly.iloc[idx]
+                # Herhangi bir madde sütununda değer var mı kontrol et
+                has_value = False
+                for col in df_yearly.columns[1:]:
+                    val = row[col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            test_val = float(str(val).replace(',', '.'))
+                            has_value = True
+                            break
+                        except:
+                            continue
+                if has_value:
+                    last_row_idx = idx
+                    break
+            
+            if last_row_idx is not None:
+                last_row = df_yearly.iloc[last_row_idx]
+                
+                # Tüm madde değerlerini topla (NaN olmayan)
+                yearly_changes = {}
+                for col in df_yearly.columns[1:]:
+                    val = last_row[col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            value = float(str(val).replace(',', '.'))
+                            if np.isfinite(value):
+                                yearly_changes[col] = value
+                        except:
+                            continue
+                
+                if len(yearly_changes) > 0:
+                    # Convert to Series and sort
+                    yearly_changes_series = pd.Series(yearly_changes)
+                    yearly_changes_sorted = yearly_changes_series.sort_values()
+                    
+                    # Get top 20 fallers (lowest values) and risers (highest values)
+                    fallers_data = yearly_changes_sorted.head(20)
+                    risers_data = yearly_changes_sorted.tail(20).iloc[::-1]
+                    
+                    yearly_top_fallers = [(str(index), float(value)) for index, value in fallers_data.items()]
+                    yearly_top_risers = [(str(index), float(value)) for index, value in risers_data.items()]
+                    
+                    print(f"DEBUG: Yıllık Fallers sayısı: {len(yearly_top_fallers)}, Risers sayısı: {len(yearly_top_risers)}")
+                    print(f"DEBUG: İlk 3 yıllık faller: {yearly_top_fallers[:3]}")
+                    print(f"DEBUG: İlk 3 yıllık riser: {yearly_top_risers[:3]}")
+                else:
+                    print("DEBUG: Yıllık verilerde hiç geçerli değer bulunamadı!")
+            else:
+                print("DEBUG: Yıllık verilerde dolu tarih satırı bulunamadı!")
+        else:
+            print("DEBUG: maddeleryıllık.csv dosyası boş veya okunamadı!")
+    except Exception as e:
+        print("=" * 50)
+        print(f"ERROR in get_top_movers (yearly maddeler): {e}")
+        print(f"ERROR Type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 50)
+
+    # Yearly Data for Harcama Grupları (harcamagruplarıyıllık.csv)
+    yearly_top_harcama_risers = []
+    yearly_top_harcama_fallers = []
+    try:
+        print("=" * 50)
+        print("DEBUG: Yıllık harcama grupları verileri işleniyor...")
+        # Read CSV - first column is date, other columns are harcama grup names
+        df_yearly_harcama = cached_read_csv("harcamagruplarıyıllık.csv", quotechar='"')
+        if df_yearly_harcama is not None and not df_yearly_harcama.empty:
+            date_col_name = df_yearly_harcama.columns[0]
+            
+            # Son dolu tarih satırını bul (geriye doğru arama)
+            last_row_idx = None
+            for idx in range(len(df_yearly_harcama) - 1, -1, -1):
+                row = df_yearly_harcama.iloc[idx]
+                # Herhangi bir harcama grup sütununda değer var mı kontrol et
+                has_value = False
+                for col in df_yearly_harcama.columns[1:]:
+                    val = row[col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            test_val = float(str(val).replace(',', '.'))
+                            has_value = True
+                            break
+                        except:
+                            continue
+                if has_value:
+                    last_row_idx = idx
+                    break
+            
+            if last_row_idx is not None:
+                last_row = df_yearly_harcama.iloc[last_row_idx]
+                
+                # Tüm harcama grup değerlerini topla (NaN olmayan)
+                yearly_harcama_changes = {}
+                for col in df_yearly_harcama.columns[1:]:
+                    val = last_row[col]
+                    if pd.notna(val) and str(val).strip() != '' and str(val).strip() != 'nan':
+                        try:
+                            value = float(str(val).replace(',', '.'))
+                            if np.isfinite(value):
+                                yearly_harcama_changes[col] = value
+                        except:
+                            continue
+                
+                if len(yearly_harcama_changes) > 0:
+                    # Convert to Series and sort
+                    yearly_harcama_changes_series = pd.Series(yearly_harcama_changes)
+                    yearly_harcama_changes_sorted = yearly_harcama_changes_series.sort_values()
+                    
+                    # Get top 20 fallers (lowest values) and risers (highest values)
+                    fallers_data = yearly_harcama_changes_sorted.head(20)
+                    risers_data = yearly_harcama_changes_sorted.tail(20).iloc[::-1]
+                    
+                    yearly_top_harcama_fallers = [(str(index), float(value)) for index, value in fallers_data.items()]
+                    yearly_top_harcama_risers = [(str(index), float(value)) for index, value in risers_data.items()]
+                    
+                    print(f"DEBUG: Yıllık Harcama Fallers sayısı: {len(yearly_top_harcama_fallers)}, Risers sayısı: {len(yearly_top_harcama_risers)}")
+                    print(f"DEBUG: İlk 3 yıllık harcama faller: {yearly_top_harcama_fallers[:3]}")
+                    print(f"DEBUG: İlk 3 yıllık harcama riser: {yearly_top_harcama_risers[:3]}")
+                else:
+                    print("DEBUG: Yıllık harcama verilerde hiç geçerli değer bulunamadı!")
+            else:
+                print("DEBUG: Yıllık harcama verilerde dolu tarih satırı bulunamadı!")
+        else:
+            print("DEBUG: harcamagruplarıyıllık.csv dosyası boş veya okunamadı!")
+    except Exception as e:
+        print("=" * 50)
+        print(f"ERROR in get_top_movers (yearly harcama): {e}")
+        print(f"ERROR Type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 50)
+
     return (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
-            monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers)
+            monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers,
+            yearly_top_risers, yearly_top_fallers, yearly_top_harcama_risers, yearly_top_harcama_fallers)
 
 @app.route('/ana-sayfa', methods=['GET', 'POST'])
 def ana_sayfa():
     # Get Top Movers
     (top_risers, top_fallers, top_harcama_risers, top_harcama_fallers,
-     monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers) = get_top_movers()
+     monthly_top_risers, monthly_top_fallers, monthly_top_harcama_risers, monthly_top_harcama_fallers,
+     yearly_top_risers, yearly_top_fallers, yearly_top_harcama_risers, yearly_top_harcama_fallers) = get_top_movers()
     
     # Debug: Template'e gönderilen değerleri kontrol et
     print("=" * 50)
@@ -1725,6 +1875,10 @@ def ana_sayfa():
                                  monthly_top_fallers=monthly_top_fallers,
                                  monthly_top_harcama_risers=monthly_top_harcama_risers,
                                  monthly_top_harcama_fallers=monthly_top_harcama_fallers,
+                                 yearly_top_risers=yearly_top_risers,
+                                 yearly_top_fallers=yearly_top_fallers,
+                                 yearly_top_harcama_risers=yearly_top_harcama_risers,
+                                 yearly_top_harcama_fallers=yearly_top_harcama_fallers,
                                  time_series_data=time_series_data,
                                  time_series_columns=time_series_columns,
                                  widget_data=widget_data,
@@ -1870,6 +2024,10 @@ def ana_sayfa():
                                  monthly_top_fallers=monthly_top_fallers,
                                  monthly_top_harcama_risers=monthly_top_harcama_risers,
                                  monthly_top_harcama_fallers=monthly_top_harcama_fallers,
+                                 yearly_top_risers=yearly_top_risers,
+                                 yearly_top_fallers=yearly_top_fallers,
+                                 yearly_top_harcama_risers=yearly_top_harcama_risers,
+                                 yearly_top_harcama_fallers=yearly_top_harcama_fallers,
                                  time_series_data=time_series_data,
                                  time_series_columns=time_series_columns,
                                  widget_data=widget_data,
@@ -1922,6 +2080,10 @@ def ana_sayfa():
                              monthly_top_fallers=monthly_top_fallers,
                              monthly_top_harcama_risers=monthly_top_harcama_risers,
                              monthly_top_harcama_fallers=monthly_top_harcama_fallers,
+                             yearly_top_risers=yearly_top_risers,
+                             yearly_top_fallers=yearly_top_fallers,
+                             yearly_top_harcama_risers=yearly_top_harcama_risers,
+                             yearly_top_harcama_fallers=yearly_top_harcama_fallers,
                              time_series_data=time_series_data,
                              time_series_columns=time_series_columns)
 
