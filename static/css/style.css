@@ -227,10 +227,10 @@ header .overflow-x-auto {
 .nav-link-modern {
     color: var(--text-color) !important;
     font-weight: 600;
-    padding: 0.65rem 1.1rem !important;
+    padding: 0.55rem 0.9rem !important;
     border-radius: 12px;
     position: relative;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -241,6 +241,7 @@ header .overflow-x-auto {
     min-width: fit-content;
     box-sizing: border-box;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .nav-link-modern::before {
