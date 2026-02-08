@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Ağırlıklar - Web TÜFE{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+        <h1 class="text-4xl font-bold gradient-text mb-2">Ağırlıklar</h1>
+        <p class="text-gray-600">TÜFE sepetindeki ürün ve hizmet gruplarının ağırlıkları (2025 ve 2026 yılları)</p>
+    </div>
+
+    <!-- Ana Gruplar -->
+    <div class="card-modern p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <span class="w-3 h-3 bg-indigo-600 rounded-full mr-3"></span>
+            Ana Gruplar
+        </h2>
+        <div class="overflow-x-auto">
+            <table id="ana-gruplar-table" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-600 text-white">
+                    <tr>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide sticky left-0 bg-indigo-600 z-10 cursor-pointer hover:bg-indigo-700" onclick="sortTable('ana-gruplar-table', 0)">
+                            Ana Grup <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-indigo-700" onclick="sortTable('ana-gruplar-table', 1, true)">
+                            2025 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-indigo-700" onclick="sortTable('ana-gruplar-table', 2, true)">
+                            2026 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-indigo-700" onclick="sortTable('ana-gruplar-table', 3, true)">
+                            Değişim <span class="sort-icon">⇅</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for grup in agirliklar_data.ana_gruplar %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
+                            {{ grup.isim }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if grup['2025'] is not none %}{{ grup['2025'] }}{% else %}999999{% endif %}">
+                            {% if grup['2025'] is not none %}
+                                {{ "%.2f"|format(grup['2025']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if grup['2026'] is not none %}{{ grup['2026'] }}{% else %}999999{% endif %}">
+                            {% if grup['2026'] is not none %}
+                                {{ "%.2f"|format(grup['2026']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center" data-value="{% if grup['2025'] is not none and grup['2026'] is not none %}{{ grup['2026'] - grup['2025'] }}{% else %}999999{% endif %}">
+                            {% if grup['2025'] is not none and grup['2026'] is not none %}
+                                {% set degisim = grup['2026'] - grup['2025'] %}
+                                <span class="{% if degisim > 0 %}text-red-600{% elif degisim < 0 %}text-green-600{% else %}text-gray-600{% endif %} font-semibold">
+                                    {{ "%+.2f"|format(degisim) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Temel Başlıklar -->
+    <div class="card-modern p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <span class="w-3 h-3 bg-purple-600 rounded-full mr-3"></span>
+            Temel Başlıklar
+        </h2>
+        <div class="overflow-x-auto">
+            <table id="temel-basliklar-table" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-purple-600 text-white">
+                    <tr>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide sticky left-0 bg-purple-600 z-10 cursor-pointer hover:bg-purple-700" onclick="sortTable('temel-basliklar-table', 0)">
+                            Temel Başlık <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-purple-700" onclick="sortTable('temel-basliklar-table', 1)">
+                            Ana Grup <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-purple-700" onclick="sortTable('temel-basliklar-table', 2, true)">
+                            2025 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-purple-700" onclick="sortTable('temel-basliklar-table', 3, true)">
+                            2026 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-purple-700" onclick="sortTable('temel-basliklar-table', 4, true)">
+                            Değişim <span class="sort-icon">⇅</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for baslik in agirliklar_data.temel_basliklar %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
+                            {{ baslik.isim }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            {{ baslik.ana_grup or '-' }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if baslik['2025'] is not none %}{{ baslik['2025'] }}{% else %}999999{% endif %}">
+                            {% if baslik['2025'] is not none %}
+                                {{ "%.2f"|format(baslik['2025']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if baslik['2026'] is not none %}{{ baslik['2026'] }}{% else %}999999{% endif %}">
+                            {% if baslik['2026'] is not none %}
+                                {{ "%.2f"|format(baslik['2026']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center" data-value="{% if baslik['2025'] is not none and baslik['2026'] is not none %}{{ baslik['2026'] - baslik['2025'] }}{% else %}999999{% endif %}">
+                            {% if baslik['2025'] is not none and baslik['2026'] is not none %}
+                                {% set degisim = baslik['2026'] - baslik['2025'] %}
+                                <span class="{% if degisim > 0 %}text-red-600{% elif degisim < 0 %}text-green-600{% else %}text-gray-600{% endif %} font-semibold">
+                                    {{ "%+.2f"|format(degisim) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Maddeler -->
+    <div class="card-modern p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <span class="w-3 h-3 bg-pink-600 rounded-full mr-3"></span>
+            Maddeler
+        </h2>
+        <div class="overflow-x-auto">
+            <table id="maddeler-table" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-pink-600 text-white">
+                    <tr>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide sticky left-0 bg-pink-600 z-10 cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 0)">
+                            Madde <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 1)">
+                            Ana Grup <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 2)">
+                            Temel Başlık <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 3, true)">
+                            2025 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 4, true)">
+                            2026 (%) <span class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="py-3 px-4 text-center text-xs font-semibold uppercase tracking-wide cursor-pointer hover:bg-pink-700" onclick="sortTable('maddeler-table', 5, true)">
+                            Değişim <span class="sort-icon">⇅</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for madde in agirliklar_data.maddeler %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
+                            {{ madde.isim }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            {{ madde.ana_grup or '-' }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            {{ madde.temel_baslik or '-' }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if madde['2025'] is not none %}{{ madde['2025'] }}{% else %}999999{% endif %}">
+                            {% if madde['2025'] is not none %}
+                                {{ "%.2f"|format(madde['2025']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 text-center" data-value="{% if madde['2026'] is not none %}{{ madde['2026'] }}{% else %}999999{% endif %}">
+                            {% if madde['2026'] is not none %}
+                                {{ "%.2f"|format(madde['2026']) }}%
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-center" data-value="{% if madde['2025'] is not none and madde['2026'] is not none %}{{ madde['2026'] - madde['2025'] }}{% else %}999999{% endif %}">
+                            {% if madde['2025'] is not none and madde['2026'] is not none %}
+                                {% set degisim = madde['2026'] - madde['2025'] %}
+                                <span class="{% if degisim > 0 %}text-red-600{% elif degisim < 0 %}text-green-600{% else %}text-gray-600{% endif %} font-semibold">
+                                    {{ "%+.2f"|format(degisim) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-modern {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    table thead th {
+        position: sticky;
+        top: 0;
+    }
+    
+    table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    .sort-icon {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-left: 4px;
+    }
+    
+    th.cursor-pointer {
+        user-select: none;
+    }
+</style>
+
+<script>
+    let sortDirections = {};
+    
+    function sortTable(tableId, columnIndex, isNumeric = false) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // Sort direction key
+        const sortKey = `${tableId}-${columnIndex}`;
+        const currentDirection = sortDirections[sortKey] || 'asc';
+        const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+        sortDirections[sortKey] = newDirection;
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            const aCell = a.cells[columnIndex];
+            const bCell = b.cells[columnIndex];
+            
+            let aValue, bValue;
+            
+            if (isNumeric) {
+                aValue = parseFloat(aCell.getAttribute('data-value') || aCell.textContent.trim().replace('%', '').replace('+', '').replace('-', '') || '0');
+                bValue = parseFloat(bCell.getAttribute('data-value') || bCell.textContent.trim().replace('%', '').replace('+', '').replace('-', '') || '0');
+                
+                if (isNaN(aValue)) aValue = 999999;
+                if (isNaN(bValue)) bValue = 999999;
+            } else {
+                aValue = aCell.textContent.trim().toLowerCase();
+                bValue = bCell.textContent.trim().toLowerCase();
+            }
+            
+            if (newDirection === 'asc') {
+                return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+            } else {
+                return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+            }
+        });
+        
+        // Clear tbody and append sorted rows
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update sort icons
+        const headers = table.querySelectorAll('th');
+        headers.forEach((header, index) => {
+            const icon = header.querySelector('.sort-icon');
+            if (icon) {
+                if (index === columnIndex) {
+                    icon.textContent = newDirection === 'asc' ? '↑' : '↓';
+                } else {
+                    icon.textContent = '⇅';
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
+

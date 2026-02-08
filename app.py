@@ -11486,5 +11486,153 @@ def aclik_siniri():
                              latest_date=None,
                              active_page='aclik_siniri')
 
+@app.route('/agirliklar', methods=['GET'])
+def agirliklar():
+    try:
+        import re
+        # sepet2026.xlsx dosyasından temel başlık -> ana grup eşleştirmesini oluştur
+        sepet_df = pd.read_excel('sepet2026.xlsx', engine='openpyxl')
+        sepet_df.columns = sepet_df.columns.str.strip()
+        
+        # "Yeni Grup", "Ana Grup" ve "Ürün" sütunlarını bul
+        yeni_grup_col = None
+        ana_grup_col = None
+        urun_col = None
+        for col in sepet_df.columns:
+            col_lower = str(col).lower()
+            if 'yeni grup' in col_lower or ('yeni' in col_lower and 'grup' in col_lower):
+                yeni_grup_col = col
+            if 'ana grup' in col_lower or ('ana' in col_lower and 'grup' in col_lower):
+                ana_grup_col = col
+            # Ürün sütunu genelde ilk sütun (index 0) ve encoding sorunu olabilir
+            if col == sepet_df.columns[0] or 'ürün' in col_lower or 'urun' in col_lower:
+                urun_col = col
+        
+        # Temel başlık -> Ana grup mapping dictionary oluştur
+        temel_baslik_ana_grup_mapping = {}
+        if yeni_grup_col and ana_grup_col:
+            for idx, row in sepet_df.iterrows():
+                yeni_grup = row.get(yeni_grup_col, '')
+                ana_grup = row.get(ana_grup_col, '')
+                if pd.notna(yeni_grup) and pd.notna(ana_grup):
+                    yeni_grup_str = str(yeni_grup).strip()
+                    ana_grup_str = str(ana_grup).strip()
+                    if yeni_grup_str and ana_grup_str and yeni_grup_str.lower() != 'nan':
+                        # Normalize: küçük harfe çevir, boşlukları normalize et
+                        normalized_key = re.sub(r'\s+', ' ', yeni_grup_str.lower().strip())
+                        temel_baslik_ana_grup_mapping[normalized_key] = ana_grup_str
+                        # Ayrıca orijinal haliyle de ekle (farklı formatlar için)
+                        temel_baslik_ana_grup_mapping[yeni_grup_str.lower()] = ana_grup_str
+        
+        # Madde -> Temel Başlık ve Ana Grup mapping dictionary oluştur
+        madde_temel_baslik_mapping = {}
+        madde_ana_grup_mapping = {}
+        if urun_col and yeni_grup_col and ana_grup_col:
+            for idx, row in sepet_df.iterrows():
+                urun = row.get(urun_col, '')
+                yeni_grup = row.get(yeni_grup_col, '')
+                ana_grup = row.get(ana_grup_col, '')
+                if pd.notna(urun) and pd.notna(yeni_grup) and pd.notna(ana_grup):
+                    urun_str = str(urun).strip()
+                    yeni_grup_str = str(yeni_grup).strip()
+                    ana_grup_str = str(ana_grup).strip()
+                    if urun_str and urun_str.lower() != 'nan':
+                        # Normalize: küçük harfe çevir, boşlukları normalize et
+                        urun_normalized = re.sub(r'\s+', ' ', urun_str.lower().strip())
+                        madde_temel_baslik_mapping[urun_normalized] = yeni_grup_str
+                        madde_ana_grup_mapping[urun_normalized] = ana_grup_str
+                        # Ayrıca orijinal haliyle de ekle (farklı formatlar için)
+                        madde_temel_baslik_mapping[urun_str.lower()] = yeni_grup_str
+                        madde_ana_grup_mapping[urun_str.lower()] = ana_grup_str
+        
+        # Excel dosyasını oku
+        df = pd.read_excel('w.xlsx', engine='openpyxl')
+        
+        # Sütun isimlerini temizle ve encoding sorunlarını düzelt
+        df.columns = df.columns.str.strip()
+        # Encoding sorunlarını düzelt - "Temel Başlık" sütununu bul (index 4)
+        # Sütun isimlerini index'e göre kullan
+        temel_baslik_col = df.columns[4] if len(df.columns) > 4 else None
+        
+        # Verileri organize et - 3 düzey: Ana Grup, Temel Başlık, Madde
+        agirliklar_data = {
+            'ana_gruplar': [],
+            'temel_basliklar': [],
+            'maddeler': []
+        }
+        
+        current_ana_grup = None
+        current_temel_baslik = None
+        
+        for idx, row in df.iterrows():
+            # Ana Grup kontrolü
+            ana_grup = row.get('Ana Grup', '')
+            if pd.notna(ana_grup) and str(ana_grup).strip() and str(ana_grup).strip().lower() != 'nan':
+                current_ana_grup = str(ana_grup).strip()
+                agirlik_2025 = row.get('2025 (%)', None)
+                agirlik_2026 = row.get('2026 (%)', None)
+                
+                agirliklar_data['ana_gruplar'].append({
+                    'isim': current_ana_grup,
+                    '2025': float(agirlik_2025) if pd.notna(agirlik_2025) else None,
+                    '2026': float(agirlik_2026) if pd.notna(agirlik_2026) else None
+                })
+            
+            # Temel Başlık kontrolü
+            temel_baslik = row.get(temel_baslik_col, '') if temel_baslik_col else row.get('Temel Başlık', '')
+            if pd.notna(temel_baslik) and str(temel_baslik).strip() and str(temel_baslik).strip().lower() != 'nan':
+                current_temel_baslik = str(temel_baslik).strip()
+                agirlik_2025 = row.get('2025 (%).1', None)
+                agirlik_2026 = row.get('2026 (%).1', None)
+                
+                # sepet2026.xlsx'ten ana grup bilgisini al
+                temel_baslik_normalized = re.sub(r'\s+', ' ', current_temel_baslik.lower().strip())
+                matched_ana_grup = temel_baslik_ana_grup_mapping.get(temel_baslik_normalized) or \
+                                  temel_baslik_ana_grup_mapping.get(current_temel_baslik.lower()) or \
+                                  current_ana_grup
+                
+                agirliklar_data['temel_basliklar'].append({
+                    'isim': current_temel_baslik,
+                    'ana_grup': matched_ana_grup,
+                    '2025': float(agirlik_2025) * 100 if pd.notna(agirlik_2025) else None,
+                    '2026': float(agirlik_2026) * 100 if pd.notna(agirlik_2026) else None
+                })
+            
+            # Madde kontrolü
+            madde = row.get('Madde', '')
+            if pd.notna(madde) and str(madde).strip() and str(madde).strip().lower() != 'nan':
+                agirlik_2025 = row.get('2025 (%).2', None)
+                agirlik_2026 = row.get('2026 (%).2', None)
+                
+                # sepet2026.xlsx'ten temel başlık ve ana grup bilgisini al
+                madde_normalized = re.sub(r'\s+', ' ', str(madde).strip().lower())
+                matched_temel_baslik = madde_temel_baslik_mapping.get(madde_normalized) or \
+                                      madde_temel_baslik_mapping.get(str(madde).strip().lower()) or \
+                                      current_temel_baslik
+                matched_ana_grup = madde_ana_grup_mapping.get(madde_normalized) or \
+                                  madde_ana_grup_mapping.get(str(madde).strip().lower()) or \
+                                  current_ana_grup
+                
+                agirliklar_data['maddeler'].append({
+                    'isim': str(madde).strip(),
+                    'ana_grup': matched_ana_grup,
+                    'temel_baslik': matched_temel_baslik,
+                    '2025': float(agirlik_2025) * 100 if pd.notna(agirlik_2025) else None,
+                    '2026': float(agirlik_2026) * 100 if pd.notna(agirlik_2026) else None
+                })
+        
+        return render_template('agirliklar.html',
+                             agirliklar_data=agirliklar_data,
+                             active_page='agirliklar')
+    
+    except Exception as e:
+        import traceback
+        print(f"Error in agirliklar route: {str(e)}")
+        print(traceback.format_exc())
+        flash(f'Hata: {str(e)}', 'error')
+        return render_template('agirliklar.html',
+                             agirliklar_data={'ana_gruplar': [], 'temel_basliklar': [], 'maddeler': []},
+                             active_page='agirliklar')
+
 if __name__ == '__main__':
     app.run(debug=True) 
