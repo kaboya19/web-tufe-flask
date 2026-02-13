@@ -246,19 +246,6 @@
                                         N/A
                                         {% endif %}
                                     </div>
-                                    
-                                    {% if widget_data.change_from_previous is not none %}
-                                    <div class="yearly-widget-change {% if widget_data.change_from_previous < 0 %}yearly-widget-change-down{% else %}yearly-widget-change-up{% endif %}">
-                                        <svg class="yearly-widget-change-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            {% if widget_data.change_from_previous < 0 %}
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            {% else %}
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                            {% endif %}
-                                        </svg>
-                                        <span>{{ "%.2f"|format(widget_data.change_from_previous)|replace(".", ",") }}</span>
-                                    </div>
-                                    {% endif %}
                                 </div>
                                 
                                 {% if widget_data.tuik_rate is not none %}
@@ -338,19 +325,6 @@
                                             N/A
                                             {% endif %}
                                         </div>
-                                        
-                                        {% if monthly_widget_data.change_from_previous is not none %}
-                                        <div class="yearly-widget-change {% if monthly_widget_data.change_from_previous < 0 %}yearly-widget-change-down{% else %}yearly-widget-change-up{% endif %}">
-                                            <svg class="yearly-widget-change-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                {% if monthly_widget_data.change_from_previous < 0 %}
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                {% else %}
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                                {% endif %}
-                                            </svg>
-                                            <span>{{ "%.2f"|format(monthly_widget_data.change_from_previous)|replace(".", ",") }}</span>
-                                        </div>
-                                        {% endif %}
                                     </div>
                                     
                                     <div style="margin-top: auto;">
@@ -417,11 +391,6 @@
                                 <div class="compact-widget-value">
                                     {% if widget_data.current_value is not none %}
                                     {{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }}%
-                                    {% if widget_data.change_from_previous is not none %}
-                                    <span class="compact-widget-change {% if widget_data.change_from_previous < 0 %}compact-widget-change-down{% else %}compact-widget-change-up{% endif %}">
-                                        ({{ "%.2f"|format(widget_data.change_from_previous)|replace(".", ",") }})
-                                    </span>
-                                    {% endif %}
                                     {% else %}
                                     N/A
                                     {% endif %}
@@ -435,11 +404,6 @@
                                 <div class="compact-widget-value">
                                     {% if monthly_widget_data.current_value is not none %}
                                     {{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }}%
-                                    {% if monthly_widget_data.change_from_previous is not none %}
-                                    <span class="compact-widget-change {% if monthly_widget_data.change_from_previous < 0 %}compact-widget-change-down{% else %}compact-widget-change-up{% endif %}">
-                                        ({{ "%.2f"|format(monthly_widget_data.change_from_previous)|replace(".", ",") }})
-                                    </span>
-                                    {% endif %}
                                     {% else %}
                                     N/A
                                     {% endif %}
