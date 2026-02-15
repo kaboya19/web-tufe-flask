@@ -423,30 +423,7 @@
         var monthlyBarGraphs = {{ tufe_monthly_bar_graphJSON | safe if tufe_monthly_bar_graphJSON else 'null' }};
         var monthlyLineGraphs = {{ tufe_monthly_line_graphJSON | safe if tufe_monthly_line_graphJSON else 'null' }};
         
-        // Bar grafiklerin renklerini kontrol et ve ayarla
-        if (yearlyBarGraphs && yearlyBarGraphs.data) {
-            yearlyBarGraphs.data.forEach(function(trace, idx) {
-                if (!trace.marker_color && (!trace.marker || !trace.marker.color)) {
-                    if (trace.name === 'Web TÜFE') {
-                        trace.marker_color = '#EF476F';
-                    } else if (trace.name === 'TÜİK TÜFE') {
-                        trace.marker_color = '#118AB2';
-                    }
-                }
-            });
-        }
-        
-        if (monthlyBarGraphs && monthlyBarGraphs.data) {
-            monthlyBarGraphs.data.forEach(function(trace, idx) {
-                if (!trace.marker_color && (!trace.marker || !trace.marker.color)) {
-                    if (trace.name === 'Web TÜFE') {
-                        trace.marker_color = '#EF476F';
-                    } else if (trace.name === 'TÜİK TÜFE') {
-                        trace.marker_color = '#118AB2';
-                    }
-                }
-            });
-        }
+        // Backend'den gelen veri zaten marker renklerine sahip, ek kontrol gerekmiyor
         
         // Başlangıçta aylık grafikleri çiz (varsayılan mod)
         if (monthlyBarGraphs && monthlyBarGraphs.data && monthlyBarGraphs.layout) {
@@ -455,6 +432,10 @@
         if (monthlyLineGraphs && monthlyLineGraphs.data && monthlyLineGraphs.layout) {
             Plotly.newPlot('line-compare-chart', monthlyLineGraphs.data, monthlyLineGraphs.layout, { displayModeBar: false, responsive: true });
         }
+        
+        // Yıllık grafikleri de başlangıçta çiz (gizli, aylık gibi)
+        // Not: Yıllık grafikler aylık grafiklerle aynı container'ı kullanıyor, 
+        // bu yüzden sadece veri hazır olmalı, çizim updateCharts() ile yapılacak
 
         // Toggle logic for comparison chart
         const barBtn = document.getElementById('bar-btn');
@@ -499,19 +480,12 @@
                 lineData = yearlyLineGraphs;
             }
             
-            // Aylık seçildiğinde her iki grafiği de güncelle
-            if (currentViewType === 'monthly') {
-                if (barData && barData.data && barData.layout) {
-                    Plotly.react('bar-compare-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-                }
-                if (lineData && lineData.data && lineData.layout) {
-                    Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                }
-            } else {
-                // Yıllık seçildiğinde sadece line grafiğini güncelle
-                if (lineData && lineData.data && lineData.layout) {
-                    Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                }
+            // Her iki durumda da her iki grafiği de güncelle (aylık gibi)
+            if (barData && barData.data && barData.layout) {
+                Plotly.react('bar-compare-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+            }
+            if (lineData && lineData.data && lineData.layout) {
+                Plotly.react('line-compare-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
             }
         }
         
@@ -536,21 +510,29 @@
         tufeYearlyBtn.addEventListener('click', function() {
             currentViewType = 'yearly';
             setActiveChartType(tufeYearlyBtn);
-            // Bar/Line butonlarını gizle
+            // Bar/Line butonlarını göster
             if (barLineBtnGroup) {
-                barLineBtnGroup.style.display = 'none';
+                barLineBtnGroup.style.display = 'flex';
             }
-            // Yıllık seçildiğinde otomatik olarak line grafiğini göster
-            barChart.classList.add('hidden');
-            lineChart.classList.remove('hidden');
-            setActiveChart(lineBtn);
-            // Container görünür olduktan sonra grafiği yeniden çiz (newPlot kullan)
+            // Yıllık seçildiğinde otomatik olarak bar grafiğini göster
+            // Önce container'ı görünür yap, sonra grafiği çiz (aylık gibi)
+            lineChart.classList.add('hidden');
+            barChart.classList.remove('hidden');
+            setActiveChart(barBtn);
+            // Aylık gibi newPlot ile çiz (aylık başlangıçta newPlot kullanıyor)
+            // Container görünür olduktan sonra çiz
             setTimeout(function() {
+                if (yearlyBarGraphs && yearlyBarGraphs.data && yearlyBarGraphs.layout) {
+                    Plotly.purge('bar-compare-chart');
+                    Plotly.newPlot('bar-compare-chart', yearlyBarGraphs.data, yearlyBarGraphs.layout, { displayModeBar: false, responsive: true });
+                }
                 if (yearlyLineGraphs && yearlyLineGraphs.data && yearlyLineGraphs.layout) {
-                    // Önce mevcut grafiği temizle
                     Plotly.purge('line-compare-chart');
-                    // Yeni grafiği çiz
                     Plotly.newPlot('line-compare-chart', yearlyLineGraphs.data, yearlyLineGraphs.layout, { displayModeBar: false, responsive: true });
+                }
+                // Resize yap
+                if (!barChart.classList.contains('hidden')) {
+                    Plotly.Plots.resize('bar-compare-chart');
                 }
             }, 50);
         });

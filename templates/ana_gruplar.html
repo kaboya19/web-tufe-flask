@@ -227,19 +227,12 @@
                                 lineData = yearlyLineGraph;
                             }
                             
-                            // Aylık seçildiğinde her iki grafiği de güncelle
-                            if (currentViewType === 'monthly') {
-                                if (barData && currentChartType === 'bar') {
-                                    Plotly.react('bar-graph', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-                                }
-                                if (lineData && currentChartType === 'line') {
-                                    Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                                }
-                            } else {
-                                // Yıllık seçildiğinde sadece line grafiğini güncelle
-                                if (lineData && lineData.data && lineData.layout) {
-                                    Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                                }
+                            // Her iki durumda da seçili grafik tipine göre güncelle
+                            if (barData && currentChartType === 'bar') {
+                                Plotly.react('bar-graph', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                            }
+                            if (lineData && currentChartType === 'line') {
+                                Plotly.react('line-graph', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
                             }
                         }
                         
@@ -290,24 +283,24 @@
                         anaGruplarYearlyBtn.addEventListener('click', function() {
                             currentViewType = 'yearly';
                             setAnaGruplarActive(anaGruplarYearlyBtn);
-                            // Bar/Line butonlarını gizle
+                            // Bar/Line butonlarını göster
                             const barLineBtnGroup = document.getElementById('bar-line-btn-group');
                             if (barLineBtnGroup) {
-                                barLineBtnGroup.style.display = 'none';
+                                barLineBtnGroup.style.display = 'flex';
                             }
-                            // Yıllık seçildiğinde otomatik olarak line grafiğini göster
-                            document.getElementById('line-graph').classList.remove('hidden');
-                            document.getElementById('line-graph').classList.add('block');
-                            document.getElementById('bar-graph').classList.remove('block');
-                            document.getElementById('bar-graph').classList.add('hidden');
-                            currentChartType = 'line';
+                            // Yıllık seçildiğinde otomatik olarak bar grafiğini göster
+                            document.getElementById('bar-graph').classList.remove('hidden');
+                            document.getElementById('bar-graph').classList.add('block');
+                            document.getElementById('line-graph').classList.remove('block');
+                            document.getElementById('line-graph').classList.add('hidden');
+                            currentChartType = 'bar';
                             // Container görünür olduktan sonra grafiği yeniden çiz (newPlot kullan)
                             setTimeout(function() {
-                                if (yearlyLineGraph && yearlyLineGraph.data && yearlyLineGraph.layout) {
+                                if (yearlyBarGraph && yearlyBarGraph.data && yearlyBarGraph.layout) {
                                     // Önce mevcut grafiği temizle
-                                    Plotly.purge('line-graph');
+                                    Plotly.purge('bar-graph');
                                     // Yeni grafiği çiz
-                                    Plotly.newPlot('line-graph', yearlyLineGraph.data, yearlyLineGraph.layout, { displayModeBar: false, responsive: true });
+                                    Plotly.newPlot('bar-graph', yearlyBarGraph.data, yearlyBarGraph.layout, { displayModeBar: false, responsive: true });
                                 }
                             }, 50);
                         });

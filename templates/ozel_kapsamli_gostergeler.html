@@ -284,6 +284,7 @@
                     <input type="hidden" name="previous_month" id="previous_month_input" value="{{ selected_previous_month or '' }}">
                     <input type="hidden" name="current_month" id="current_month_input" value="{{ selected_current_month or '' }}">
                     <input type="hidden" name="year_ago_month" id="year_ago_month_input" value="{{ selected_year_ago_month or '' }}">
+                    <input type="hidden" name="katki_level" id="katki_level_input" value="{{ katki_level or '1' }}">
                     <select name="indicator"
                         class="block w-full md:w-auto rounded-md border-gray-300 shadow-sm focus:border-[#EF476F] focus:ring focus:ring-[#EF476F] focus:ring-opacity-50"
                         onchange="document.getElementById('indicator-form').submit()">
@@ -391,6 +392,30 @@
             <!-- Katkı Payları Grafiği -->
             {% if katki_graphJSON %}
             <div class="bg-white rounded-lg shadow-sm p-6 overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Aylık Web TÜFE Katkı Payları</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-700 mr-2">Düzey:</span>
+                        <div class="inline-flex rounded-lg border border-indigo-200 overflow-hidden">
+                            <button type="button" id="katki-level-1" onclick="setKatkiLevel(1)" 
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if (katki_level or '1') == '1' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Düzey 1
+                            </button>
+                            <button type="button" id="katki-level-2" onclick="setKatkiLevel(2)"
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if (katki_level or '1') == '2' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Düzey 2
+                            </button>
+                            <button type="button" id="katki-level-3" onclick="setKatkiLevel(3)"
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none border-r border-indigo-200 {% if (katki_level or '1') == '3' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Düzey 3
+                            </button>
+                            <button type="button" id="katki-level-4" onclick="setKatkiLevel(4)"
+                                class="px-4 py-2 text-sm font-semibold transition-colors duration-150 focus:outline-none {% if (katki_level or '1') == '4' %}bg-indigo-600 text-white shadow-inner{% else %}bg-white text-gray-600 hover:bg-indigo-50{% endif %}">
+                                Düzey 4
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <div id="katki-chart" class="w-full" style="height: 400px; min-width: 0;"></div>
                 </div>
@@ -700,19 +725,12 @@
                         lineData = yearlyLineGraph;
                     }
 
-                    // Yıllık seçildiğinde sadece line grafiği güncelle
-                    if (viewType === 'yearly') {
-                        if (lineData && lineData.data && lineData.layout) {
-                            Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                        }
-                    } else {
-                        // Aylık seçildiğinde bar veya line grafiği güncelle
-                        if (barData && chartType === 'bar' && barData.data && barData.layout) {
-                            Plotly.react('bar-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
-                        }
-                        if (lineData && chartType === 'line' && lineData.data && lineData.layout) {
-                            Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
-                        }
+                    // Her iki durumda da seçili grafik tipine göre güncelle
+                    if (barData && chartType === 'bar' && barData.data && barData.layout) {
+                        Plotly.react('bar-chart', barData.data, barData.layout, { displayModeBar: false, responsive: true });
+                    }
+                    if (lineData && chartType === 'line' && lineData.data && lineData.layout) {
+                        Plotly.react('line-chart', lineData.data, lineData.layout, { displayModeBar: false, responsive: true });
                     }
                 }
 
@@ -759,24 +777,32 @@
                     currentViewType = 'yearly';
                     window.ozelCurrentViewType = 'yearly';
                     setOzelActive(ozelYearlyBtn);
-                    // Bar/Line butonlarını gizle
+                    // Bar/Line butonlarını göster
                     if (barLineBtnGroup) {
-                        barLineBtnGroup.style.display = 'none';
+                        barLineBtnGroup.style.display = 'flex';
                     }
-                    // Sadece line grafiği göster
+                    // Yıllık seçildiğinde otomatik olarak bar grafiğini göster
                     const barChart = document.getElementById('bar-chart');
                     const lineChart = document.getElementById('line-chart');
-                    if (barChart) barChart.classList.add('hidden');
-                    if (lineChart) {
-                        lineChart.classList.remove('hidden');
-                        lineChart.classList.add('block');
+                    if (barChart) {
+                        barChart.classList.remove('hidden');
+                        barChart.classList.add('block');
                     }
-                    currentChartType = 'line';
-                    window.ozelCurrentChartType = 'line';
-                    updateCharts();
+                    if (lineChart) {
+                        lineChart.classList.remove('block');
+                        lineChart.classList.add('hidden');
+                    }
+                    currentChartType = 'bar';
+                    window.ozelCurrentChartType = 'bar';
+                    // Container görünür olduktan sonra grafiği yeniden çiz (newPlot kullan)
                     setTimeout(function() {
-                        Plotly.Plots.resize('line-chart');
-                    }, 100);
+                        if (yearlyBarGraph && yearlyBarGraph.data && yearlyBarGraph.layout) {
+                            // Önce mevcut grafiği temizle
+                            Plotly.purge('bar-chart');
+                            // Yeni grafiği çiz
+                            Plotly.newPlot('bar-chart', yearlyBarGraph.data, yearlyBarGraph.layout, { displayModeBar: false, responsive: true });
+                        }
+                    }, 50);
                 });
                 
                 ozelMonthlyBtn.addEventListener('click', function() {
@@ -897,6 +923,55 @@
             
             // Sayfayı yeni URL ile yükle
             window.location.href = url.toString();
+        }
+
+        let currentKatkiLevel = {{ katki_level or 1 }};
+
+        function setKatkiLevel(level) {
+            currentKatkiLevel = level;
+            
+            // Buton durumlarını güncelle
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`katki-level-${i}`);
+                if (btn) {
+                    if (i == level) {
+                        btn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-indigo-50');
+                        btn.classList.add('bg-indigo-600', 'text-white', 'shadow-inner');
+                    } else {
+                        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-inner');
+                        btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-indigo-50');
+                    }
+                }
+            }
+            
+            // Hidden input'u güncelle
+            const katkiLevelInput = document.getElementById('katki_level_input');
+            if (katkiLevelInput) {
+                katkiLevelInput.value = level;
+            }
+            
+            // Grafiği güncelle
+            updateKatkiGraph();
+        }
+
+        function updateKatkiGraph() {
+            fetch(`/api/katki-graph?level=${currentKatkiLevel}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.graphJSON) {
+                    const graphData = JSON.parse(data.graphJSON);
+                    Plotly.react('katki-chart', graphData.data, graphData.layout, {
+                        displayModeBar: false,
+                        responsive: true,
+                        scrollZoom: true
+                    });
+                } else {
+                    console.error('Grafik yüklenemedi:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('AJAX hatası:', error);
+            });
         }
 
         // toggleViewMonthly function removed for performance optimization

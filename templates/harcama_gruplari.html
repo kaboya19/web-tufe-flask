@@ -711,9 +711,14 @@
                 yearlyBarChart.style.display = 'none';
                 yearlyLineChart.style.display = 'none';
             } else {
-                // Yıllık seçildiğinde sadece line grafik göster
-                yearlyLineChart.style.display = 'block';
-                yearlyBarChart.style.display = 'none';
+                // Yıllık seçildiğinde bar grafik göster (aylık gibi)
+                if (currentChartType === 'bar') {
+                    yearlyBarChart.style.display = 'block';
+                    yearlyLineChart.style.display = 'none';
+                } else {
+                    yearlyLineChart.style.display = 'block';
+                    yearlyBarChart.style.display = 'none';
+                }
                 monthlyBarChart.style.display = 'none';
                 monthlyLineChart.style.display = 'none';
             }
@@ -726,8 +731,10 @@
                         Plotly.Plots.resize('monthly-line-chart');
                     }
                 } else {
-                    // Yıllık seçildiğinde sadece line grafik güncelle
-                    if (typeof yearlyLineGraph !== 'undefined') {
+                    // Yıllık seçildiğinde seçili grafik tipine göre güncelle
+                    if (currentChartType === 'bar' && typeof yearlyBarGraph !== 'undefined') {
+                        Plotly.Plots.resize('yearly-bar-chart');
+                    } else if (currentChartType === 'line' && typeof yearlyLineGraph !== 'undefined') {
                         Plotly.Plots.resize('yearly-line-chart');
                     }
                 }
@@ -748,15 +755,15 @@
         harcamaYearlyBtn.addEventListener('click', function() {
             currentViewType = 'yearly';
             setHarcamaActive(harcamaYearlyBtn);
-            // Bar/Line butonlarını gizle
+            // Bar/Line butonlarını göster
             const barLineBtnGroup = document.getElementById('bar-line-btn-group');
             if (barLineBtnGroup) {
-                barLineBtnGroup.style.display = 'none';
+                barLineBtnGroup.style.display = 'flex';
             }
-            // Yıllık seçildiğinde otomatik olarak line grafiğini göster
-            document.getElementById('yearly-line-chart').style.display = 'block';
-            document.getElementById('yearly-bar-chart').style.display = 'none';
-            currentChartType = 'line'; // Set current chart type to line
+            // Yıllık seçildiğinde otomatik olarak bar grafiğini göster
+            document.getElementById('yearly-bar-chart').style.display = 'block';
+            document.getElementById('yearly-line-chart').style.display = 'none';
+            currentChartType = 'bar'; // Set current chart type to bar
             updateHarcamaCharts();
         });
         
