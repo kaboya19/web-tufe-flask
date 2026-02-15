@@ -332,11 +332,12 @@
                                         <div class="yearly-widget-range">
                                             <div class="yearly-widget-range-labels">
                                                 <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_low)|replace(".", ",") }}% AY İÇİ DÜŞÜK</span>
-                                                <span class="yearly-widget-range-label">{{ "%.2f"|format(monthly_widget_data.month_high)|replace(".", ",") }}% AY İÇİ YÜKSEK</span>
+                                                <span class="yearly-widget-range-label">3,15% AY İÇİ YÜKSEK</span>
                                             </div>
                                             <div class="yearly-widget-slider">
                                                 <div class="yearly-widget-slider-track">
-                                                    {% set range = monthly_widget_data.month_high - monthly_widget_data.month_low %}
+                                                    {% set month_high_fixed = 3.15 %}
+                                                    {% set range = month_high_fixed - monthly_widget_data.month_low %}
                                                     {% if range > 0 %}
                                                         {% set position = ((monthly_widget_data.current_value - monthly_widget_data.month_low) / range) * 100 %}
                                                     {% else %}
