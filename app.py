@@ -7331,32 +7331,73 @@ def create_katki_graph(level=1):
             ['#1F2937', '#374151', '#4B5563', '#6B7280', '#9CA3AF'],  # Gri
         ]
         
-        # Düzey bazlı başlangıç noktası - her düzey farklı bir renk ailesinden başlasın
-        start_family = (katki_level - 1) % len(color_families)
-        
-        # Renkleri ailelerden döngüsel olarak seç (farklı aileden başlayarak)
-        colors = []
-        family_index = start_family
-        color_index_in_family = 0
-        
-        for i in range(len(categories)):
-            # Mevcut aileden bir renk al
-            current_family = color_families[family_index % len(color_families)]
-            colors.append(current_family[color_index_in_family % len(current_family)])
+        # Düzey 3 ve 4 için özel renk seçimi - her kategori için tamamen farklı renk ailelerinden
+        if katki_level == 3 or katki_level == 4:
+            # Her kategori için farklı renk ailesinden, farklı tonlardan renk seç
+            # Düzey 3 ve 4'te genellikle az kategori olduğu için her birine tamamen farklı renk ver
+            colors = []
+            # Düzey 3 için: Kırmızı, Turuncu, Yeşil, Mavi, Mor, Pembe gibi tamamen farklı renkler
+            # Düzey 4 için: Farklı bir set
+            if katki_level == 3:
+                # Düzey 3 için ayırt edilebilir renk seti
+                level3_colors = [
+                    '#DC2626',  # Koyu kırmızı
+                    '#F97316',  # Canlı turuncu
+                    '#22C55E',  # Canlı yeşil
+                    '#2563EB',  # Canlı mavi
+                    '#7C3AED',  # Canlı mor
+                    '#EC4899',  # Canlı pembe
+                    '#14B8A6',  # Turkuaz
+                    '#F59E0B',  # Altın sarısı
+                    '#EF4444',  # Açık kırmızı
+                    '#10B981',  # Zümrüt yeşili
+                ]
+            else:  # katki_level == 4
+                # Düzey 4 için farklı ayırt edilebilir renk seti
+                level4_colors = [
+                    '#B91C1C',  # Koyu kırmızı (farklı ton)
+                    '#EA580C',  # Koyu turuncu
+                    '#16A34A',  # Koyu yeşil
+                    '#1E40AF',  # Koyu mavi
+                    '#6B21A8',  # Koyu mor
+                    '#DB2777',  # Koyu pembe
+                    '#0D9488',  # Koyu turkuaz
+                    '#D97706',  # Koyu turuncu-sarı
+                    '#F87171',  # Açık kırmızı
+                    '#4ADE80',  # Açık yeşil
+                ]
             
-            # Sonraki renk için bir sonraki aileye geç
-            family_index += 1
-            # Her 3 kategoride bir, aynı aile içinde farklı bir ton kullan
-            if i % 3 == 2:
-                color_index_in_family += 1
-        
-        # Eğer hala yeterli renk yoksa, all_colors'dan tamamla
-        if len(colors) < len(categories):
-            remaining = len(categories) - len(colors)
-            # Kullanılmayan renkleri bul ve ekle
-            used_colors = set(colors)
-            unused_colors = [c for c in all_colors if c not in used_colors]
-            colors.extend(unused_colors[:remaining])
+            selected_colors = level3_colors if katki_level == 3 else level4_colors
+            # Kategoriler için renkleri döngüsel olarak al
+            for i in range(len(categories)):
+                colors.append(selected_colors[i % len(selected_colors)])
+        else:
+            # Düzey 1 ve 2 için mevcut mantık (çok kategori olduğu için)
+            start_family = (katki_level - 1) % len(color_families)
+            
+            # Renkleri ailelerden döngüsel olarak seç (farklı aileden başlayarak)
+            colors = []
+            family_index = start_family
+            color_index_in_family = 0
+            
+            for i in range(len(categories)):
+                # Mevcut aileden bir renk al
+                current_family = color_families[family_index % len(color_families)]
+                colors.append(current_family[color_index_in_family % len(current_family)])
+                
+                # Sonraki renk için bir sonraki aileye geç
+                family_index += 1
+                # Her 3 kategoride bir, aynı aile içinde farklı bir ton kullan
+                if i % 3 == 2:
+                    color_index_in_family += 1
+            
+            # Eğer hala yeterli renk yoksa, all_colors'dan tamamla
+            if len(colors) < len(categories):
+                remaining = len(categories) - len(colors)
+                # Kullanılmayan renkleri bul ve ekle
+                used_colors = set(colors)
+                unused_colors = [c for c in all_colors if c not in used_colors]
+                colors.extend(unused_colors[:remaining])
         
         colors = colors[:len(categories)]
         
@@ -7416,6 +7457,7 @@ def create_katki_graph(level=1):
         import traceback
         traceback.print_exc()
         return None
+
 
 @app.route('/ozel-kapsamli-gostergeler', methods=['GET', 'POST'])
 def ozel_kapsamli_gostergeler():

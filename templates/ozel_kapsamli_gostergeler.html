@@ -417,6 +417,8 @@
                     </div>
                 </div>
                 <div class="overflow-x-auto">
+                </div>
+                <div class="overflow-x-auto">
                     <div id="katki-chart" class="w-full" style="height: 400px; min-width: 0;"></div>
                 </div>
             </div>
@@ -925,7 +927,7 @@
             window.location.href = url.toString();
         }
 
-        let currentKatkiLevel = {{ katki_level or 1 }};
+        let currentKatkiLevel = '{{ katki_level or 1 }}';
 
         function setKatkiLevel(level) {
             currentKatkiLevel = level;
@@ -955,7 +957,7 @@
         }
 
         function updateKatkiGraph() {
-            fetch(`/api/katki-graph?level=${currentKatkiLevel}`)
+            fetch('/api/katki-graph?level=' + currentKatkiLevel)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.graphJSON) {
@@ -969,7 +971,7 @@
                     console.error('Grafik yüklenemedi:', data.error);
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('AJAX hatası:', error);
             });
         }
