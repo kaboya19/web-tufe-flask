@@ -40,7 +40,7 @@ Compress(app)
 
 # Bakım Modu Kontrolü
 # Bakım modunu aktifleştirmek için aşağıdaki değeri True yapın
-MAINTENANCE_MODE = False
+MAINTENANCE_MODE = True
 
 @app.before_request
 def check_maintenance_mode():
@@ -5723,7 +5723,10 @@ def harcama_gruplari():
                                     break
                             
                             # Eğer NaN olmayan ilk veri 2025-12-31 veya sonrası ise, TÜİK verisini normalize et
-                            tuik_values = tuik_filtered[tuik_column_name].copy()
+                            tuik_values = tuik_filtered[tuik_column_name]
+                            if isinstance(tuik_values, pd.DataFrame):
+                                tuik_values = tuik_values.iloc[:, 0]
+                            tuik_values = tuik_values.copy()
                             base_date = pd.to_datetime('2025-12-31')
                             should_normalize = first_non_nan_date is not None and first_non_nan_date >= base_date
                             
@@ -5731,7 +5734,8 @@ def harcama_gruplari():
                                 # İlk NaN olmayan tarihte TÜİK değerini bul
                                 if first_non_nan_date in tuik_filtered.index:
                                     tuik_first_value = tuik_filtered.loc[first_non_nan_date, tuik_column_name]
-                                    # TÜİK değeri varsa normalize et
+                                    if isinstance(tuik_first_value, pd.Series):
+                                        tuik_first_value = tuik_first_value.iloc[0]
                                     if pd.notna(tuik_first_value) and tuik_first_value != 0:
                                         # TÜİK verisini ilk değere göre normalize et (ilk değer = 100)
                                         tuik_values_normalized = (tuik_values / tuik_first_value) * 100
@@ -5745,6 +5749,8 @@ def harcama_gruplari():
                                         if len(tuik_dates_before) > 0:
                                             tuik_base_date = tuik_dates_before[-1]
                                             tuik_base_value = tuik_filtered.loc[tuik_base_date, tuik_column_name]
+                                            if isinstance(tuik_base_value, pd.Series):
+                                                tuik_base_value = tuik_base_value.iloc[0]
                                             if pd.notna(tuik_base_value) and tuik_base_value != 0:
                                                 # TÜİK verisini base değere göre normalize et
                                                 tuik_values_normalized = (tuik_values / tuik_base_value) * 100
@@ -5758,7 +5764,7 @@ def harcama_gruplari():
                                 
                                 # TÜİK verisini ilk NaN olmayan tarihten itibaren filtrele
                                 tuik_filtered_normalized = tuik_filtered[tuik_filtered.index >= first_non_nan_date]
-                                tuik_values_normalized_filtered = tuik_values_normalized[tuik_filtered_normalized.index]
+                                tuik_values_normalized_filtered = tuik_values_normalized.loc[tuik_filtered_normalized.index]
                             else:
                                 # İlk tarih 2025-12-31'den önce ise normalize etme
                                 tuik_values_normalized_filtered = tuik_values
