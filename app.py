@@ -40,7 +40,7 @@ Compress(app)
 
 # Bakım Modu Kontrolü
 # Bakım modunu aktifleştirmek için aşağıdaki değeri True yapın
-MAINTENANCE_MODE = True
+MAINTENANCE_MODE = False
 
 @app.before_request
 def check_maintenance_mode():
