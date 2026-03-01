@@ -276,14 +276,31 @@
                                     </div>
                                     {% endif %}
                                     
+                                    {% if widget_data.show_finalized_message %}
                                     <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #D1FAE5; border-left: 3px solid #10B981; border-radius: 4px;">
                                         <p style="margin: 0; font-size: 11px; color: #065F46; line-height: 1.4;">
                                             <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                             </svg>
-                                            Aylık veriler kesinleşmiştir. Aylık artış: %3,19 | Yıllık artış: %32,93
+                                            Aylık veriler kesinleşmiştir.
+                                            {% if monthly_widget_data and monthly_widget_data.current_value is not none %}
+                                            Aylık artış: %{{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }}
+                                            {% endif %}
+                                            {% if widget_data.current_value is not none %}
+                                            | Yıllık artış: %{{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }}
+                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% else %}
+                                    <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 4px;">
+                                        <p style="margin: 0; font-size: 11px; color: #92400E; line-height: 1.4;">
+                                            <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Veriler ayın 24'ünde kesinleşecektir.
+                                        </p>
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 </div>
                                 {% endif %}
@@ -348,14 +365,31 @@
                                         </div>
                                         {% endif %}
                                         
+                                        {% if monthly_widget_data.show_finalized_message %}
                                         <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #D1FAE5; border-left: 3px solid #10B981; border-radius: 4px;">
                                             <p style="margin: 0; font-size: 11px; color: #065F46; line-height: 1.4;">
                                                 <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                             </svg>
-                                                Aylık veriler kesinleşmiştir. Aylık artış: %3,19 | Yıllık artış: %32,93
+                                                Aylık veriler kesinleşmiştir.
+                                                {% if monthly_widget_data.current_value is not none %}
+                                                Aylık artış: %{{ "%.2f"|format(monthly_widget_data.current_value)|replace(".", ",") }}
+                                                {% endif %}
+                                                {% if widget_data and widget_data.current_value is not none %}
+                                                | Yıllık artış: %{{ "%.2f"|format(widget_data.current_value)|replace(".", ",") }}
+                                                {% endif %}
                                             </p>
                                         </div>
+                                        {% else %}
+                                        <div class="yearly-widget-warning" style="margin-top: 12px; padding: 8px 12px; background-color: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 4px;">
+                                            <p style="margin: 0; font-size: 11px; color: #92400E; line-height: 1.4;">
+                                                <svg style="display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                            </svg>
+                                                Veriler ayın 24'ünde kesinleşecektir.
+                                            </p>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endif %}
