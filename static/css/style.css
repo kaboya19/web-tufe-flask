@@ -751,6 +751,7 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    align-items: stretch;
 }
 
 @media (max-width: 1024px) {
@@ -1156,6 +1157,308 @@ main {
     .yearly-widget-icon svg {
         width: 16px;
         height: 16px;
+    }
+}
+
+/* Widget Nowcast Display */
+.widget-nowcast {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+.widget-nowcast-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.widget-nowcast-icon {
+    width: 16px;
+    height: 16px;
+    color: rgba(255,255,255,0.6);
+    flex-shrink: 0;
+}
+
+.widget-nowcast-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.widget-nowcast-body {
+    text-align: center;
+}
+
+.widget-nowcast-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.widget-nowcast-band-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.widget-nowcast-bound {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    white-space: nowrap;
+    min-width: 38px;
+}
+
+.widget-nowcast-bound:first-child {
+    text-align: right;
+}
+
+.widget-nowcast-bound:last-child {
+    text-align: left;
+}
+
+.widget-nowcast-bar-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+}
+
+.widget-nowcast-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.25), rgba(255,255,255,0.5));
+    transition: width 0.6s ease;
+}
+
+.widget-nowcast-bar-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.2);
+    transition: left 0.6s ease;
+}
+
+/* Widget Chart Buttons Container */
+.widget-chart-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.widget-chart-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    backdrop-filter: blur(4px);
+}
+
+.widget-chart-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.widget-chart-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Widget Chart Modal */
+.widget-chart-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.widget-chart-modal.show {
+    display: flex;
+}
+
+.widget-chart-modal-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: widgetChartSlideIn 0.3s ease-out;
+}
+
+@keyframes widgetChartSlideIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.widget-chart-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 12px;
+}
+
+.widget-chart-modal-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.widget-chart-modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.widget-chart-modal-close:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.widget-chart-modal-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 24px 16px;
+}
+
+.widget-chart-tab {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: 2px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.widget-chart-tab:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+.widget-chart-tab.active {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+.widget-chart-container {
+    padding: 0 24px 24px;
+    flex: 1;
+    min-height: 420px;
+}
+
+.widget-chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 420px;
+    gap: 16px;
+    color: #6b7280;
+}
+
+.widget-chart-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: widgetSpin 0.8s linear infinite;
+}
+
+@keyframes widgetSpin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+    .widget-chart-modal-content {
+        max-height: 95vh;
+        border-radius: 16px;
+    }
+    .widget-chart-modal-header {
+        padding: 16px 16px 8px;
+    }
+    .widget-chart-modal-title {
+        font-size: 1.1rem;
+    }
+    .widget-chart-modal-tabs {
+        padding: 0 16px 12px;
+    }
+    .widget-chart-tab {
+        padding: 6px 14px;
+        font-size: 13px;
+    }
+    .widget-chart-container {
+        padding: 0 12px 16px;
+        min-height: 320px;
+    }
+    .widget-chart-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .widget-chart-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+        justify-content: center;
+    }
+    .widget-chart-btn svg {
+        width: 18px;
+        height: 18px;
     }
 }
 

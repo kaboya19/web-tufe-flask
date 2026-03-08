@@ -254,8 +254,27 @@
                                     <div class="yearly-widget-comparison-value">{{ "%.2f"|format(widget_data.tuik_rate)|replace(".", ",") }}%</div>
                                 </div>
                                 {% endif %}
-                                
+
                                 <div style="margin-top: auto;">
+                                <div id="nowcast-yearly" class="widget-nowcast" style="display:none;">
+                                    <div class="widget-nowcast-header">
+                                        <svg class="widget-nowcast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        <span class="widget-nowcast-label">Ay Sonu Tahmini</span>
+                                    </div>
+                                    <div class="widget-nowcast-body">
+                                        <span id="nowcast-yearly-value" class="widget-nowcast-value"></span>
+                                        <div class="widget-nowcast-band-bar">
+                                            <span id="nowcast-yearly-low" class="widget-nowcast-bound"></span>
+                                            <div class="widget-nowcast-bar-track">
+                                                <div id="nowcast-yearly-fill" class="widget-nowcast-bar-fill"></div>
+                                                <div id="nowcast-yearly-thumb" class="widget-nowcast-bar-thumb"></div>
+                                            </div>
+                                            <span id="nowcast-yearly-high" class="widget-nowcast-bound"></span>
+                                        </div>
+                                    </div>
+                                </div>
                                     {% if widget_data.ytd_low is not none and widget_data.ytd_high is not none and widget_data.current_value is not none %}
                                     <div class="yearly-widget-range">
                                         <div class="yearly-widget-range-labels">
@@ -343,8 +362,27 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                    
+
                                     <div style="margin-top: auto;">
+                                    <div id="nowcast-monthly" class="widget-nowcast" style="display:none;">
+                                        <div class="widget-nowcast-header">
+                                            <svg class="widget-nowcast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                            <span class="widget-nowcast-label">Ay Sonu Tahmini</span>
+                                        </div>
+                                        <div class="widget-nowcast-body">
+                                            <span id="nowcast-monthly-value" class="widget-nowcast-value"></span>
+                                            <div class="widget-nowcast-band-bar">
+                                                <span id="nowcast-monthly-low" class="widget-nowcast-bound"></span>
+                                                <div class="widget-nowcast-bar-track">
+                                                    <div id="nowcast-monthly-fill" class="widget-nowcast-bar-fill"></div>
+                                                    <div id="nowcast-monthly-thumb" class="widget-nowcast-bar-thumb"></div>
+                                                </div>
+                                                <span id="nowcast-monthly-high" class="widget-nowcast-bound"></span>
+                                            </div>
+                                        </div>
+                                    </div>
                                         {% if monthly_widget_data.month_low is not none and monthly_widget_data.month_high is not none and monthly_widget_data.current_value is not none %}
                                         <div class="yearly-widget-range">
                                             <div class="yearly-widget-range-labels">
@@ -395,6 +433,21 @@
                                 {% endif %}
                             </div>
                             
+                            <div class="widget-chart-buttons">
+                                <button class="widget-chart-btn" onclick="event.stopPropagation(); openWidgetChart('yearly')">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <span>Yıllık Enflasyon Grafiği</span>
+                                </button>
+                                <button class="widget-chart-btn" onclick="event.stopPropagation(); openWidgetChart('monthly')">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <span>Aylık Enflasyon Grafiği</span>
+                                </button>
+                            </div>
+
                             <div class="yearly-widget-continue-btn-container">
                                 <button id="yearly-widget-continue-btn" class="yearly-widget-continue-btn">
                                     <span>Siteye Devam Et</span>
@@ -406,6 +459,27 @@
                         </div>
                     </div>
                     {% endif %}
+
+                    <!-- Grafik Modal -->
+                    <div id="widget-chart-modal" class="widget-chart-modal">
+                        <div class="widget-chart-modal-content">
+                            <div class="widget-chart-modal-header">
+                                <h3 id="widget-chart-modal-title" class="widget-chart-modal-title">Enflasyon Grafiği</h3>
+                                <button onclick="closeWidgetChart()" class="widget-chart-modal-close">&times;</button>
+                            </div>
+                            <div class="widget-chart-modal-tabs">
+                                <button id="tab-yearly" class="widget-chart-tab active" onclick="switchWidgetChartTab('yearly')">Yıllık Enflasyon</button>
+                                <button id="tab-monthly" class="widget-chart-tab" onclick="switchWidgetChartTab('monthly')">Aylık Enflasyon</button>
+                            </div>
+                            <div id="widget-chart-container" class="widget-chart-container">
+                                <div id="widget-chart-loading" class="widget-chart-loading">
+                                    <div class="widget-chart-spinner"></div>
+                                    <p>Grafik yükleniyor...</p>
+                                </div>
+                                <div id="widget-chart-plot" style="width:100%;height:100%;"></div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Ana İçerik -->
                     <div id="main-content-wrapper">
@@ -937,6 +1011,34 @@
                 });
             }
         })();
+
+        // Nowcast verilerini widget kartlarına yükle
+        (function() {
+            fetch('/api/widget-forecast-data')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    function fmt(v) { return v.toFixed(2).replace('.', ','); }
+                    function fillNowcast(prefix, fc) {
+                        if (!fc || !fc.forecast || fc.forecast.length === 0) return;
+                        var val = fc.forecast[fc.forecast.length - 1];
+                        var lo = fc.lower[fc.lower.length - 1];
+                        var hi = fc.upper[fc.upper.length - 1];
+                        document.getElementById(prefix + '-value').textContent = '%' + fmt(val);
+                        document.getElementById(prefix + '-low').textContent = '%' + fmt(lo);
+                        document.getElementById(prefix + '-high').textContent = '%' + fmt(hi);
+                        var range = hi - lo;
+                        var pos = range > 0 ? ((val - lo) / range) * 100 : 50;
+                        pos = Math.max(0, Math.min(100, pos));
+                        document.getElementById(prefix + '-fill').style.width = pos + '%';
+                        document.getElementById(prefix + '-thumb').style.left = pos + '%';
+                        var container = document.getElementById(prefix.split('-').slice(0,2).join('-'));
+                        if (container) container.style.display = 'block';
+                    }
+                    fillNowcast('nowcast-monthly', data.monthly);
+                    fillNowcast('nowcast-yearly', data.yearly);
+                })
+                .catch(function() {});
+        })();
     </script>
     <script id="graphs-data" type="application/json">{{ graphJSON | safe }}</script>
     <script>
@@ -1050,5 +1152,249 @@
     }
 
     // toggleView function removed for performance optimization
+
+    Plotly.register({
+        moduleType: 'locale',
+        name: 'tr',
+        dictionary: {},
+        format: {
+            days: ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
+            shortDays: ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'],
+            months: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+            shortMonths: ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'],
+            date: '%d/%m/%Y',
+            decimal: ',',
+            thousands: '.'
+        }
+    });
+
+    var _widgetChartData = null;
+    var _widgetForecastData = null;
+    var _widgetChartActiveTab = 'yearly';
+    var trAylar = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+    function _formatDateTR(ds) {
+        var p = ds.split('-');
+        return parseInt(p[2],10) + ' ' + trAylar[parseInt(p[1],10)-1] + ' ' + p[0];
+    }
+
+    function openWidgetChart(tab) {
+        _widgetChartActiveTab = tab || 'yearly';
+        var modal = document.getElementById('widget-chart-modal');
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        document.getElementById('tab-yearly').classList.toggle('active', _widgetChartActiveTab === 'yearly');
+        document.getElementById('tab-monthly').classList.toggle('active', _widgetChartActiveTab === 'monthly');
+
+        if (_widgetChartData) {
+            renderWidgetChart();
+        } else {
+            document.getElementById('widget-chart-loading').style.display = 'flex';
+            document.getElementById('widget-chart-plot').style.display = 'none';
+            Promise.all([
+                fetch('/api/widget-chart-data').then(function(r) { return r.json(); }),
+                fetch('/api/widget-forecast-data').then(function(r) { return r.json(); }).catch(function() { return {}; })
+            ]).then(function(results) {
+                _widgetChartData = results[0];
+                _widgetForecastData = results[1];
+                renderWidgetChart();
+            }).catch(function() {
+                document.getElementById('widget-chart-loading').innerHTML = '<p style="color:#ef4444;">Grafik yüklenemedi.</p>';
+            });
+        }
+    }
+
+    function closeWidgetChart() {
+        var modal = document.getElementById('widget-chart-modal');
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    function switchWidgetChartTab(tab) {
+        _widgetChartActiveTab = tab;
+        document.getElementById('tab-yearly').classList.toggle('active', tab === 'yearly');
+        document.getElementById('tab-monthly').classList.toggle('active', tab === 'monthly');
+        if (_widgetChartData) renderWidgetChart();
+    }
+
+    function renderWidgetChart() {
+        var loading = document.getElementById('widget-chart-loading');
+        var plotDiv = document.getElementById('widget-chart-plot');
+        var titleEl = document.getElementById('widget-chart-modal-title');
+        loading.style.display = 'none';
+        plotDiv.style.display = 'block';
+
+        var d = _widgetChartData[_widgetChartActiveTab];
+        if (!d || !d.dates || d.dates.length === 0) {
+            plotDiv.innerHTML = '<p style="text-align:center;padding:40px;color:#6b7280;">Veri bulunamadı.</p>';
+            return;
+        }
+
+        var isYearly = _widgetChartActiveTab === 'yearly';
+        titleEl.textContent = isYearly ? 'Yıllık Enflasyon Grafiği' : 'Aylık Enflasyon Grafiği';
+
+        var lineColor = isYearly ? '#6366f1' : '#f59e0b';
+        var fillColor = isYearly ? 'rgba(99,102,241,0.1)' : 'rgba(245,158,11,0.1)';
+
+        var hoverTexts = d.dates.map(_formatDateTR);
+
+        var traces = [];
+
+        var allYValues = d.values.slice();
+
+        var fc = _widgetForecastData ? _widgetForecastData[_widgetChartActiveTab] : null;
+        if (fc && fc.forecast_dates && fc.forecast_dates.length > 0) {
+            allYValues = allYValues.concat(fc.upper).concat(fc.lower);
+        }
+
+        var yMin = Math.min.apply(null, allYValues);
+        var yMax = Math.max.apply(null, allYValues);
+        var yPad = (yMax - yMin) * 0.1 || 1;
+
+        traces.push({
+            x: d.dates,
+            y: d.dates.map(function() { return yMin - yPad; }),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: 'transparent', width: 0 },
+            showlegend: false,
+            hoverinfo: 'skip'
+        });
+
+        traces.push({
+            x: d.dates,
+            y: d.values,
+            type: 'scatter',
+            mode: 'lines',
+            name: isYearly ? 'Yıllık Enflasyon (%)' : 'Aylık Enflasyon (%)',
+            line: { color: lineColor, width: 2.5, shape: 'spline' },
+            fill: 'tonexty',
+            fillcolor: fillColor,
+            text: hoverTexts,
+            hovertemplate: '%{text}<br><b>%{y:.2f}%</b><extra></extra>'
+        });
+
+        if (fc && fc.forecast_dates && fc.forecast_dates.length > 0) {
+            var fcDates = [fc.last_actual_date].concat(fc.forecast_dates);
+            var fcVals = [fc.last_actual_value].concat(fc.forecast);
+            var fcUpper = [fc.last_actual_value].concat(fc.upper);
+            var fcLower = [fc.last_actual_value].concat(fc.lower);
+            var fcHover = fcDates.map(_formatDateTR);
+
+            var fcColor = isYearly ? '#a5b4fc' : '#fcd34d';
+            var bandColor = isYearly ? 'rgba(165,180,252,0.2)' : 'rgba(252,211,77,0.2)';
+
+            traces.push({
+                x: fcDates,
+                y: fcLower,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'transparent', width: 0 },
+                showlegend: false,
+                hoverinfo: 'skip'
+            });
+
+            traces.push({
+                x: fcDates,
+                y: fcUpper,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'transparent', width: 0 },
+                fill: 'tonexty',
+                fillcolor: bandColor,
+                name: 'Güven Aralığı',
+                text: fcDates.map(function(ds, i) {
+                    return _formatDateTR(ds) + '<br>Üst: %' + fcUpper[i].toFixed(2) + ' | Alt: %' + fcLower[i].toFixed(2);
+                }),
+                hovertemplate: '%{text}<extra></extra>'
+            });
+
+            traces.push({
+                x: fcDates,
+                y: fcVals,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Tahmin (Ortalama)',
+                line: { color: fcColor, width: 2.5, dash: 'dash' },
+                marker: { size: 4, color: fcColor },
+                text: fcHover,
+                hovertemplate: '%{text}<br><b>Tahmin: %{y:.2f}%</b><extra></extra>'
+            });
+
+            if (fc.methods) {
+                var methodColors = {
+                    'historical': '#ef4444',
+                    'linear': '#22c55e',
+                    'recent': '#3b82f6',
+                    'pattern': '#a855f7'
+                };
+                var methodKeys = Object.keys(fc.methods);
+                for (var mi = 0; mi < methodKeys.length; mi++) {
+                    var mKey = methodKeys[mi];
+                    var mData = fc.methods[mKey];
+                    var mDates = [fc.last_actual_date].concat(fc.forecast_dates);
+                    var mVals = [fc.last_actual_value].concat(mData.values);
+                    var mColor = methodColors[mKey] || '#6b7280';
+                    traces.push({
+                        x: mDates,
+                        y: mVals,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: mData.label,
+                        line: { color: mColor, width: 1.2, dash: 'dot' },
+                        opacity: 0.7,
+                        text: mDates.map(_formatDateTR),
+                        hovertemplate: '%{text}<br><b>' + mData.label + ': %{y:.2f}%</b><extra></extra>',
+                        visible: 'legendonly'
+                    });
+                }
+            }
+        }
+
+        var layout = {
+            autosize: true,
+            height: 480,
+            margin: { l: 55, r: 25, t: 40, b: 50 },
+            xaxis: {
+                title: { text: 'Tarih', font: { size: 12, color: '#6b7280' } },
+                gridcolor: '#f3f4f6',
+                tickformat: '%d %b'
+            },
+            yaxis: {
+                title: { text: 'Değişim (%)', font: { size: 12, color: '#6b7280' } },
+                gridcolor: '#f3f4f6',
+                ticksuffix: '%',
+                autorange: true
+            },
+            plot_bgcolor: 'white',
+            paper_bgcolor: 'white',
+            font: { family: 'Poppins, sans-serif' },
+            hovermode: 'x unified',
+            hoverlabel: { bgcolor: '#1f2937', font: { color: 'white', size: 13 } },
+            legend: {
+                orientation: 'h',
+                yanchor: 'bottom',
+                y: 1.02,
+                xanchor: 'center',
+                x: 0.5,
+                font: { size: 12 }
+            }
+        };
+
+        Plotly.newPlot('widget-chart-plot', traces, layout, {
+            displayModeBar: false,
+            responsive: true,
+            locale: 'tr'
+        });
+    }
+
+    document.getElementById('widget-chart-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeWidgetChart();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeWidgetChart();
+    });
 </script>
 {% endblock %}

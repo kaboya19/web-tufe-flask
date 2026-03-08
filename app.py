@@ -801,6 +801,363 @@ def get_monthly_widget_data():
         traceback.print_exc()
         return None
 
+@app.route('/api/widget-chart-data')
+def widget_chart_data():
+    """Yıllık ve aylık enflasyon grafik verilerini JSON olarak döndür"""
+    try:
+        result = {}
+
+        def _read_widget_csv(filename):
+            df = cached_read_csv(filename)
+            if len(df.columns) < 2:
+                return None
+            dcol, vcol = df.columns[0], df.columns[1]
+            dates, vals = [], []
+            for _, row in df.iterrows():
+                v = row[vcol]
+                if pd.notna(v) and str(v).strip() not in ('', 'nan'):
+                    try:
+                        val = float(str(v).replace(',', '.'))
+                        date_str = str(row[dcol])[:10]
+                        day = int(date_str[8:10])
+                        if day >= 25:
+                            continue
+                        dates.append(date_str)
+                        vals.append(round(val, 4))
+                    except:
+                        continue
+            return {'dates': dates, 'values': vals}
+
+        yearly = _read_widget_csv("tüfeyıllıkgünlük.csv")
+        if yearly:
+            result['yearly'] = yearly
+
+        monthly = _read_widget_csv("tüfeaylıkgünlük.csv")
+        if monthly:
+            result['monthly'] = monthly
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/widget-forecast-data')
+def widget_forecast_data():
+    """5 metotla ay sonu enflasyon tahmini (nowcasting)"""
+    try:
+        from datetime import timedelta
+
+        def _parse_series(filename):
+            df = cached_read_csv(filename)
+            if len(df.columns) < 2:
+                return {}, []
+            dcol, vcol = df.columns[0], df.columns[1]
+            by_month = {}
+            all_records = []
+            for _, row in df.iterrows():
+                v = row[vcol]
+                if pd.notna(v) and str(v).strip() not in ('', 'nan'):
+                    try:
+                        val = float(str(v).replace(',', '.'))
+                        ds = str(row[dcol])[:10]
+                        dt = datetime.strptime(ds, '%Y-%m-%d')
+                        day = dt.day
+                        if day >= 25:
+                            continue
+                        key = (dt.year, dt.month)
+                        if key not in by_month:
+                            by_month[key] = {'dates': [], 'values': [], 'days': []}
+                        by_month[key]['dates'].append(ds)
+                        by_month[key]['values'].append(val)
+                        by_month[key]['days'].append(day)
+                        all_records.append((ds, val, dt))
+                    except:
+                        continue
+            return by_month, all_records
+
+        def _parse_index(filename):
+            df = cached_read_csv(filename)
+            if len(df.columns) < 2:
+                return {}
+            dcol, vcol = df.columns[0], df.columns[1]
+            idx_map = {}
+            for _, row in df.iterrows():
+                v = row[vcol]
+                if pd.notna(v) and str(v).strip() not in ('', 'nan'):
+                    try:
+                        val = float(str(v).replace(',', '.'))
+                        ds = str(row[dcol])[:10]
+                        dt = datetime.strptime(ds, '%Y-%m-%d')
+                        idx_map[dt] = val
+                    except:
+                        continue
+            return idx_map
+
+        def _linear_regression(x, y):
+            n = len(x)
+            if n < 2:
+                return 0, y[0] if y else 0
+            x_arr = np.array(x, dtype=float)
+            y_arr = np.array(y, dtype=float)
+            sx = np.sum(x_arr)
+            sy = np.sum(y_arr)
+            sxx = np.sum(x_arr * x_arr)
+            sxy = np.sum(x_arr * y_arr)
+            denom = n * sxx - sx * sx
+            if abs(denom) < 1e-12:
+                return 0, np.mean(y_arr)
+            slope = (n * sxy - sx * sy) / denom
+            intercept = (sy - slope * sx) / n
+            return slope, intercept
+
+        def _forecast_methods(by_month, current_key, index_map):
+            cur = by_month.get(current_key)
+            if not cur or len(cur['values']) < 2:
+                return None
+
+            last_day = max(cur['days'])
+            last_val = cur['values'][-1]
+            if last_day >= 24:
+                return None
+
+            forecast_days = list(range(last_day + 1, 25))
+            if not forecast_days:
+                return None
+
+            methods = {}
+
+            # --- Method 1: Historical Pattern ---
+            cur_year, cur_month = current_key
+            prev_year = cur_year - 1
+            prev_key = (prev_year, cur_month)
+            try:
+                prev_month_for_index = cur_month - 1 if cur_month > 1 else 12
+                prev_month_year_for_index = cur_year if cur_month > 1 else cur_year - 1
+
+                hist_returns = []
+                for d in range(last_day + 1, 25):
+                    dt_cur = datetime(prev_year, cur_month, d)
+                    dt_prev = datetime(prev_year, cur_month, d - 1)
+                    if dt_cur in index_map and dt_prev in index_map and index_map[dt_prev] != 0:
+                        hist_returns.append(index_map[dt_cur] / index_map[dt_prev] - 1)
+                    else:
+                        hist_returns.append(0)
+
+                cur_last_index = index_map.get(datetime(cur_year, cur_month, last_day))
+                if cur_last_index and len(hist_returns) == len(forecast_days):
+                    projected_index = [cur_last_index]
+                    for r in hist_returns:
+                        projected_index.append(projected_index[-1] * (1 + r))
+
+                    cur_month_indices = []
+                    for d in range(1, last_day + 1):
+                        dt = datetime(cur_year, cur_month, d)
+                        if dt in index_map:
+                            cur_month_indices.append(index_map[dt])
+
+                    prev_m_indices = []
+                    last_d_prev = calendar.monthrange(prev_month_year_for_index, prev_month_for_index)[1]
+                    for d in range(1, min(last_d_prev + 1, 25)):
+                        dt = datetime(prev_month_year_for_index, prev_month_for_index, d)
+                        if dt in index_map:
+                            prev_m_indices.append(index_map[dt])
+                    prev_m_avg = np.mean(prev_m_indices) if prev_m_indices else 1
+
+                    m1_vals = []
+                    running_indices = list(cur_month_indices)
+                    for pi in projected_index[1:]:
+                        running_indices.append(pi)
+                        cur_avg = np.mean(running_indices)
+                        m1_vals.append((cur_avg / prev_m_avg - 1) * 100)
+                    methods['historical'] = m1_vals
+                else:
+                    methods['historical'] = [last_val] * len(forecast_days)
+            except:
+                methods['historical'] = [last_val] * len(forecast_days)
+
+            # --- Method 2: Linear Trend (all data) ---
+            slope, intercept = _linear_regression(cur['days'], cur['values'])
+            methods['linear'] = [slope * d + intercept for d in forecast_days]
+
+            # --- Method 3: Last N-day Trend ---
+            n_recent = min(10, len(cur['days']))
+            recent_days = cur['days'][-n_recent:]
+            recent_vals = cur['values'][-n_recent:]
+            slope_n, intercept_n = _linear_regression(recent_days, recent_vals)
+            methods['recent'] = [slope_n * d + intercept_n for d in forecast_days]
+
+            # --- Method 4: Completed Month Pattern ---
+            completed = {k: v for k, v in by_month.items()
+                         if k != current_key and max(v['days']) >= 23 and len(v['values']) >= 20}
+            if completed:
+                shapes = []
+                for k, mv in completed.items():
+                    total_change = mv['values'][-1] - mv['values'][0]
+                    if abs(total_change) < 1e-8:
+                        continue
+                    deltas = {}
+                    for i in range(1, len(mv['days'])):
+                        deltas[mv['days'][i]] = (mv['values'][i] - mv['values'][i - 1]) / abs(total_change)
+                    shapes.append(deltas)
+
+                if shapes:
+                    cur_total = last_val - cur['values'][0] if abs(last_val - cur['values'][0]) > 1e-8 else 0.5
+                    m5_vals = []
+                    running = last_val
+                    for d in forecast_days:
+                        avg_shape = np.mean([s.get(d, 0) for s in shapes])
+                        running += avg_shape * abs(cur_total)
+                        m5_vals.append(running)
+                    methods['pattern'] = m5_vals
+                else:
+                    methods['pattern'] = methods['linear'][:]
+            else:
+                methods['pattern'] = methods['linear'][:]
+
+            method_arrays = list(methods.values())
+            n_methods = len(method_arrays)
+            ensemble = []
+            upper = []
+            lower = []
+            for i in range(len(forecast_days)):
+                vals_at_i = [m[i] for m in method_arrays]
+                mean_val = np.mean(vals_at_i)
+                std_val = np.std(vals_at_i) if n_methods > 1 else 0
+                ensemble.append(round(float(mean_val), 4))
+                upper.append(round(float(mean_val + std_val), 4))
+                lower.append(round(float(mean_val - std_val), 4))
+
+            forecast_dates = []
+            for d in forecast_days:
+                try:
+                    forecast_dates.append(datetime(cur_year, cur_month, d).strftime('%Y-%m-%d'))
+                except:
+                    continue
+
+            methods_rounded = {}
+            method_labels = {
+                'historical': 'Tarihsel Kalıp',
+                'linear': 'Lineer Trend',
+                'recent': 'Son 10 Gün',
+                'pattern': 'Ay Kalıbı'
+            }
+            for key, vals in methods.items():
+                methods_rounded[key] = {
+                    'label': method_labels.get(key, key),
+                    'values': [round(float(v), 4) for v in vals]
+                }
+
+            return {
+                'forecast_dates': forecast_dates,
+                'forecast': ensemble,
+                'upper': upper,
+                'lower': lower,
+                'last_actual_date': cur['dates'][-1],
+                'last_actual_value': round(cur['values'][-1], 4),
+                'methods': methods_rounded
+            }
+
+        monthly_by_month, _ = _parse_series("tüfeaylıkgünlük.csv")
+        yearly_by_month, _ = _parse_series("tüfeyıllıkgünlük.csv")
+        index_map = _parse_index("tüfe.csv")
+
+        now = datetime.now()
+        current_key = (now.year, now.month)
+
+        result = {}
+
+        monthly_fc = _forecast_methods(monthly_by_month, current_key, index_map)
+        if monthly_fc:
+            result['monthly'] = monthly_fc
+
+        # Yıllık: son 11 ayın kümülatif artışı * tahmin edilen aylık
+        def _derive_yearly_from_monthly(monthly_forecast):
+            try:
+                df_grup = cached_read_csv("gruplaraylıkv2.csv")
+                tufe_row = None
+                for _, row in df_grup.iterrows():
+                    if str(row.get('Grup', '')).strip() == 'Web TÜFE':
+                        tufe_row = row
+                        break
+                if tufe_row is None:
+                    return None
+
+                date_cols = [c for c in df_grup.columns if c not in ('', 'Grup') and not c.startswith('Unnamed')]
+                date_vals = []
+                for dc in date_cols:
+                    v = tufe_row[dc]
+                    if pd.notna(v):
+                        try:
+                            date_vals.append((dc, float(str(v).replace(',', '.'))))
+                        except:
+                            continue
+
+                cur_year, cur_month = current_key
+                prev_11 = []
+                for m_offset in range(1, 12):
+                    m = cur_month - m_offset
+                    y = cur_year
+                    while m <= 0:
+                        m += 12
+                        y -= 1
+                    last_day = calendar.monthrange(y, m)[1]
+                    target = f"{y}-{m:02d}-{last_day:02d}"
+                    for dc, val in date_vals:
+                        if dc == target:
+                            prev_11.append(val)
+                            break
+
+                if len(prev_11) != 11:
+                    return None
+
+                cum_11 = 1.0
+                for rate in prev_11:
+                    cum_11 *= (1 + rate / 100)
+
+                def _monthly_to_yearly(m_val):
+                    return round(float((cum_11 * (1 + m_val / 100) - 1) * 100), 4)
+
+                fc = monthly_forecast
+                cur_yearly = yearly_by_month.get(current_key)
+                last_actual_yearly = round(cur_yearly['values'][-1], 4) if cur_yearly and cur_yearly['values'] else _monthly_to_yearly(fc['last_actual_value'])
+
+                y_forecast = [_monthly_to_yearly(v) for v in fc['forecast']]
+                y_upper = [_monthly_to_yearly(v) for v in fc['upper']]
+                y_lower = [_monthly_to_yearly(v) for v in fc['lower']]
+
+                y_methods = {}
+                if 'methods' in fc:
+                    for mkey, mdata in fc['methods'].items():
+                        y_methods[mkey] = {
+                            'label': mdata['label'],
+                            'values': [_monthly_to_yearly(v) for v in mdata['values']]
+                        }
+
+                return {
+                    'forecast_dates': fc['forecast_dates'],
+                    'forecast': y_forecast,
+                    'upper': y_upper,
+                    'lower': y_lower,
+                    'last_actual_date': fc['last_actual_date'],
+                    'last_actual_value': last_actual_yearly,
+                    'methods': y_methods
+                }
+            except Exception as e:
+                print(f"Yıllık türetme hatası: {e}")
+                import traceback
+                traceback.print_exc()
+                return None
+
+        if monthly_fc:
+            yearly_derived = _derive_yearly_from_monthly(monthly_fc)
+            if yearly_derived:
+                result['yearly'] = yearly_derived
+
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 def get_ana_gruplar_data(classification='eski'):
     # Google Sheets API setup
     """creds = get_google_credentials_2()
