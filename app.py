@@ -2445,7 +2445,8 @@ def ana_sayfa():
                              time_series_columns=time_series_columns)
 
 @app.route('/tufe', methods=['GET', 'POST'])
-def tufe():
+@app.route('/tufe/<path:madde_name>', methods=['GET', 'POST'])
+def tufe(madde_name=None):
     # Initialize graphJSON
     graphJSON = None
     # Get TÜFE data
@@ -2550,9 +2551,18 @@ def tufe():
     df_madde=pd.read_csv("endeksler_int.csv").rename(columns={"Unnamed: 0":"Tarih"})
     madde_names = df_madde.columns[1:].tolist()  # Get column names as madde names
     
-    selected_madde = request.form.get('madde') if request.method == 'POST' else 'TÜFE'
+    if madde_name:
+        selected_madde = madde_name
+    elif request.method == 'POST' and request.form.get('madde'):
+        selected_madde = request.form.get('madde')
+        view_type_param = request.form.get('view_type', 'graph')
+        if selected_madde == 'TÜFE':
+            return redirect(url_for('tufe', view_type=view_type_param) if view_type_param != 'graph' else url_for('tufe'))
+        return redirect(url_for('tufe', madde_name=selected_madde, view_type=view_type_param) if view_type_param != 'graph' else url_for('tufe', madde_name=selected_madde))
+    else:
+        selected_madde = 'TÜFE'
     # View type (graph/data)
-    view_type = request.form.get('view_type', 'graph') if request.method == 'POST' else 'graph'
+    view_type = request.args.get('view_type', 'graph')
     
     if selected_madde == 'TÜFE':
         # Filter dates to show only first day of each month
