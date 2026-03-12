@@ -2591,8 +2591,8 @@ def tufe(madde_name=None):
                 color='#EF476F',
                 width=3
             ),
-            hovertemplate='%{customdata[0]}<br>Web TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
-            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(df['Tarih'], df['Web TÜFE'])]
+            hovertemplate='%{customdata[0]}<br>Web TÜFE: %{customdata[1]:.2f}' + '<extra></extra>',
+            customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y] for date, y in zip(df['Tarih'], df['Web TÜFE'])]
         ))
         
         # Add TÜİK TÜFE line if data is available (TÜFE sütunu)
@@ -2612,8 +2612,8 @@ def tufe(madde_name=None):
                         width=3,
                         shape='hv'  # Step grafik
                     ),
-                    hovertemplate='%{customdata[0]}<br>TÜİK TÜFE: %{customdata[1]:+.2f}%' + '<extra></extra>',
-                    customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y-100] for date, y in zip(tuik_filtered.index, tuik_filtered['TÜFE'])]
+                    hovertemplate='%{customdata[0]}<br>TÜİK TÜFE: %{customdata[1]:.2f}' + '<extra></extra>',
+                    customdata=[[f"{date.strftime('%d')} {get_turkish_month(date.strftime('%Y-%m-%d'))} {date.strftime('%Y')}", y] for date, y in zip(tuik_filtered.index, tuik_filtered['TÜFE'])]
                 ))
         
         # Update layout with modern theme
